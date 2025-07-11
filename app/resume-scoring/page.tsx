@@ -113,14 +113,16 @@ export default function ResumeScoringPage() {
           suggestions.
         </p>
       </div>
-      <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
-        {/* Input Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Your Resume & Job Description</CardTitle>
-            <CardDescription>Provide your resume content and the job description for analysis.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
+
+      {/* Input Section: Resume & Job Description in a single horizontal card */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Your Resume & Job Description</CardTitle>
+          <CardDescription>Provide your resume content and the job description for analysis.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+            {/* Resume Input */}
             <div>
               <Label htmlFor="resume-text">Resume Text (or upload PDF below)</Label>
               <Textarea
@@ -134,21 +136,22 @@ export default function ResumeScoringPage() {
                 rows={10}
                 className="mt-1 min-h-[150px]"
               />
-            </div>
-            <div className="flex items-center justify-center text-gray-500">
-              <span className="mx-2">OR</span>
-            </div>
-            <div>
-              <Label htmlFor="resume-file">Upload Resume (PDF)</Label>
-              <Input id="resume-file" type="file" accept=".pdf" onChange={handleResumeUpload} className="mt-1" />
-              {resumeFile && (
-                <div className="flex items-center space-x-2 mt-2 text-sm text-gray-600">
-                  <FileText className="w-4 h-4" />
-                  <span>{resumeFile.name}</span>
-                </div>
-              )}
+              <div className="flex items-center justify-center text-gray-500 my-2">
+                <span className="mx-2">OR</span>
+              </div>
+              <div>
+                <Label htmlFor="resume-file">Upload Resume (PDF)</Label>
+                <Input id="resume-file" type="file" accept=".pdf" onChange={handleResumeUpload} className="mt-1" />
+                {resumeFile && (
+                  <div className="flex items-center space-x-2 mt-2 text-sm text-gray-600">
+                    <FileText className="w-4 h-4" />
+                    <span>{resumeFile.name}</span>
+                  </div>
+                )}
+              </div>
             </div>
 
+            {/* Job Description Input */}
             <div>
               <Label htmlFor="jobDescription">Job Description</Label>
               <Textarea
@@ -160,98 +163,98 @@ export default function ResumeScoringPage() {
                 className="mt-1 min-h-[150px]"
               />
             </div>
+          </div>
 
-            <Button
-              onClick={analyzeResume}
-              disabled={(!resumeText && !resumeFile) || !jobDescription.trim() || isAnalyzing}
-              className="w-full"
-            >
-              {isAnalyzing ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Analyzing Resume...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  Analyze Resume
-                </>
-              )}
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Results Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle>ATS Analysis Results</CardTitle>
-            <CardDescription>Detailed insights from the AI analysis.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {!result && !isAnalyzing && (
-              <div className="text-center py-8 text-gray-500">
-                Provide your resume and job description to see AI-powered results.
-              </div>
+          <Button
+            onClick={analyzeResume}
+            disabled={(!resumeText && !resumeFile) || !jobDescription.trim() || isAnalyzing}
+            className="w-full"
+          >
+            {isAnalyzing ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Analyzing Resume...
+              </>
+            ) : (
+              <>
+                <Sparkles className="mr-2 h-4 w-4" />
+                Analyze Resume
+              </>
             )}
+          </Button>
+        </CardContent>
+      </Card>
 
-            {isAnalyzing && (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p className="text-gray-600">Analyzing your resume with Gemini...</p>
-              </div>
-            )}
+      {/* Results Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>ATS Analysis Results</CardTitle>
+          <CardDescription>Detailed insights from the AI analysis.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {!result && !isAnalyzing && (
+            <div className="text-center py-8 text-gray-500">
+              Provide your resume and job description to see AI-powered results.
+            </div>
+          )}
 
-            {result && (
-              <div className="space-y-6">
-                {/* Score */}
-                <div className="text-center">
-                  <div className="flex items-center justify-center space-x-2 mb-2">
-                    {getScoreIcon(result.score)}
-                    <span className={`text-3xl font-bold ${getScoreColor(result.score)}`}>{result.score}%</span>
-                  </div>
-                  <Progress value={result.score} className="w-full" />
-                  <p className="text-sm text-gray-600 mt-2">ATS Compatibility Score</p>
+          {isAnalyzing && (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Analyzing your resume with Gemini...</p>
+            </div>
+          )}
+
+          {result && (
+            <div className="space-y-6">
+              {/* Score */}
+              <div className="text-center">
+                <div className="flex items-center justify-center space-x-2 mb-2">
+                  {getScoreIcon(result.score)}
+                  <span className={`text-3xl font-bold ${getScoreColor(result.score)}`}>{result.score}%</span>
                 </div>
+                <Progress value={result.score} className="w-full" />
+                <p className="text-sm text-gray-600 mt-2">ATS Compatibility Score</p>
+              </div>
 
-                {/* Keywords */}
-                <div>
-                  <h3 className="font-semibold mb-3">Keyword Analysis</h3>
-                  <div className="space-y-3">
-                    <div>
-                      <p className="text-sm font-medium text-green-600 mb-2">Found Keywords</p>
-                      <div className="flex flex-wrap gap-1">
-                        {result.keywords.found.length > 0 ? (
-                          result.keywords.found.map((keyword) => (
-                            <Badge key={keyword} variant="secondary" className="bg-green-100 text-green-800">
-                              {keyword}
-                            </Badge>
-                          ))
-                        ) : (
-                          <span className="text-sm text-gray-500">No specific keywords found.</span>
-                        )}
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-red-600 mb-2">Missing Keywords</p>
-                      <div className="flex flex-wrap gap-1">
-                        {result.keywords.missing.length > 0 ? (
-                          result.keywords.missing.map((keyword) => (
-                            <Badge key={keyword} variant="secondary" className="bg-red-100 text-red-800">
-                              {keyword}
-                            </Badge>
-                          ))
-                        ) : (
-                          <span className="text-sm text-gray-500">All key terms seem to be present!</span>
-                        )}
-                      </div>
+              {/* Keywords */}
+              <div>
+                <h3 className="font-semibold mb-3">Keyword Analysis</h3>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-sm font-medium text-green-600 mb-2">Found Keywords</p>
+                    <div className="flex flex-wrap gap-1">
+                      {result.keywords.found.length > 0 ? (
+                        result.keywords.found.map((keyword) => (
+                          <Badge key={keyword} variant="secondary" className="bg-green-100 text-green-800">
+                            {keyword}
+                          </Badge>
+                        ))
+                      ) : (
+                        <span className="text-sm text-gray-500">No specific keywords found.</span>
+                      )}
                     </div>
                   </div>
+                  <div>
+                    <p className="text-sm font-medium text-red-600 mb-2">Missing Keywords</p>
+                    <div className="flex flex-wrap gap-1">
+                      {result.keywords.missing.length > 0 ? (
+                        result.keywords.missing.map((keyword) => (
+                          <Badge key={keyword} variant="secondary" className="bg-red-100 text-red-800">
+                            {keyword}
+                          </Badge>
+                        ))
+                      ) : (
+                        <span className="text-sm text-gray-500">All key terms seem to be present!</span>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
       {/* Detailed Results */}
       {result && (
         <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
