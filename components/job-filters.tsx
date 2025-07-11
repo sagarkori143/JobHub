@@ -1,184 +1,129 @@
 "use client"
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
+import type React from "react"
+
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
+import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Slider } from "@/components/ui/slider"
-import type { JobFilters } from "@/types/job-search"
+import { Checkbox } from "@/components/ui/checkbox"
+import type { JobSearchFilters } from "@/types/job-search"
 
 interface JobFiltersProps {
-  filters: JobFilters
-  onFiltersChange: (filters: JobFilters) => void
+  filters: JobSearchFilters
+  setFilters: (filters: JobSearchFilters) => void
 }
 
-const jobTypesArray = ["Full-time", "Part-time", "Contract", "Internship"]
-const experienceLevelsArray = ["Entry", "Mid", "Senior", "Executive"]
-const industriesArray = ["Technology", "Healthcare", "Finance", "Education", "Marketing", "Design"]
-
-// Rename component to match the import in app/page.tsx
-export function JobFilters({ filters, onFiltersChange }: JobFiltersProps) {
-  const [localFilters, setLocalFilters] = useState(filters)
-
-  const handleFilterChange = (key: keyof JobFilters, value: any) => {
-    const newFilters = { ...localFilters, [key]: value }
-    setLocalFilters(newFilters)
-    onFiltersChange(newFilters)
+export function JobFilters({ filters, setFilters }: JobFiltersProps) {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target
+    setFilters({ ...filters, [id]: value })
   }
 
-  const handleArrayFilterChange = (key: keyof JobFilters, value: string, checked: boolean) => {
-    const currentArray = localFilters[key] as string[]
-    const newArray = checked ? [...currentArray, value] : currentArray.filter((item) => item !== value)
-
-    handleFilterChange(key, newArray)
+  const handleSelectChange = (id: keyof JobSearchFilters, value: string) => {
+    setFilters({ ...filters, [id]: value })
   }
 
-  const clearFilters = () => {
-    const clearedFilters: JobFilters = {
-      search: "",
+  const handleCheckboxChange = (checked: boolean) => {
+    setFilters({ ...filters, remote: checked })
+  }
+
+  const handleClearFilters = () => {
+    setFilters({
+      keywords: "",
       location: "",
-      jobType: [],
-      experienceLevel: [],
-      industry: [],
-      remote: null,
-      salaryRange: { min: 0, max: 200000 },
-    }
-    setLocalFilters(clearedFilters)
-    onFiltersChange(clearedFilters)
+      type: "",
+      experienceLevel: "",
+      salaryMin: "",
+      remote: false,
+    })
   }
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="flex justify-between items-center">
-          Filters
-          <Button variant="outline" size="sm" onClick={clearFilters}>
-            Clear All
-          </Button>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div>
-          <Label htmlFor="search">Search Jobs</Label>
-          <Input
-            id="search"
-            placeholder="Job title, company, or keywords"
-            value={localFilters.search}
-            onChange={(e) => handleFilterChange("search", e.target.value)}
-          />
-        </div>
+    <div className="bg-white p-6 rounded-lg shadow-md space-y-6">
+      <h2 className="text-2xl font-bold text-gray-800 mb-4">Filter Jobs</h2>
 
-        <div>
-          <Label htmlFor="location">Location</Label>
-          <Input
-            id="location"
-            placeholder="City, state, or remote"
-            value={localFilters.location}
-            onChange={(e) => handleFilterChange("location", e.target.value)}
-          />
-        </div>
+      <div>
+        <Label htmlFor="keywords" className="mb-2 block">
+          Keywords
+        </Label>
+        <Input
+          id="keywords"
+          placeholder="e.g., React, Frontend, Senior"
+          value={filters.keywords}
+          onChange={handleInputChange}
+        />
+      </div>
 
-        <div>
-          <Label>Job Type</Label>
-          <div className="space-y-2 mt-2">
-            {jobTypesArray.map((type) => (
-              <div key={type} className="flex items-center space-x-2">
-                <Checkbox
-                  id={type}
-                  checked={localFilters.jobType.includes(type)}
-                  onCheckedChange={(checked) => handleArrayFilterChange("jobType", type, checked as boolean)}
-                />
-                <Label htmlFor={type}>{type}</Label>
-              </div>
-            ))}
-          </div>
-        </div>
+      <div>
+        <Label htmlFor="location" className="mb-2 block">
+          Location
+        </Label>
+        <Input
+          id="location"
+          placeholder="e.g., New York, Remote"
+          value={filters.location}
+          onChange={handleInputChange}
+        />
+      </div>
 
-        <div>
-          <Label>Experience Level</Label>
-          <div className="space-y-2 mt-2">
-            {experienceLevelsArray.map((level) => (
-              <div key={level} className="flex items-center space-x-2">
-                <Checkbox
-                  id={level}
-                  checked={localFilters.experienceLevel.includes(level)}
-                  onCheckedChange={(checked) => handleArrayFilterChange("experienceLevel", level, checked as boolean)}
-                />
-                <Label htmlFor={level}>{level}</Label>
-              </div>
-            ))}
-          </div>
-        </div>
+      <div>
+        <Label htmlFor="type" className="mb-2 block">
+          Job Type
+        </Label>
+        <Select value={filters.type} onValueChange={(value) => handleSelectChange("type", value)}>
+          <SelectTrigger id="type">
+            <SelectValue placeholder="Select job type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All</SelectItem>
+            <SelectItem value="Full-time">Full-time</SelectItem>
+            <SelectItem value="Part-time">Part-time</SelectItem>
+            <SelectItem value="Contract">Contract</SelectItem>
+            <SelectItem value="Internship">Internship</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
-        <div>
-          <Label>Industry</Label>
-          <div className="space-y-2 mt-2">
-            {industriesArray.map((industry) => (
-              <div key={industry} className="flex items-center space-x-2">
-                <Checkbox
-                  id={industry}
-                  checked={localFilters.industry.includes(industry)}
-                  onCheckedChange={(checked) => handleArrayFilterChange("industry", industry, checked as boolean)}
-                />
-                <Label htmlFor={industry}>{industry}</Label>
-              </div>
-            ))}
-          </div>
-        </div>
+      <div>
+        <Label htmlFor="experienceLevel" className="mb-2 block">
+          Experience Level
+        </Label>
+        <Select value={filters.experienceLevel} onValueChange={(value) => handleSelectChange("experienceLevel", value)}>
+          <SelectTrigger id="experienceLevel">
+            <SelectValue placeholder="Select experience level" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All</SelectItem>
+            <SelectItem value="Entry">Entry Level</SelectItem>
+            <SelectItem value="Mid">Mid Level</SelectItem>
+            <SelectItem value="Senior">Senior Level</SelectItem>
+            <SelectItem value="Director">Director</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
-        <div>
-          <Label>Remote Work</Label>
-          <Select
-            value={localFilters.remote === null ? "any" : localFilters.remote.toString()}
-            onValueChange={(value) => handleFilterChange("remote", value === "any" ? null : value === "true")}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="any">Any</SelectItem>
-              <SelectItem value="true">Remote Only</SelectItem>
-              <SelectItem value="false">On-site Only</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+      <div>
+        <Label htmlFor="salaryMin" className="mb-2 block">
+          Minimum Salary
+        </Label>
+        <Input
+          id="salaryMin"
+          type="number"
+          placeholder="e.g., 70000"
+          value={filters.salaryMin}
+          onChange={handleInputChange}
+        />
+      </div>
 
-        <div>
-          <Label>
-            Salary Range: ${localFilters.salaryRange.min.toLocaleString()} - $
-            {localFilters.salaryRange.max.toLocaleString()}
-          </Label>
-          <div className="mt-2 space-y-4">
-            <div>
-              <Label className="text-sm">Minimum</Label>
-              <Slider
-                value={[localFilters.salaryRange.min]}
-                onValueChange={([value]) =>
-                  handleFilterChange("salaryRange", { ...localFilters.salaryRange, min: value })
-                }
-                max={200000}
-                step={5000}
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <Label className="text-sm">Maximum</Label>
-              <Slider
-                value={[localFilters.salaryRange.max]}
-                onValueChange={([value]) =>
-                  handleFilterChange("salaryRange", { ...localFilters.salaryRange, max: value })
-                }
-                max={200000}
-                step={5000}
-                className="mt-1"
-              />
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+      <div className="flex items-center space-x-2">
+        <Checkbox id="remote" checked={filters.remote} onCheckedChange={handleCheckboxChange} />
+        <Label htmlFor="remote">Remote Only</Label>
+      </div>
+
+      <Button onClick={handleClearFilters} variant="outline" className="w-full bg-transparent">
+        Clear Filters
+      </Button>
+    </div>
   )
 }

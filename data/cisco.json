@@ -1,1 +1,72 @@
-[]
+[
+  {
+    "id": "cisco-1",
+    "title": "Network Engineer",
+    "company": "Cisco",
+    "location": "San Jose, CA",
+    "type": "Full-time",
+    "salary": {
+      "min": 100000,
+      "max": 150000,
+      "currency": "USD"
+    },
+    "description": "Design, implement, and troubleshoot complex network infrastructures for enterprise clients.",
+    "requirements": [
+      "Bachelor's degree in Computer Science or Electrical Engineering.",
+      "3+ years of experience in network engineering.",
+      "CCNA or CCNP certification.",
+      "Strong knowledge of routing and switching protocols."
+    ],
+    "benefits": [
+      "Health, dental, vision insurance",
+      "401(k) with matching",
+      "Employee stock purchase plan",
+      "Paid time off",
+      "Tuition reimbursement"
+    ],
+    "postedDate": "2024-07-03",
+    "applicationDeadline": "2024-08-19",
+    "industry": "Networking",
+    "experienceLevel": "Mid",
+    "remote": false,
+    "companyLogo": "/placeholder.svg?height=40&width=40",
+    "link": "https://jobs.cisco.com/jobs/details/12345",
+    "scrapedAt": "2024-07-10T10:00:00Z",
+    "sourceUrl": "https://jobs.cisco.com/"
+  },
+  {
+    "id": "cisco-2",
+    "title": "Cybersecurity Analyst",
+    "company": "Cisco",
+    "location": "Remote",
+    "type": "Full-time",
+    "salary": {
+      "min": 110000,
+      "max": 160000,
+      "currency": "USD"
+    },
+    "description": "Monitor, detect, and respond to cybersecurity threats. Implement security measures and best practices.",
+    "requirements": [
+      "Bachelor's degree in Cybersecurity or related field.",
+      "3+ years of experience in cybersecurity.",
+      "Certifications like CompTIA Security+, CEH, or CISSP.",
+      "Knowledge of security frameworks (NIST, ISO 27001)."
+    ],
+    "benefits": [
+      "Health, dental, vision insurance",
+      "401(k) with matching",
+      "Employee stock purchase plan",
+      "Paid time off",
+      "Tuition reimbursement"
+    ],
+    "postedDate": "2024-06-29",
+    "applicationDeadline": "2024-08-14",
+    "industry": "Cybersecurity",
+    "experienceLevel": "Mid",
+    "remote": true,
+    "companyLogo": "/placeholder.svg?height=40&width=40",
+    "link": "https://jobs.cisco.com/jobs/details/67890",
+    "scrapedAt": "2024-07-10T10:00:00Z",
+    "sourceUrl": "https://jobs.cisco.com/"
+  }
+]

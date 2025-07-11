@@ -1,1 +1,72 @@
-[]
+[
+  {
+    "id": "uber-1",
+    "title": "Software Engineer, Rides",
+    "company": "Uber",
+    "location": "San Francisco, CA",
+    "type": "Full-time",
+    "salary": {
+      "min": 140000,
+      "max": 210000,
+      "currency": "USD"
+    },
+    "description": "Build and optimize the core platform for Uber's ridesharing business. Focus on scalability and reliability.",
+    "requirements": [
+      "Bachelor's degree in Computer Science or related field.",
+      "3+ years of experience in software development.",
+      "Proficiency in Go, Java, or Python.",
+      "Experience with distributed systems and microservices."
+    ],
+    "benefits": [
+      "Medical, dental, vision insurance",
+      "401(k) with matching",
+      "Restricted Stock Units (RSUs)",
+      "Paid time off",
+      "Commuter benefits"
+    ],
+    "postedDate": "2024-07-05",
+    "applicationDeadline": "2024-08-20",
+    "industry": "Transportation",
+    "experienceLevel": "Mid",
+    "remote": false,
+    "companyLogo": "/placeholder.svg?height=40&width=40",
+    "link": "https://www.uber.com/careers/list/12345",
+    "scrapedAt": "2024-07-10T10:00:00Z",
+    "sourceUrl": "https://www.uber.com/careers/"
+  },
+  {
+    "id": "uber-2",
+    "title": "Data Scientist, Eats",
+    "company": "Uber",
+    "location": "Seattle, WA",
+    "type": "Full-time",
+    "salary": {
+      "min": 130000,
+      "max": 200000,
+      "currency": "USD"
+    },
+    "description": "Apply statistical modeling and machine learning to optimize Uber Eats operations and user experience.",
+    "requirements": [
+      "Master's or Ph.D. in a quantitative field.",
+      "3+ years of experience in data science.",
+      "Proficiency in Python or R, and SQL.",
+      "Experience with A/B testing and experimental design."
+    ],
+    "benefits": [
+      "Medical, dental, vision insurance",
+      "401(k) with matching",
+      "Restricted Stock Units (RSUs)",
+      "Paid time off",
+      "Commuter benefits"
+    ],
+    "postedDate": "2024-06-30",
+    "applicationDeadline": "2024-08-15",
+    "industry": "Food Delivery",
+    "experienceLevel": "Mid",
+    "remote": false,
+    "companyLogo": "/placeholder.svg?height=40&width=40",
+    "link": "https://www.uber.com/careers/list/67890",
+    "scrapedAt": "2024-07-10T10:00:00Z",
+    "sourceUrl": "https://www.uber.com/careers/"
+  }
+]

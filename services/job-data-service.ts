@@ -1,111 +1,35 @@
 import type { JobListing } from "@/types/job-search"
 import { mockJobs } from "@/data/mock-jobs"
 
-export interface JobMetadata {
-  lastUpdated: string
-  totalJobs: number
-  companies: Record<
-    string,
-    {
-      total: number
-      active: number
-      expired: number
-    }
-  >
-  scrapingSession?: {
-    timestamp: string
-    companiesProcessed: number
-    totalActiveJobs: number
-  }
-}
+// In a real application, this would fetch from a backend API
+// For this example, we simulate fetching from a static JSON file
+// or falling back to mock data.
 
-class JobDataService {
-  private static instance: JobDataService
-  private jobs: JobListing[] = []
-  private metadata: JobMetadata | null = null
-  private lastFetch = 0
-  private readonly CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
+export async function getJobs(): Promise<JobListing[]> {
+  try {
+    // In a real Next.js app, this would be a fetch to your API route:
+    // const response = await fetch('/api/jobs', { cache: 'no-store' });
+    // const jobs = await response.json();
 
-  static getInstance(): JobDataService {
-    if (!JobDataService.instance) {
-      JobDataService.instance = new JobDataService()
-    }
-    return JobDataService.instance
-  }
+    // For Next.js, we directly import the mock data or simulate a fetch
+    // from the merged posts.json if it were accessible directly.
+    // Since posts.json is generated server-side (or during build),
+    // we'll simulate its content or use mockJobs as a fallback.
 
-  async loadJobs(forceRefresh = false): Promise<JobListing[]> {
-    const now = Date.now()
-
-    // Return cached data if still fresh
-    if (!forceRefresh && this.jobs.length > 0 && now - this.lastFetch < this.CACHE_DURATION) {
-      return this.jobs
-    }
-
-    try {
-      // In a real application, this would fetch from your API or file system
-      // For now, we'll simulate loading from the posts.json file
-      const response = await fetch("/api/jobs")
-
-      if (response.ok) {
-        const data = await response.json()
-        this.jobs = data.jobs || []
-        this.metadata = data.metadata || null
-        this.lastFetch = now
-
-        console.log(`📊 Loaded ${this.jobs.length} jobs from scraped data`)
-        // If scraped data is empty, use fallback
-        if (this.jobs.length === 0) {
-          console.log("⚠️ Scraped data is empty, falling back to mock jobs.")
-          return this.getFallbackJobs()
-        }
-        return this.jobs
-      } else {
-        console.warn("Failed to fetch jobs from API, using fallback data")
-        return this.getFallbackJobs()
+    // Simulate fetching from posts.json
+    const response = await fetch("/posts.json") // This path would work if posts.json was in public
+    if (response.ok) {
+      const jobs = await response.json()
+      if (jobs && jobs.length > 0) {
+        return jobs
       }
-    } catch (error) {
-      console.error("Error loading jobs:", error)
-      return this.getFallbackJobs()
     }
-  }
 
-  private getFallbackJobs(): JobListing[] {
-    console.log("Using mock data as fallback.")
+    console.warn("Could not load jobs from /posts.json or it was empty. Falling back to mock data.")
+    return mockJobs
+  } catch (error) {
+    console.error("Error fetching jobs:", error)
+    // Fallback to mock data in case of any fetch error
     return mockJobs
   }
-
-  async getCompanyJobs(companyName: string): Promise<JobListing[]> {
-    const allJobs = await this.loadJobs()
-    return allJobs.filter((job) => job.company.toLowerCase() === companyName.toLowerCase())
-  }
-
-  async getActiveJobs(): Promise<JobListing[]> {
-    const allJobs = await this.loadJobs()
-    return allJobs.filter((job) => (job as any).isActive !== false)
-  }
-
-  async getExpiredJobs(): Promise<JobListing[]> {
-    // This would typically load from individual company files
-    // For now, return empty array
-    return []
-  }
-
-  getMetadata(): JobMetadata | null {
-    return this.metadata
-  }
-
-  async refreshJobs(): Promise<JobListing[]> {
-    return this.loadJobs(true)
-  }
-
-  getStats() {
-    return {
-      totalJobs: this.jobs.length,
-      lastUpdated: this.metadata?.lastUpdated || null,
-      companies: this.metadata?.companies || {},
-      cacheAge: Date.now() - this.lastFetch,
-    }
-  }
 }
-
-export const jobDataService = JobDataService.getInstance()

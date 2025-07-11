@@ -1,1 +1,72 @@
-[]
+[
+  {
+    "id": "google-1",
+    "title": "Software Engineer, L4",
+    "company": "Google",
+    "location": "Mountain View, CA",
+    "type": "Full-time",
+    "salary": {
+      "min": 150000,
+      "max": 220000,
+      "currency": "USD"
+    },
+    "description": "Design, develop, test, deploy, maintain, and enhance software solutions. Work on large-scale distributed systems.",
+    "requirements": [
+      "Bachelor's degree in Computer Science or related field.",
+      "4 years of experience in software development.",
+      "Experience with data structures and algorithms.",
+      "Proficiency in C++, Java, Python, or Go."
+    ],
+    "benefits": [
+      "Medical, dental, vision insurance",
+      "401(k) with matching",
+      "Paid time off",
+      "On-site amenities",
+      "Parental leave"
+    ],
+    "postedDate": "2024-07-01",
+    "applicationDeadline": "2024-08-15",
+    "industry": "Technology",
+    "experienceLevel": "Mid",
+    "remote": false,
+    "companyLogo": "/placeholder.svg?height=40&width=40",
+    "link": "https://careers.google.com/jobs/results/12345/",
+    "scrapedAt": "2024-07-10T10:00:00Z",
+    "sourceUrl": "https://careers.google.com/jobs/"
+  },
+  {
+    "id": "google-2",
+    "title": "Product Manager, Cloud AI",
+    "company": "Google",
+    "location": "Sunnyvale, CA",
+    "type": "Full-time",
+    "salary": {
+      "min": 160000,
+      "max": 230000,
+      "currency": "USD"
+    },
+    "description": "Lead product strategy and roadmap for Google Cloud AI services. Work with engineering and sales teams.",
+    "requirements": [
+      "Bachelor's degree in Computer Science, Engineering, or related technical field.",
+      "5 years of experience in product management.",
+      "Experience with AI/ML technologies.",
+      "Strong communication and leadership skills."
+    ],
+    "benefits": [
+      "Medical, dental, vision insurance",
+      "401(k) with matching",
+      "Paid time off",
+      "On-site amenities",
+      "Parental leave"
+    ],
+    "postedDate": "2024-06-25",
+    "applicationDeadline": "2024-08-10",
+    "industry": "Technology",
+    "experienceLevel": "Senior",
+    "remote": false,
+    "companyLogo": "/placeholder.svg?height=40&width=40",
+    "link": "https://careers.google.com/jobs/results/67890/",
+    "scrapedAt": "2024-07-10T10:00:00Z",
+    "sourceUrl": "https://careers.google.com/jobs/"
+  }
+]

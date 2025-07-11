@@ -17,12 +17,30 @@ import {
   Hourglass,
   Award,
   XCircle,
+  Search,
+  User,
+  LogOut,
+  HelpCircle,
+  Bell,
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar" // Added Avatar components
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu" // Added DropdownMenu components
+import { useAuth } from "@/contexts/auth-context" // Added useAuth
+import { LoginModal } from "@/components/login-modal" // Added LoginModal
+import { ProfileModal } from "@/components/profile-modal" // Added ProfileModal
+import { JobPreferencesModal } from "@/components/job-preferences-modal" // Added JobPreferencesModal
+import { useState } from "react" // Added useState
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
   isCollapsed: boolean
@@ -31,19 +49,27 @@ interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export function Sidebar({ className, isCollapsed, setIsCollapsed }: SidebarProps) {
   const pathname = usePathname()
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
+  const [isJobPreferencesModalOpen, setIsJobPreferencesModalOpen] = useState(false)
+  const { user, isAuthenticated, logout } = useAuth()
+
+  const handleLogout = () => {
+    logout()
+  }
 
   const navItems = [
     {
-      title: "Dashboard",
+      title: "Search Jobs",
+      href: "/",
+      icon: Search,
+      active: pathname === "/",
+    },
+    {
+      title: "Main Dashboard",
       href: "/dashboard",
       icon: LayoutDashboard,
       active: pathname === "/dashboard",
-    },
-    {
-      title: "Job Board",
-      href: "/",
-      icon: Briefcase,
-      active: pathname === "/",
     },
     {
       title: "Applied",
@@ -135,6 +161,83 @@ export function Sidebar({ className, isCollapsed, setIsCollapsed }: SidebarProps
             ))}
           </nav>
         </ScrollArea>
+        {/* User Section for Desktop */}
+        <div className="mt-auto p-4 border-t bg-gradient-to-r from-gray-50 to-gray-100">
+          {isAuthenticated && user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className={`w-full ${isCollapsed ? "justify-center px-2" : "justify-start"} h-12 hover:bg-white/50`}
+                >
+                  <div className={`flex items-center ${isCollapsed ? "justify-center" : "gap-3"}`}>
+                    <Avatar className="ring-2 ring-blue-200">
+                      <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
+                      <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+                        {user.name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")}
+                      </AvatarFallback>
+                    </Avatar>
+                    {!isCollapsed && (
+                      <div className="text-left">
+                        <p className="text-sm font-medium text-gray-800">{user.name}</p>
+                        <p className="text-xs text-gray-500">{user.email}</p>
+                      </div>
+                    )}
+                  </div>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <div className="flex items-center space-x-2 p-2">
+                  <Avatar>
+                    <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
+                    <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+                      {user.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="text-sm font-medium">{user.name}</p>
+                    <p className="text-xs text-gray-500">{user.role}</p>
+                  </div>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setIsProfileModalOpen(true)}>
+                  <User className="mr-2 h-4 w-4" />
+                  Profile Settings
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setIsJobPreferencesModalOpen(true)}>
+                  <Bell className="mr-2 h-4 w-4" />
+                  Job Preferences
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Settings className="mr-2 h-4 w-4" />
+                  Account Settings
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <HelpCircle className="mr-2 h-4 w-4" />
+                  Help & Support
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button
+              onClick={() => setIsLoginModalOpen(true)}
+              className={`w-full ${isCollapsed ? "px-2" : ""} bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white`}
+            >
+              {isCollapsed ? <User className="h-4 w-4" /> : "Sign In"}
+            </Button>
+          )}
+        </div>
         <div className="flex items-center justify-end h-16 px-4 border-t">
           <Button variant="ghost" size="icon" onClick={() => setIsCollapsed(!isCollapsed)} className="hidden md:flex">
             {isCollapsed ? <Menu className="h-4 w-4" /> : <X className="h-4 w-4" />}
@@ -176,9 +279,85 @@ export function Sidebar({ className, isCollapsed, setIsCollapsed }: SidebarProps
                 ))}
               </nav>
             </ScrollArea>
+            {/* User Section for Mobile */}
+            <div className="mt-auto p-4 border-t bg-gradient-to-r from-gray-50 to-gray-100">
+              {isAuthenticated && user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className={`w-full justify-start h-12 hover:bg-white/50`}>
+                      <div className={`flex items-center gap-3`}>
+                        <Avatar className="ring-2 ring-blue-200">
+                          <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
+                          <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+                            {user.name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="text-left">
+                          <p className="text-sm font-medium text-gray-800">{user.name}</p>
+                          <p className="text-xs text-gray-500">{user.email}</p>
+                        </div>
+                      </div>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <div className="flex items-center space-x-2 p-2">
+                      <Avatar>
+                        <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
+                        <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+                          {user.name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="text-sm font-medium">{user.name}</p>
+                        <p className="text-xs text-gray-500">{user.role}</p>
+                      </div>
+                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setIsProfileModalOpen(true)}>
+                      <User className="mr-2 h-4 w-4" />
+                      Profile Settings
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setIsJobPreferencesModalOpen(true)}>
+                      <Bell className="mr-2 h-4 w-4" />
+                      Job Preferences
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <Settings className="mr-2 h-4 w-4" />
+                      Account Settings
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <HelpCircle className="mr-2 h-4 w-4" />
+                      Help & Support
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Button
+                  onClick={() => setIsLoginModalOpen(true)}
+                  className={`w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white`}
+                >
+                  Sign In
+                </Button>
+              )}
+            </div>
           </div>
         </SheetContent>
       </Sheet>
+
+      <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
+      <ProfileModal isOpen={isProfileModalOpen} onClose={() => setIsProfileModalOpen(false)} />
+      <JobPreferencesModal isOpen={isJobPreferencesModalOpen} onClose={() => setIsJobPreferencesModalOpen(false)} />
     </>
   )
 }

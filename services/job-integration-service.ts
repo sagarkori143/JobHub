@@ -1,178 +1,159 @@
 import type { JobListing } from "@/types/job-search"
+import fs from "fs/promises"
+import path from "path"
 
-export interface ScrapedJob {
-  id: string
-  title: string
-  company: string
-  location: string
-  department?: string
-  type: "Full-time" | "Part-time" | "Contract" | "Internship"
-  salary: {
-    min: number
-    max: number
-    currency: string
-  }
-  description: string
-  requirements: string[]
-  benefits: string[]
-  postedDate: string
-  applicationDeadline: string
-  industry: string
-  experienceLevel: "Entry" | "Mid" | "Senior" | "Executive"
-  remote: boolean
-  companyLogo?: string
-  scrapedAt: string
-  source: string
-}
+const DATA_DIR = path.join(process.cwd(), "data")
+const POSTS_FILE = path.join(DATA_DIR, "posts.json")
+const METADATA_FILE = path.join(DATA_DIR, "scraping-metadata.json")
 
-export class JobIntegrationService {
-  private static instance: JobIntegrationService
-  private scrapedJobs: ScrapedJob[] = []
-  private lastScrapeTime: string | null = null
-
-  static getInstance(): JobIntegrationService {
-    if (!JobIntegrationService.instance) {
-      JobIntegrationService.instance = new JobIntegrationService()
+interface ScrapingMetadata {
+  lastScraped: string | null
+  companies: {
+    [companyName: string]: {
+      lastScraped: string | null
+      lastSuccessfulScrape: string | null
+      status: "success" | "failed" | "pending"
+      message?: string
     }
-    return JobIntegrationService.instance
-  }
-
-  // Load scraped jobs from storage
-  loadScrapedJobs(): ScrapedJob[] {
-    try {
-      const stored = localStorage.getItem("scrapedJobs")
-      if (stored) {
-        this.scrapedJobs = JSON.parse(stored)
-        this.lastScrapeTime = localStorage.getItem("lastScrapeTime")
-      }
-    } catch (error) {
-      console.error("Error loading scraped jobs:", error)
-    }
-    return this.scrapedJobs
-  }
-
-  // Save scraped jobs to storage
-  saveScrapedJobs(jobs: ScrapedJob[]): void {
-    try {
-      this.scrapedJobs = jobs
-      this.lastScrapeTime = new Date().toISOString()
-      localStorage.setItem("scrapedJobs", JSON.stringify(jobs))
-      localStorage.setItem("lastScrapeTime", this.lastScrapeTime)
-    } catch (error) {
-      console.error("Error saving scraped jobs:", error)
-    }
-  }
-
-  // Convert scraped jobs to JobListing format
-  convertToJobListings(scrapedJobs: ScrapedJob[]): JobListing[] {
-    return scrapedJobs.map((job) => ({
-      ...job,
-      // Ensure all required JobListing fields are present
-      type: job.type || "Full-time",
-      salary: job.salary || { min: 50000, max: 100000, currency: "USD" },
-      description:
-        job.description ||
-        `Join ${job.company} as a ${job.title}. Exciting opportunity to work with cutting-edge technology.`,
-      requirements: job.requirements || [
-        "Bachelor's degree in relevant field",
-        "Strong problem-solving skills",
-        "Excellent communication abilities",
-      ],
-      benefits: job.benefits || ["Competitive salary", "Health insurance", "Professional development"],
-      postedDate: job.postedDate || new Date().toISOString().split("T")[0],
-      applicationDeadline:
-        job.applicationDeadline || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-      industry: job.industry || "Technology",
-      experienceLevel: job.experienceLevel || "Mid",
-      remote: job.remote ?? false,
-      companyLogo: job.companyLogo || "/placeholder.svg?height=40&width=40",
-    }))
-  }
-
-  // Get all jobs (scraped + existing)
-  getAllJobs(existingJobs: JobListing[]): JobListing[] {
-    const scrapedJobListings = this.convertToJobListings(this.scrapedJobs)
-
-    // Remove duplicates based on title and company
-    const allJobs = [...existingJobs]
-
-    scrapedJobListings.forEach((scrapedJob) => {
-      const isDuplicate = allJobs.some(
-        (existingJob) =>
-          existingJob.title.toLowerCase() === scrapedJob.title.toLowerCase() &&
-          existingJob.company.toLowerCase() === scrapedJob.company.toLowerCase(),
-      )
-
-      if (!isDuplicate) {
-        allJobs.push(scrapedJob)
-      }
-    })
-
-    return allJobs
-  }
-
-  // Get only scraped jobs
-  getScrapedJobs(): JobListing[] {
-    return this.convertToJobListings(this.scrapedJobs)
-  }
-
-  // Get scraping statistics
-  getScrapingStats() {
-    return {
-      totalScrapedJobs: this.scrapedJobs.length,
-      lastScrapeTime: this.lastScrapeTime,
-      companiesScraped: [...new Set(this.scrapedJobs.map((job) => job.company))].length,
-      jobsByCompany: this.scrapedJobs.reduce(
-        (acc, job) => {
-          acc[job.company] = (acc[job.company] || 0) + 1
-          return acc
-        },
-        {} as Record<string, number>,
-      ),
-    }
-  }
-
-  // Check for new jobs based on user preferences
-  checkForNewJobs(userPreferences: any): JobListing[] {
-    const scrapedJobListings = this.convertToJobListings(this.scrapedJobs)
-
-    return scrapedJobListings.filter((job) => {
-      // Check keywords
-      const matchesKeywords = userPreferences.keywords.some(
-        (keyword: string) =>
-          job.title.toLowerCase().includes(keyword.toLowerCase()) ||
-          job.description.toLowerCase().includes(keyword.toLowerCase()),
-      )
-
-      // Check industries
-      const matchesIndustry =
-        userPreferences.industries.length === 0 || userPreferences.industries.includes(job.industry)
-
-      // Check locations
-      const matchesLocation =
-        userPreferences.locations.length === 0 ||
-        userPreferences.locations.some(
-          (location: string) =>
-            job.location.toLowerCase().includes(location.toLowerCase()) ||
-            (location.toLowerCase() === "remote" && job.remote),
-        )
-
-      // Check job types
-      const matchesJobType = userPreferences.jobTypes.length === 0 || userPreferences.jobTypes.includes(job.type)
-
-      // Check experience levels
-      const matchesExperience =
-        userPreferences.experienceLevels.length === 0 || userPreferences.experienceLevels.includes(job.experienceLevel)
-
-      // Check salary range
-      const avgSalary = (job.salary.min + job.salary.max) / 2
-      const matchesSalary = avgSalary >= userPreferences.salaryRange.min && avgSalary <= userPreferences.salaryRange.max
-
-      return (
-        matchesKeywords && matchesIndustry && matchesLocation && matchesJobType && matchesExperience && matchesSalary
-      )
-    })
   }
 }
 
-export const jobIntegrationService = JobIntegrationService.getInstance()
+export async function saveJobs(companyName: string, jobs: JobListing[]): Promise<void> {
+  try {
+    await fs.mkdir(DATA_DIR, { recursive: true })
+    const filePath = path.join(DATA_DIR, `${companyName.toLowerCase()}.json`)
+    await fs.writeFile(filePath, JSON.stringify(jobs, null, 2))
+    console.log(`Saved ${jobs.length} jobs for ${companyName} to ${filePath}`)
+    await updateScrapingMetadata(companyName, "success", `Successfully scraped ${jobs.length} jobs.`)
+  } catch (error) {
+    console.error(`Failed to save jobs for ${companyName}:`, error)
+    await updateScrapingMetadata(
+      companyName,
+      "failed",
+      `Error saving jobs: ${error instanceof Error ? error.message : String(error)}`,
+    )
+    throw error
+  }
+}
+
+export async function loadJobs(companyName: string): Promise<JobListing[]> {
+  try {
+    const filePath = path.join(DATA_DIR, `${companyName.toLowerCase()}.json`)
+    const data = await fs.readFile(filePath, "utf-8")
+    return JSON.parse(data) as JobListing[]
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      console.warn(`No job data found for ${companyName}.`)
+      return []
+    }
+    console.error(`Failed to load jobs for ${companyName}:`, error)
+    throw error
+  }
+}
+
+export async function mergeAllCompanyJobs(): Promise<JobListing[]> {
+  try {
+    await fs.mkdir(DATA_DIR, { recursive: true })
+    const files = await fs.readdir(DATA_DIR)
+    const companyFiles = files.filter(
+      (file) => file.endsWith(".json") && file !== "posts.json" && file !== "scraping-metadata.json",
+    )
+
+    let allJobs: JobListing[] = []
+    for (const file of companyFiles) {
+      const filePath = path.join(DATA_DIR, file)
+      try {
+        const data = await fs.readFile(filePath, "utf-8")
+        const companyJobs: JobListing[] = JSON.parse(data)
+        allJobs = allJobs.concat(companyJobs)
+      } catch (error) {
+        console.error(`Error reading or parsing ${file}:`, error)
+      }
+    }
+
+    // Filter out expired jobs for the main posts.json
+    const activeJobs = allJobs.filter((job) => !job.expired)
+
+    await fs.writeFile(POSTS_FILE, JSON.stringify(activeJobs, null, 2))
+    console.log(`Merged ${activeJobs.length} active jobs into ${POSTS_FILE}`)
+    return activeJobs
+  } catch (error) {
+    console.error("Failed to merge all company jobs:", error)
+    throw error
+  }
+}
+
+export async function loadAllMergedJobs(): Promise<JobListing[]> {
+  try {
+    const data = await fs.readFile(POSTS_FILE, "utf-8")
+    return JSON.parse(data) as JobListing[]
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      console.warn(`Merged posts.json not found. Returning empty array.`)
+      return []
+    }
+    console.error(`Failed to load merged jobs from ${POSTS_FILE}:`, error)
+    throw error
+  }
+}
+
+export async function getScrapingMetadata(): Promise<ScrapingMetadata> {
+  try {
+    const data = await fs.readFile(METADATA_FILE, "utf-8")
+    return JSON.parse(data) as ScrapingMetadata
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      return { lastScraped: null, companies: {} }
+    }
+    console.error("Failed to load scraping metadata:", error)
+    throw error
+  }
+}
+
+export async function updateScrapingMetadata(
+  companyName: string,
+  status: "success" | "failed" | "pending",
+  message?: string,
+): Promise<void> {
+  try {
+    const metadata = await getScrapingMetadata()
+    const now = new Date().toISOString()
+
+    metadata.lastScraped = now
+    metadata.companies[companyName] = {
+      lastScraped: now,
+      lastSuccessfulScrape: status === "success" ? now : metadata.companies[companyName]?.lastSuccessfulScrape || null,
+      status,
+      message,
+    }
+
+    await fs.writeFile(METADATA_FILE, JSON.stringify(metadata, null, 2))
+  } catch (error) {
+    console.error("Failed to update scraping metadata:", error)
+    throw error
+  }
+}
+
+export async function initializeScrapingMetadata(companyNames: string[]): Promise<void> {
+  try {
+    const metadata = await getScrapingMetadata()
+    let changed = false
+    companyNames.forEach((company) => {
+      if (!metadata.companies[company]) {
+        metadata.companies[company] = {
+          lastScraped: null,
+          lastSuccessfulScrape: null,
+          status: "pending",
+        }
+        changed = true
+      }
+    })
+    if (changed) {
+      await fs.writeFile(METADATA_FILE, JSON.stringify(metadata, null, 2))
+      console.log("Initialized scraping metadata for new companies.")
+    }
+  } catch (error) {
+    console.error("Failed to initialize scraping metadata:", error)
+    throw error
+  }
+}

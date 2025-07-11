@@ -1,9 +1,16 @@
-export type Job = {
+export interface Job {
   id: string
+  title: string
   company: string
-  position: string
+  location: string
+  status: "Applied" | "Interviewing" | "Offer" | "Rejected" | "Wishlist"
   dateApplied: string
-  status: "Applied" | "Interviewing" | "Offer" | "Rejected"
-  industry: string
-  estimatedSalary?: number
+  notes?: string
+  contactPerson?: string
+  contactEmail?: string
+  contactPhone?: string
+  interviewDate?: string
+  offerDetails?: string
+  rejectionReason?: string
+  link?: string
 }

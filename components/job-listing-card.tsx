@@ -1,129 +1,86 @@
 "use client"
 
-import type React from "react"
-
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { MapPin, Clock, DollarSign, Building, ExternalLink } from "lucide-react"
 import type { JobListing } from "@/types/job-search"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { MapPin, Briefcase, DollarSign, Calendar, Clock } from "lucide-react"
 
 interface JobListingCardProps {
   job: JobListing
-  onViewDetails: (job: JobListing) => void
-  onApply: (job: JobListing) => void
+  onClick: () => void
 }
 
-export function JobListingCard({ job, onViewDetails, onApply }: JobListingCardProps) {
-  const formatSalary = (min: number, max: number, currency: string) => {
-    return `$${(min / 1000).toFixed(0)}k - $${(max / 1000).toFixed(0)}k ${currency}`
+export function JobListingCard({ job, onClick }: JobListingCardProps) {
+  const formatSalary = (salary?: { min: number; max: number; currency: string }) => {
+    if (!salary) return "N/A"
+    const formatter = new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: salary.currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    })
+    return `${formatter.format(salary.min)} - ${formatter.format(salary.max)}`
   }
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffTime = Math.abs(now.getTime() - date.getTime())
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-
-    if (diffDays === 1) return "1 day ago"
-    if (diffDays < 7) return `${diffDays} days ago`
-    if (diffDays < 30) return `${Math.ceil(diffDays / 7)} weeks ago`
-    return `${Math.ceil(diffDays / 30)} months ago`
-  }
-
-  const handleCardClick = (e: React.MouseEvent) => {
-    // Don't trigger card click if clicking on buttons
-    if ((e.target as HTMLElement).closest("button")) {
-      return
+  const getExperienceLevelColor = (level: string) => {
+    switch (level.toLowerCase()) {
+      case "entry":
+        return "bg-blue-100 text-blue-800"
+      case "mid":
+        return "bg-green-100 text-green-800"
+      case "senior":
+        return "bg-purple-100 text-purple-800"
+      case "director":
+        return "bg-red-100 text-red-800"
+      default:
+        return "bg-gray-100 text-gray-800"
     }
-    onViewDetails(job)
   }
 
   return (
     <Card
-      className="hover:shadow-lg transition-all duration-200 cursor-pointer border-l-4 border-l-blue-500 bg-gradient-to-r from-white to-blue-50/30"
-      onClick={handleCardClick}
+      className="cursor-pointer hover:shadow-lg transition-shadow duration-200 flex flex-col h-full"
+      onClick={onClick}
     >
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg flex items-center justify-center shadow-sm">
-              <Building className="w-6 h-6 text-blue-600" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-lg text-gray-800">{job.title}</h3>
-              <p className="text-gray-600 font-medium">{job.company}</p>
-            </div>
-          </div>
-          <Badge
-            variant="secondary"
-            className="bg-gradient-to-r from-green-100 to-green-200 text-green-800 border-green-300"
-          >
-            {job.type}
-          </Badge>
+      <CardHeader>
+        <div className="flex items-center justify-between mb-2">
+          <CardTitle className="text-lg font-semibold">{job.title}</CardTitle>
+          {job.companyLogo && (
+            <img
+              src={job.companyLogo || "/placeholder.svg"}
+              alt={`${job.company} logo`}
+              className="h-10 w-10 object-contain"
+            />
+          )}
         </div>
+        <CardDescription className="text-gray-600">{job.company}</CardDescription>
       </CardHeader>
-      <CardContent className="pt-0">
-        <div className="space-y-3">
-          <div className="flex items-center space-x-4 text-sm text-gray-600">
-            <div className="flex items-center space-x-1">
-              <MapPin className="w-4 h-4 text-blue-500" />
-              <span>{job.location}</span>
-            </div>
-            {job.remote && (
-              <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
-                Remote
-              </Badge>
-            )}
+      <CardContent className="flex-1 text-sm text-gray-700 space-y-2">
+        <div className="flex items-center gap-2">
+          <MapPin className="h-4 w-4 text-gray-500" />
+          <span>{job.remote ? "Remote" : job.location}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Briefcase className="h-4 w-4 text-gray-500" />
+          <span>{job.type}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <DollarSign className="h-4 w-4 text-gray-500" />
+          <span>{formatSalary(job.salary)}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Calendar className="h-4 w-4 text-gray-500" />
+          <span>Posted: {job.postedDate}</span>
+        </div>
+        {job.applicationDeadline && (
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-gray-500" />
+            <span>Deadline: {job.applicationDeadline}</span>
           </div>
-
-          <div className="flex items-center space-x-4 text-sm text-gray-600">
-            <div className="flex items-center space-x-1">
-              <DollarSign className="w-4 h-4 text-green-500" />
-              <span className="font-medium">{formatSalary(job.salary.min, job.salary.max, job.salary.currency)}</span>
-            </div>
-            <div className="flex items-center space-x-1">
-              <Clock className="w-4 h-4 text-orange-500" />
-              <span>{formatDate(job.postedDate)}</span>
-            </div>
-          </div>
-
-          <p className="text-sm text-gray-700 line-clamp-2">{job.description}</p>
-
-          <div className="flex items-center justify-between">
-            <div className="flex space-x-2">
-              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                {job.industry}
-              </Badge>
-              <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
-                {job.experienceLevel}
-              </Badge>
-            </div>
-            <div className="flex space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onViewDetails(job)
-                }}
-                className="hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300"
-              >
-                <ExternalLink className="w-4 h-4 mr-1" />
-                View Details
-              </Button>
-              <Button
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onApply(job)
-                }}
-                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-md"
-              >
-                Apply Now
-              </Button>
-            </div>
-          </div>
+        )}
+        <div className="flex flex-wrap gap-2 mt-3">
+          <Badge className={getExperienceLevelColor(job.experienceLevel)}>{job.experienceLevel} Level</Badge>
+          <Badge variant="outline">{job.industry}</Badge>
         </div>
       </CardContent>
     </Card>

@@ -1,46 +1,33 @@
-import cron from "node-cron"
-import JobScraper from "./job-scraper.js"
+// This file would typically run on a server or a dedicated cron job service.
+// In a Next.js App Router context, this logic would be part of a Server Action
+// or an API Route that is triggered by an external cron service (e.g., Vercel Cron Jobs).
 
-console.log("🕐 Job Scraper Cron Scheduler Starting...")
+// For demonstration purposes, this file shows how you might import and run the scraper.
+// It's not directly executable in the browser-based Next.js environment as a cron job.
 
-// Schedule job scraping every hour
-const cronJob = cron.schedule(
-  "0 * * * *",
-  async () => {
-    console.log("\n⏰ Hourly job scraping triggered at:", new Date().toISOString())
+import { runScrapers } from "./job-scraper.js"
+import { mergeAllCompanyJobs } from "../services/job-integration-service.js"
+import { emailService } from "../services/email-service.js" // Import email service
 
-    const scraper = new JobScraper()
+async function scheduledJob() {
+  console.log("Cron job started: Running scrapers and merging jobs...")
+  try {
+    await runScrapers() // Execute all scrapers
+    await mergeAllCompanyJobs() // Merge all scraped jobs into posts.json
 
-    try {
-      await scraper.scrapeAll()
-      console.log("✅ Scheduled scraping completed successfully")
-    } catch (error) {
-      console.error("❌ Scheduled scraping failed:", error)
-    } finally {
-      await scraper.cleanup()
-    }
-  },
-  {
-    scheduled: false,
-    timezone: "America/New_York",
-  },
-)
+    // Simulate sending new job alerts after scraping and merging
+    // In a real scenario, you'd compare new jobs with old ones to find truly new ones
+    // For this simulation, we'll just trigger some alerts based on mock data
+    console.log("Triggering new job alerts simulation...")
+    emailService.sendNewJobAlerts() // This will use its internal mockNewJobs
 
-// Start the cron job
-cronJob.start()
+    console.log("Cron job finished successfully.")
+  } catch (error) {
+    console.error("Cron job failed:", error)
+  }
+}
 
-console.log("✅ Cron job scheduled to run every hour")
-console.log("🔄 Next execution will be at the top of the next hour")
-
-// Keep the process alive
-process.on("SIGINT", () => {
-  console.log("\n🛑 Stopping cron scheduler...")
-  cronJob.stop()
-  process.exit(0)
-})
-
-process.on("SIGTERM", () => {
-  console.log("\n🛑 Stopping cron scheduler...")
-  cronJob.stop()
-  process.exit(0)
-})
+// This would be triggered by an external cron service.
+// For local testing, you might call it manually or via a simple script.
+// Example: `node scripts/cron-scheduler.js`
+scheduledJob()

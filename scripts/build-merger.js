@@ -1,6 +1,7 @@
 import fs from "fs/promises"
 import path from "path"
 import { fileURLToPath } from "url"
+import { mergeAllCompanyJobs } from "../services/job-integration-service.js"
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -70,9 +71,20 @@ async function mergeBuildJobs() {
   return buildMetadata
 }
 
+async function runBuildMerger() {
+  console.log("Build merger started: Merging all company job data into posts.json...")
+  try {
+    await mergeAllCompanyJobs()
+    console.log("Build merger finished successfully.")
+  } catch (error) {
+    console.error("Build merger failed:", error)
+    process.exit(1) // Exit with error code if merge fails
+  }
+}
+
 // Run if called directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  mergeBuildJobs().catch(console.error)
+  runBuildMerger().catch(console.error)
 }
 
 export default mergeBuildJobs

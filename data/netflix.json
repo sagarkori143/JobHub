@@ -1,1 +1,72 @@
-[]
+[
+  {
+    "id": "netflix-1",
+    "title": "Software Engineer, Backend",
+    "company": "Netflix",
+    "location": "Los Gatos, CA",
+    "type": "Full-time",
+    "salary": {
+      "min": 180000,
+      "max": 300000,
+      "currency": "USD"
+    },
+    "description": "Build and scale backend services for Netflix's streaming platform. Focus on reliability and performance.",
+    "requirements": [
+      "Bachelor's degree in Computer Science or related field.",
+      "5+ years of experience in backend development.",
+      "Proficiency in Java, Scala, or Python.",
+      "Experience with distributed systems and microservices."
+    ],
+    "benefits": [
+      "Unlimited paid time off",
+      "Health, dental, vision insurance",
+      "Netflix stock options",
+      "Parental leave",
+      "Fitness reimbursement"
+    ],
+    "postedDate": "2024-06-25",
+    "applicationDeadline": "2024-08-10",
+    "industry": "Entertainment",
+    "experienceLevel": "Senior",
+    "remote": false,
+    "companyLogo": "/placeholder.svg?height=40&width=40",
+    "link": "https://jobs.netflix.com/jobs/12345",
+    "scrapedAt": "2024-07-10T10:00:00Z",
+    "sourceUrl": "https://jobs.netflix.com/"
+  },
+  {
+    "id": "netflix-2",
+    "title": "Product Designer, Growth",
+    "company": "Netflix",
+    "location": "Los Angeles, CA",
+    "type": "Full-time",
+    "salary": {
+      "min": 150000,
+      "max": 250000,
+      "currency": "USD"
+    },
+    "description": "Design user experiences that drive subscriber growth and engagement for Netflix products.",
+    "requirements": [
+      "Bachelor's degree in Design, HCI, or related field.",
+      "5+ years of experience in product design.",
+      "Strong portfolio showcasing UX/UI design skills.",
+      "Experience with A/B testing and user research."
+    ],
+    "benefits": [
+      "Unlimited paid time off",
+      "Health, dental, vision insurance",
+      "Netflix stock options",
+      "Parental leave",
+      "Fitness reimbursement"
+    ],
+    "postedDate": "2024-07-01",
+    "applicationDeadline": "2024-08-15",
+    "industry": "Entertainment",
+    "experienceLevel": "Senior",
+    "remote": false,
+    "companyLogo": "/placeholder.svg?height=40&width=40",
+    "link": "https://jobs.netflix.com/jobs/67890",
+    "scrapedAt": "2024-07-10T10:00:00Z",
+    "sourceUrl": "https://jobs.netflix.com/"
+  }
+]

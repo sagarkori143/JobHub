@@ -1,1 +1,72 @@
-[]
+[
+  {
+    "id": "meta-1",
+    "title": "Software Engineer, Product",
+    "company": "Meta",
+    "location": "Menlo Park, CA",
+    "type": "Full-time",
+    "salary": {
+      "min": 160000,
+      "max": 240000,
+      "currency": "USD"
+    },
+    "description": "Build and scale products that reach billions of people. Work on Facebook, Instagram, WhatsApp, or Reality Labs.",
+    "requirements": [
+      "Bachelor's degree in Computer Science or related field.",
+      "4+ years of experience in software development.",
+      "Proficiency in C++, Java, Python, or Hack.",
+      "Experience with large-scale distributed systems."
+    ],
+    "benefits": [
+      "Medical, dental, vision insurance",
+      "401(k) with matching",
+      "Restricted Stock Units (RSUs)",
+      "Paid time off",
+      "On-site perks"
+    ],
+    "postedDate": "2024-07-01",
+    "applicationDeadline": "2024-08-16",
+    "industry": "Technology",
+    "experienceLevel": "Mid",
+    "remote": false,
+    "companyLogo": "/placeholder.svg?height=40&width=40",
+    "link": "https://www.metacareers.com/jobs/12345",
+    "scrapedAt": "2024-07-10T10:00:00Z",
+    "sourceUrl": "https://www.metacareers.com/"
+  },
+  {
+    "id": "meta-2",
+    "title": "Research Scientist, AI",
+    "company": "Meta",
+    "location": "New York, NY",
+    "type": "Full-time",
+    "salary": {
+      "min": 170000,
+      "max": 250000,
+      "currency": "USD"
+    },
+    "description": "Conduct cutting-edge research in AI, machine learning, and computer vision. Publish papers and contribute to open source.",
+    "requirements": [
+      "Ph.D. in Computer Science, AI, or related field.",
+      "2+ years of experience in AI research.",
+      "Strong publication record.",
+      "Proficiency in Python and deep learning frameworks."
+    ],
+    "benefits": [
+      "Medical, dental, vision insurance",
+      "401(k) with matching",
+      "Restricted Stock Units (RSUs)",
+      "Paid time off",
+      "On-site perks"
+    ],
+    "postedDate": "2024-06-26",
+    "applicationDeadline": "2024-08-11",
+    "industry": "Technology",
+    "experienceLevel": "Senior",
+    "remote": false,
+    "companyLogo": "/placeholder.svg?height=40&width=40",
+    "link": "https://www.metacareers.com/jobs/67890",
+    "scrapedAt": "2024-07-10T10:00:00Z",
+    "sourceUrl": "https://www.metacareers.com/"
+  }
+]

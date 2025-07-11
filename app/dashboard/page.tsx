@@ -1,18 +1,49 @@
 "use client"
 
+import { useState, useEffect } from "react"
+import type { Job } from "@/types/job"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { TrendingUp, Users, MapPin, Briefcase } from "lucide-react"
-import { mockJobs } from "@/data/mock-jobs" // Using mockJobs for dashboard stats
+import { BarChart, LineChart, PieChart } from "lucide-react" // Placeholder icons
+import { ResponsiveContainer, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Pie, Cell, Line } from "recharts"
 
-export default function MainDashboard() {
-  const totalJobs = mockJobs.length
-  const remoteJobs = mockJobs.filter((job) => job.remote).length
-  const avgSalary = Math.round(
-    mockJobs.reduce((sum, job) => sum + (job.salary.min + job.salary.max) / 2, 0) / mockJobs.length,
+export default function DashboardPage() {
+  const [jobs, setJobs] = useState<Job[]>([])
+
+  useEffect(() => {
+    const storedJobs = localStorage.getItem("jobApplications")
+    if (storedJobs) {
+      setJobs(JSON.parse(storedJobs))
+    }
+  }, [])
+
+  // Data for Job Status Distribution
+  const statusCounts = jobs.reduce(
+    (acc, job) => {
+      acc[job.status] = (acc[job.status] || 0) + 1
+      return acc
+    },
+    {} as Record<Job["status"], number>,
   )
 
-  const topCompanies = mockJobs.reduce(
+  const statusData = Object.entries(statusCounts).map(([name, value]) => ({
+    name,
+    value,
+  }))
+
+  const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8"]
+
+  // Data for Applications Over Time (mock data for now)
+  const applicationsOverTime = [
+    { name: "Jan", applications: 4 },
+    { name: "Feb", applications: 7 },
+    { name: "Mar", applications: 5 },
+    { name: "Apr", applications: 9 },
+    { name: "May", applications: 6 },
+    { name: "Jun", applications: 12 },
+  ]
+
+  // Data for Top Companies (mock data for now)
+  const companyCounts = jobs.reduce(
     (acc, job) => {
       acc[job.company] = (acc[job.company] || 0) + 1
       return acc
@@ -20,113 +51,115 @@ export default function MainDashboard() {
     {} as Record<string, number>,
   )
 
-  const topIndustries = mockJobs.reduce(
-    (acc, job) => {
-      acc[job.industry] = (acc[job.industry] || 0) + 1
-      return acc
-    },
-    {} as Record<string, number>,
-  )
+  const topCompanies = Object.entries(companyCounts)
+    .sort(([, countA], [, countB]) => countB - countA)
+    .slice(0, 5)
+    .map(([name, applications]) => ({ name, applications }))
 
   return (
-    <div className="space-y-8 p-4 md:p-0">
-      {" "}
-      {/* Added responsive padding */}
-      <div>
-        <h1 className="text-2xl md:text-3xl font-bold mb-2">Job Market Overview</h1>
-        <p className="text-gray-600 text-base md:text-lg">Latest insights and trends in the job market</p>
-      </div>
-      {/* Stats Cards */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        {" "}
-        {/* Made responsive */}
+    <div className="container mx-auto p-4">
+      <h1 className="text-3xl font-bold text-gray-800 mb-6">Application Dashboard</h1>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Jobs Available</CardTitle>
-            <Briefcase className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Total Applications</CardTitle>
+            <BarChart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalJobs}</div>
-            <p className="text-xs text-muted-foreground">Active job listings</p>
+            <div className="text-2xl font-bold">{jobs.length}</div>
+            <p className="text-xs text-muted-foreground">Across all statuses</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Remote Opportunities</CardTitle>
-            <MapPin className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Active Applications</CardTitle>
+            <LineChart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{remoteJobs}</div>
-            <p className="text-xs text-muted-foreground">{Math.round((remoteJobs / totalJobs) * 100)}% of all jobs</p>
+            <div className="text-2xl font-bold">
+              {jobs.filter((job) => job.status === "Applied" || job.status === "Interviewing").length}
+            </div>
+            <p className="text-xs text-muted-foreground">Applied & Interviewing</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Average Salary</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Offers Received</CardTitle>
+            <PieChart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${avgSalary.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">Across all positions</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Companies</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{Object.keys(topCompanies).length}</div>
-            <p className="text-xs text-muted-foreground">Companies hiring</p>
+            <div className="text-2xl font-bold">{jobs.filter((job) => job.status === "Offer").length}</div>
+            <p className="text-xs text-muted-foreground">Congratulations!</p>
           </CardContent>
         </Card>
       </div>
-      {/* Top Industries */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Top Industries</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-2">
-            {Object.entries(topIndustries)
-              .sort(([, a], [, b]) => b - a)
-              .map(([industry, count]) => (
-                <Badge key={industry} variant="secondary">
-                  {industry} ({count})
-                </Badge>
-              ))}
-          </div>
-        </CardContent>
-      </Card>
-      {/* Recent Job Postings */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Job Postings</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {mockJobs.slice(0, 5).map((job) => (
-              <div
-                key={job.id}
-                className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border rounded-lg"
-              >
-                <div>
-                  <h3 className="font-semibold">{job.title}</h3>
-                  <p className="text-sm text-gray-600">
-                    {job.company} • {job.location}
-                  </p>
-                </div>
-                <div className="text-left sm:text-right mt-2 sm:mt-0">
-                  <Badge>{job.type}</Badge>
-                  <p className="text-sm text-gray-600 mt-1">
-                    ${(job.salary.min / 1000).toFixed(0)}k - ${(job.salary.max / 1000).toFixed(0)}k
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Job Status Distribution</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={statusData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                >
+                  {statusData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Applications Over Time</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={applicationsOverTime}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="applications" stroke="#8884d8" activeDot={{ r: 8 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Top Companies Applied To</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={topCompanies}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="applications" fill="#82ca9d" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

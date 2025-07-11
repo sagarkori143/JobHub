@@ -1,1 +1,72 @@
-[]
+[
+  {
+    "id": "apple-1",
+    "title": "Software Engineer, iOS",
+    "company": "Apple",
+    "location": "Cupertino, CA",
+    "type": "Full-time",
+    "salary": {
+      "min": 140000,
+      "max": 210000,
+      "currency": "USD"
+    },
+    "description": "Develop and maintain high-quality iOS applications for Apple's ecosystem. Collaborate with design and product teams.",
+    "requirements": [
+      "Bachelor's degree in Computer Science or equivalent.",
+      "3+ years of experience in iOS development.",
+      "Proficiency in Swift and Objective-C.",
+      "Experience with Xcode and Apple's development tools."
+    ],
+    "benefits": [
+      "Medical, dental, vision insurance",
+      "401(k) with matching",
+      "Employee stock purchase plan",
+      "Paid time off",
+      "Fitness centers"
+    ],
+    "postedDate": "2024-07-02",
+    "applicationDeadline": "2024-08-17",
+    "industry": "Technology",
+    "experienceLevel": "Mid",
+    "remote": false,
+    "companyLogo": "/placeholder.svg?height=40&width=40",
+    "link": "https://jobs.apple.com/en-us/details/123456789",
+    "scrapedAt": "2024-07-10T10:00:00Z",
+    "sourceUrl": "https://jobs.apple.com/"
+  },
+  {
+    "id": "apple-2",
+    "title": "Machine Learning Engineer",
+    "company": "Apple",
+    "location": "Seattle, WA",
+    "type": "Full-time",
+    "salary": {
+      "min": 150000,
+      "max": 220000,
+      "currency": "USD"
+    },
+    "description": "Research, design, and implement machine learning models for various Apple products and services.",
+    "requirements": [
+      "Master's or Ph.D. in Computer Science, AI, or related field.",
+      "3+ years of experience in machine learning.",
+      "Proficiency in Python and ML frameworks (TensorFlow, PyTorch).",
+      "Experience with large-scale data processing."
+    ],
+    "benefits": [
+      "Medical, dental, vision insurance",
+      "401(k) with matching",
+      "Employee stock purchase plan",
+      "Paid time off",
+      "Fitness centers"
+    ],
+    "postedDate": "2024-06-27",
+    "applicationDeadline": "2024-08-12",
+    "industry": "Technology",
+    "experienceLevel": "Senior",
+    "remote": false,
+    "companyLogo": "/placeholder.svg?height=40&width=40",
+    "link": "https://jobs.apple.com/en-us/details/987654321",
+    "scrapedAt": "2024-07-10T10:00:00Z",
+    "sourceUrl": "https://jobs.apple.com/"
+  }
+]

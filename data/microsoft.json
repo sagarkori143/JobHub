@@ -1,1 +1,72 @@
-[]
+[
+  {
+    "id": "microsoft-1",
+    "title": "Principal Software Engineer",
+    "company": "Microsoft",
+    "location": "Redmond, WA",
+    "type": "Full-time",
+    "salary": {
+      "min": 180000,
+      "max": 250000,
+      "currency": "USD"
+    },
+    "description": "Lead the design and implementation of complex software systems for Azure services. Mentor junior engineers.",
+    "requirements": [
+      "Bachelor's degree in Computer Science or related field.",
+      "8+ years of experience in software engineering.",
+      "Expertise in C#, Java, or C++.",
+      "Experience with cloud platforms (Azure preferred)."
+    ],
+    "benefits": [
+      "Medical, dental, vision insurance",
+      "401(k) with matching",
+      "Stock awards",
+      "Paid time off",
+      "Fitness programs"
+    ],
+    "postedDate": "2024-06-20",
+    "applicationDeadline": "2024-08-01",
+    "industry": "Technology",
+    "experienceLevel": "Senior",
+    "remote": false,
+    "companyLogo": "/placeholder.svg?height=40&width=40",
+    "link": "https://careers.microsoft.com/v2/global/en/job/1234567",
+    "scrapedAt": "2024-07-10T10:00:00Z",
+    "sourceUrl": "https://careers.microsoft.com/"
+  },
+  {
+    "id": "microsoft-2",
+    "title": "Technical Program Manager",
+    "company": "Microsoft",
+    "location": "Remote",
+    "type": "Full-time",
+    "salary": {
+      "min": 140000,
+      "max": 200000,
+      "currency": "USD"
+    },
+    "description": "Drive technical programs and projects across multiple engineering teams. Ensure timely delivery and quality.",
+    "requirements": [
+      "Bachelor's degree in Computer Science or related field.",
+      "5+ years of experience in technical program management.",
+      "Strong understanding of software development lifecycle.",
+      "Excellent communication and collaboration skills."
+    ],
+    "benefits": [
+      "Medical, dental, vision insurance",
+      "401(k) with matching",
+      "Stock awards",
+      "Paid time off",
+      "Fitness programs"
+    ],
+    "postedDate": "2024-07-01",
+    "applicationDeadline": "2024-08-18",
+    "industry": "Technology",
+    "experienceLevel": "Senior",
+    "remote": true,
+    "companyLogo": "/placeholder.svg?height=40&width=40",
+    "link": "https://careers.microsoft.com/v2/global/en/job/8901234",
+    "scrapedAt": "2024-07-10T10:00:00Z",
+    "sourceUrl": "https://careers.microsoft.com/"
+  }
+]

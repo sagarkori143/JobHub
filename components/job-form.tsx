@@ -1,100 +1,151 @@
 "use client"
 
+import type React from "react"
+
 import { useState } from "react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { Job } from "@/types/job"
 
-const industries = [
-  "Technology",
-  "Healthcare",
-  "Finance",
-  "Education",
-  "Manufacturing",
-  "Retail",
-  "Hospitality",
-  "Media",
-  "Transportation",
-  "Energy",
-  "Agriculture",
-  "Construction",
-]
-
 interface JobFormProps {
-  onSubmit: (job: Omit<Job, "id">) => void
+  isOpen: boolean
+  onClose: () => void
+  onSubmit: (job: Job) => void
 }
 
-export function JobForm({ onSubmit }: JobFormProps) {
+export function JobForm({ isOpen, onClose, onSubmit }: JobFormProps) {
+  const [title, setTitle] = useState("")
   const [company, setCompany] = useState("")
-  const [position, setPosition] = useState("")
-  const [industry, setIndustry] = useState("")
+  const [location, setLocation] = useState("")
   const [status, setStatus] = useState<Job["status"]>("Applied")
-  const [estimatedSalary, setEstimatedSalary] = useState("")
+  const [dateApplied, setDateApplied] = useState("")
+  const [notes, setNotes] = useState("")
+  const [link, setLink] = useState("")
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    const dateApplied = new Date().toISOString().split("T")[0]
-    onSubmit({
+    const newJob: Job = {
+      id: Date.now().toString(), // Simple unique ID
+      title,
       company,
-      position,
-      industry,
+      location,
       status,
       dateApplied,
-      estimatedSalary: estimatedSalary ? Number.parseInt(estimatedSalary) : undefined,
-    })
+      notes,
+      link,
+    }
+    onSubmit(newJob)
+    // Reset form
+    setTitle("")
+    setCompany("")
+    setLocation("")
+    setStatus("Applied")
+    setDateApplied("")
+    setNotes("")
+    setLink("")
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <Label htmlFor="company">Company</Label>
-        <Input id="company" value={company} onChange={(e) => setCompany(e.target.value)} required />
-      </div>
-      <div>
-        <Label htmlFor="position">Position</Label>
-        <Input id="position" value={position} onChange={(e) => setPosition(e.target.value)} required />
-      </div>
-      <div>
-        <Label htmlFor="industry">Industry</Label>
-        <Select value={industry} onValueChange={setIndustry}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select an industry" />
-          </SelectTrigger>
-          <SelectContent>
-            {industries.map((ind) => (
-              <SelectItem key={ind} value={ind}>
-                {ind}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div>
-        <Label htmlFor="status">Status</Label>
-        <Select value={status} onValueChange={(value: Job["status"]) => setStatus(value)}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Applied">Applied</SelectItem>
-            <SelectItem value="Interviewing">Interviewing</SelectItem>
-            <SelectItem value="Offer">Offer</SelectItem>
-            <SelectItem value="Rejected">Rejected</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div>
-        <Label htmlFor="estimatedSalary">Estimated Salary</Label>
-        <Input
-          id="estimatedSalary"
-          type="number"
-          value={estimatedSalary}
-          onChange={(e) => setEstimatedSalary(e.target.value)}
-        />
-      </div>
-      <Button type="submit">Add Job Application</Button>
-    </form>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[425px] md:max-w-[600px] lg:max-w-[700px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Add New Job Application</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="title" className="text-right">
+              Job Title
+            </Label>
+            <Input
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="col-span-3"
+              required
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="company" className="text-right">
+              Company
+            </Label>
+            <Input
+              id="company"
+              value={company}
+              onChange={(e) => setCompany(e.target.value)}
+              className="col-span-3"
+              required
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="location" className="text-right">
+              Location
+            </Label>
+            <Input
+              id="location"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              className="col-span-3"
+              required
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="status" className="text-right">
+              Status
+            </Label>
+            <Select value={status} onValueChange={(value: Job["status"]) => setStatus(value)}>
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Applied">Applied</SelectItem>
+                <SelectItem value="Interviewing">Interviewing</SelectItem>
+                <SelectItem value="Offer">Offer</SelectItem>
+                <SelectItem value="Rejected">Rejected</SelectItem>
+                <SelectItem value="Wishlist">Wishlist</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="dateApplied" className="text-right">
+              Date Applied
+            </Label>
+            <Input
+              id="dateApplied"
+              type="date"
+              value={dateApplied}
+              onChange={(e) => setDateApplied(e.target.value)}
+              className="col-span-3"
+              required
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="link" className="text-right">
+              Job Link
+            </Label>
+            <Input
+              id="link"
+              type="url"
+              value={link}
+              onChange={(e) => setLink(e.target.value)}
+              className="col-span-3"
+              placeholder="e.g., https://example.com/job-post"
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="notes" className="text-right">
+              Notes
+            </Label>
+            <Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} className="col-span-3" />
+          </div>
+          <DialogFooter>
+            <Button type="submit">Save Application</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   )
 }

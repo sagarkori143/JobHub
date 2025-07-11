@@ -1,1 +1,72 @@
-[]
+[
+  {
+    "id": "amazon-1",
+    "title": "Software Development Engineer, II",
+    "company": "Amazon",
+    "location": "Seattle, WA",
+    "type": "Full-time",
+    "salary": {
+      "min": 130000,
+      "max": 190000,
+      "currency": "USD"
+    },
+    "description": "Build scalable, fault-tolerant, and high-performance software systems for Amazon's core services.",
+    "requirements": [
+      "Bachelor's degree in Computer Science or equivalent.",
+      "3+ years of experience in software development.",
+      "Proficiency in Java, C++, or Python.",
+      "Experience with distributed systems."
+    ],
+    "benefits": [
+      "Health, dental, vision insurance",
+      "401(k) with company match",
+      "Restricted Stock Units (RSUs)",
+      "Paid time off",
+      "Employee discounts"
+    ],
+    "postedDate": "2024-07-05",
+    "applicationDeadline": "2024-08-20",
+    "industry": "Technology",
+    "experienceLevel": "Mid",
+    "remote": false,
+    "companyLogo": "/placeholder.svg?height=40&width=40",
+    "link": "https://www.amazon.jobs/en/jobs/123456",
+    "scrapedAt": "2024-07-10T10:00:00Z",
+    "sourceUrl": "https://www.amazon.jobs/"
+  },
+  {
+    "id": "amazon-2",
+    "title": "Data Engineer",
+    "company": "Amazon",
+    "location": "Remote",
+    "type": "Full-time",
+    "salary": {
+      "min": 120000,
+      "max": 180000,
+      "currency": "USD"
+    },
+    "description": "Design, implement, and operate stable, scalable, and efficient ETL pipelines and data solutions.",
+    "requirements": [
+      "Bachelor's degree in Computer Science, Engineering, or related field.",
+      "3+ years of experience in data engineering.",
+      "Proficiency in SQL and Python.",
+      "Experience with AWS data services (S3, Redshift, Glue, EMR)."
+    ],
+    "benefits": [
+      "Health, dental, vision insurance",
+      "401(k) with company match",
+      "Restricted Stock Units (RSUs)",
+      "Paid time off",
+      "Employee discounts"
+    ],
+    "postedDate": "2024-06-28",
+    "applicationDeadline": "2024-08-15",
+    "industry": "Data & Analytics",
+    "experienceLevel": "Mid",
+    "remote": true,
+    "companyLogo": "/placeholder.svg?height=40&width=40",
+    "link": "https://www.amazon.jobs/en/jobs/789012",
+    "scrapedAt": "2024-07-10T10:00:00Z",
+    "sourceUrl": "https://www.amazon.jobs/"
+  }
+]

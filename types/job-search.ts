@@ -1,10 +1,10 @@
-export type JobListing = {
+export interface JobListing {
   id: string
   title: string
   company: string
   location: string
-  type: "Full-time" | "Part-time" | "Contract" | "Internship"
-  salary: {
+  type: string // e.g., "Full-time", "Part-time", "Contract"
+  salary?: {
     min: number
     max: number
     currency: string
@@ -12,23 +12,24 @@ export type JobListing = {
   description: string
   requirements: string[]
   benefits: string[]
-  postedDate: string
-  applicationDeadline: string
+  postedDate: string // YYYY-MM-DD
+  applicationDeadline?: string // YYYY-MM-DD
   industry: string
-  experienceLevel: "Entry" | "Mid" | "Senior" | "Executive"
+  experienceLevel: string // e.g., "Entry", "Mid", "Senior"
   remote: boolean
-  companyLogo?: string
+  companyLogo?: string // URL to company logo
+  link?: string // Link to the original job posting
+  // Added for scraped jobs
+  scrapedAt?: string // ISO string of when it was scraped
+  sourceUrl?: string // URL from where it was scraped
+  expired?: boolean // True if job is no longer available
 }
 
-export type JobFilters = {
-  search: string
+export interface JobSearchFilters {
+  keywords: string
   location: string
-  jobType: string[]
-  experienceLevel: string[]
-  industry: string[]
-  remote: boolean | null
-  salaryRange: {
-    min: number
-    max: number
-  }
+  type: string
+  experienceLevel: string
+  salaryMin: string
+  remote: boolean
 }

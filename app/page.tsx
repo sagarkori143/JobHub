@@ -7,6 +7,7 @@ import { JobDetailsModal } from "@/components/job-details-modal"
 import { Pagination } from "@/components/pagination"
 import { useToast } from "@/hooks/use-toast"
 import { jobDataService } from "@/services/job-data-service"
+import { getJobs } from "@/services/job-data-service"
 import type { JobListing, JobFilters as JobFiltersType } from "@/types/job-search"
 import type { Job } from "@/types/job"
 import { RefreshCw, Database, AlertCircle } from "lucide-react"
@@ -24,13 +25,14 @@ const initialFilters: JobFiltersType = {
 
 const JOBS_PER_PAGE = 6
 
-export default function JobSearchPage() {
+export default async function JobSearchPage() {
+  const jobs = await getJobs()
   const [filters, setFilters] = useState<JobFiltersType>(initialFilters)
   const [selectedJob, setSelectedJob] = useState<JobListing | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
-  const [allJobs, setAllJobs] = useState<JobListing[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [allJobs, setAllJobs] = useState<JobListing[]>(jobs)
+  const [isLoading, setIsLoading] = useState(false)
   const [lastUpdated, setLastUpdated] = useState<string | null>(null)
   const { toast } = useToast()
 

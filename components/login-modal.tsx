@@ -3,12 +3,13 @@
 import type React from "react"
 
 import { useState } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useAuth } from "@/contexts/auth-context"
 import { useToast } from "@/hooks/use-toast"
+import { Loader2 } from "lucide-react"
 
 interface LoginModalProps {
   isOpen: boolean
@@ -25,72 +26,69 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+    const success = await login(email, password)
+    setIsLoading(false)
 
-    try {
-      const success = await login(email, password)
-      if (success) {
-        toast({
-          title: "Welcome back, Sagar!",
-          description: "You have successfully signed in.",
-        })
-        onClose()
-        setEmail("")
-        setPassword("")
-      } else {
-        toast({
-          title: "Sign in failed",
-          description: "Invalid email or password. Try: sagar@gmail.com / sagarkori",
-          variant: "destructive",
-        })
-      }
-    } catch (error) {
+    if (success) {
       toast({
-        title: "Error",
-        description: "Something went wrong. Please try again.",
+        title: "Login Successful",
+        description: "Welcome back!",
+      })
+      onClose()
+    } else {
+      toast({
+        title: "Login Failed",
+        description: "Invalid email or password.",
         variant: "destructive",
       })
-    } finally {
-      setIsLoading(false)
     }
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] sm:max-w-md">
-        {" "}
-        {/* Made responsive */}
+      <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-center text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Welcome to JobHub
-          </DialogTitle>
+          <DialogTitle>Login to JobHub</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="email">Email</Label>
+        <form onSubmit={handleSubmit} className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="email" className="text-right">
+              Email
+            </Label>
             <Input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="sagar@gmail.com"
+              className="col-span-3"
               required
             />
           </div>
-          <div>
-            <Label htmlFor="password">Password</Label>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="password" className="text-right">
+              Password
+            </Label>
             <Input
               id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
+              className="col-span-3"
               required
             />
           </div>
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Signing in..." : "Sign In"}
-          </Button>
-          <div className="text-center text-sm text-gray-600">Demo credentials: sagar@gmail.com / sagarkori</div>
+          <DialogFooter>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Logging In...
+                </>
+              ) : (
+                "Login"
+              )}
+            </Button>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
