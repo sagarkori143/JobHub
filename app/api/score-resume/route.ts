@@ -1,6 +1,10 @@
 import { generateText } from "ai"
 import { google } from "@ai-sdk/google"
 
+/**
+ * POST  /api/score-resume
+ * Body: { resumeText: string; jobDescription: string }
+ */
 export async function POST(req: Request) {
   try {
     const { resumeText, jobDescription } = await req.json()
@@ -12,42 +16,42 @@ export async function POST(req: Request) {
       })
     }
 
-    // Ensure the API key is explicitly passed
-    const googleModel = google("gemini-pro", {
-      apiKey: process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY,
-    })
+    // Read the key explicitly and fail fast if it is missing.
+    const apiKey = process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY
 
-    if (!googleModel.parameters.apiKey) {
-      throw new Error(
-        "Google Generative AI API key is missing. Please set GOOGLE_API_KEY or GOOGLE_GENERATIVE_AI_API_KEY environment variable.",
+    if (!apiKey) {
+      return new Response(
+        JSON.stringify({
+          error:
+            "Google Generative AI API key is missing. Set GOOGLE_API_KEY or GOOGLE_GENERATIVE_AI_API_KEY in your environment.",
+        }),
+        { status: 500, headers: { "Content-Type": "application/json" } },
       )
     }
 
-    const prompt = `Analyze the following resume against the job description. Provide a compatibility score (0-100), a list of strengths, a list of areas for improvement, and a list of keywords found in the resume that are also in the job description, and a list of keywords missing from the resume that are in the job description.
+    const prompt = `
+You are an expert ATS (Applicant Tracking System) and resume analyst.
+Analyze the resume against the job description and return a JSON object:
+{
+  "score": number,           // 0-100
+  "strengths": string[],     // what the resume does well
+  "improvements": string[],  // what could be better
+  "keywords": {
+    "found": string[],       // keywords present in the resume
+    "missing": string[]      // important keywords absent from the resume
+  }
+}
 
-    Resume:
-    ${resumeText}
+Job Description:
+${jobDescription}
 
-    Job Description:
-    ${jobDescription}
+Resume:
+${resumeText}
+`
 
-    Format your response as a JSON object with the following structure:
-    {
-      "score": number,
-      "strengths": string[],
-      "improvements": string[],
-      "keywords": {
-        "found": string[],
-        "missing": string[]
-      }
-    }
-    `
+    const model = google("models/gemini-pro", { apiKey })
 
-    const { text } = await generateText({
-      model: googleModel,
-      prompt: prompt,
-      temperature: 0.7,
-    })
+    const { text } = await generateText({ model, prompt, temperature: 0.7 })
 
     const result = JSON.parse(text)
 
