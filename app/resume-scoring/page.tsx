@@ -2,7 +2,8 @@
 
 import type React from "react"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -66,6 +67,20 @@ export default function ResumeScoringPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [result, setResult] = useState<ATSResult | null>(null)
   const resumeFileInputRef = useRef<HTMLInputElement>(null)
+  const searchParams = useSearchParams()
+
+  // Pre-fill job description from URL parameter
+  useEffect(() => {
+    const jobDescriptionParam = searchParams.get('jobDescription')
+    if (jobDescriptionParam) {
+      const decodedDescription = decodeURIComponent(jobDescriptionParam)
+      setJobDescription(decodedDescription)
+      toast({
+        title: "Job Description Loaded",
+        description: "Job description has been pre-filled from your selection.",
+      })
+    }
+  }, [searchParams])
 
   const extractTextFromPdf = async (file: File): Promise<string> => {
     const pdfjs = await loadPdfJs()

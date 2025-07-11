@@ -1,15 +1,15 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { MapPin, DollarSign, Clock, Building, FileText } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
+import { Building, MapPin, DollarSign, Clock, FileText, Sparkles } from "lucide-react"
 import type { JobListing } from "@/types/job-search"
 import type { Job } from "@/types/job"
 
@@ -25,6 +25,7 @@ export function JobDetailsModal({ job, isOpen, onClose, onAddToPersonal, onApply
   const [resumeFile, setResumeFile] = useState<File | null>(null)
   const [matchScore, setMatchScore] = useState<number | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const router = useRouter()
 
   if (!job) return null
 
@@ -59,6 +60,13 @@ export function JobDetailsModal({ job, isOpen, onClose, onAddToPersonal, onApply
       setMatchScore(score)
       setIsAnalyzing(false)
     }, 2000)
+  }
+
+  const handleResumeMatching = () => {
+    // Navigate to resume scoring page with job description pre-filled
+    const encodedDescription = encodeURIComponent(job.description)
+    router.push(`/resume-scoring?jobDescription=${encodedDescription}`)
+    onClose() // Close the modal
   }
 
   const handleAddToPersonal = () => {
@@ -151,53 +159,6 @@ export function JobDetailsModal({ job, isOpen, onClose, onAddToPersonal, onApply
                 </ul>
               </div>
               <Separator />
-              {/* Resume Upload and Analysis */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="text-lg font-semibold mb-3">Resume Analysis</h3>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="resume">Upload Resume (PDF)</Label>
-                    <Input id="resume" type="file" accept=".pdf" onChange={handleResumeUpload} className="mt-1" />
-                  </div>
-
-                  {resumeFile && (
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
-                      {" "}
-                      {/* Made responsive */}
-                      <div className="flex items-center space-x-2">
-                        <FileText className="w-4 h-4" />
-                        <span className="text-sm">{resumeFile.name}</span>
-                      </div>
-                      <Button size="sm" onClick={analyzeResume} disabled={isAnalyzing}>
-                        {isAnalyzing ? "Analyzing..." : "Analyze Match"}
-                      </Button>
-                    </div>
-                  )}
-
-                  {matchScore !== null && (
-                    <div className="bg-white p-3 rounded border">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium text-sm">ATS Match Score:</span> {/* Adjusted font size */}
-                        <span
-                          className={`text-lg font-bold ${
-                            matchScore >= 80 ? "text-green-600" : matchScore >= 60 ? "text-yellow-600" : "text-red-600"
-                          }`}
-                        >
-                          {matchScore}%
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                        <div
-                          className={`h-2 rounded-full ${
-                            matchScore >= 80 ? "bg-green-600" : matchScore >= 60 ? "bg-yellow-600" : "bg-red-600"
-                          }`}
-                          style={{ width: `${matchScore}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
                 {" "}
@@ -207,6 +168,12 @@ export function JobDetailsModal({ job, isOpen, onClose, onAddToPersonal, onApply
                   className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg"
                 >
                   Apply for this Job
+                </Button>
+                <Button
+                  onClick={handleResumeMatching}
+                  className="flex-1 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white shadow-lg"
+                >
+                  Resume Matching
                 </Button>
                 <Button
                   onClick={handleAddToPersonal}

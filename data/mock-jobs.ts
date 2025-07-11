@@ -9,7 +9,7 @@ export const mockJobs: JobListing[] = [
     type: "Full-time",
     salary: { min: 120000, max: 180000, currency: "USD" },
     description:
-      "We are looking for a Senior Software Engineer to join our dynamic team. You will be responsible for designing, developing, and maintaining scalable web applications using modern technologies.",
+      "We are looking for a Senior Software Engineer to join our dynamic team. You will design, develop, and maintain scalable web applications using a modern tech stack including React, Node.js, and TypeScript. Our infrastructure is built on AWS, leveraging services like Lambda, S3, and DynamoDB. You’ll work with Docker for containerization, GitHub Actions for CI/CD, and follow Agile methodologies. Experience with RESTful APIs, GraphQL, automated testing (Jest, Cypress), and cloud-native architectures is highly valued.",
     requirements: [
       "5+ years of experience in software development",
       "Proficiency in React, Node.js, and TypeScript",
@@ -39,7 +39,7 @@ export const mockJobs: JobListing[] = [
     type: "Full-time",
     salary: { min: 80000, max: 120000, currency: "USD" },
     description:
-      "Join our marketing team as a Marketing Manager where you'll lead campaigns, analyze market trends, and drive brand awareness across multiple channels.",
+      "Join our marketing team as a Marketing Manager where you'll lead campaigns, analyze market trends, and drive brand awareness across multiple channels. You will utilize digital marketing platforms such as Google Ads, Facebook Business Manager, and HubSpot. Familiarity with analytics tools like Google Analytics, Tableau, and A/B testing platforms is essential. Experience with marketing automation, CRM systems, and SEO/SEM strategies is a plus.",
     requirements: [
       "3+ years of marketing experience",
       "Experience with digital marketing platforms",
@@ -68,7 +68,7 @@ export const mockJobs: JobListing[] = [
     type: "Full-time",
     salary: { min: 130000, max: 200000, currency: "USD" },
     description:
-      "Join Amazon's world-class engineering team to build scalable systems that serve millions of customers worldwide. Work on cutting-edge technologies in cloud computing, machine learning, and distributed systems.",
+      "Join Amazon's world-class engineering team to build scalable systems that serve millions of customers worldwide. Work on cutting-edge technologies in cloud computing, machine learning, and distributed systems. Our stack includes Java, Python, AWS, Kubernetes, and microservices. You’ll collaborate using tools like Jira, Confluence, and Slack, and contribute to a culture of code reviews, automated testing, and continuous integration.",
     requirements: [
       "Bachelor's degree in Computer Science or related field",
       "3+ years of software development experience",
@@ -98,7 +98,7 @@ export const mockJobs: JobListing[] = [
     type: "Full-time",
     salary: { min: 140000, max: 220000, currency: "USD" },
     description:
-      "Google's software engineers develop the next-generation technologies that change how billions of users connect, explore, and interact with information and one another.",
+      "Google's software engineers develop the next-generation technologies that change how billions of users connect, explore, and interact with information and one another. You will work with large-scale systems design, leveraging C++, Java, Python, or Go. Projects may involve machine learning, big data processing (BigQuery, Dataflow), and cloud infrastructure (GCP). Collaboration is done via Google Workspace, and code quality is ensured through rigorous code reviews and automated testing.",
     requirements: [
       "Bachelor's degree in Computer Science or equivalent",
       "4+ years of software development experience",
@@ -128,7 +128,7 @@ export const mockJobs: JobListing[] = [
     type: "Full-time",
     salary: { min: 135000, max: 210000, currency: "USD" },
     description:
-      "Join Microsoft's engineering team to build products that empower every person and organization on the planet to achieve more. Work on Azure, Office 365, and other cutting-edge platforms.",
+      "Join Microsoft's engineering team to build products that empower every person and organization on the planet to achieve more. Work on Azure, Office 365, and other cutting-edge platforms. Our stack includes C#, .NET, Azure cloud services, and modern frontend frameworks like React. You’ll use Azure DevOps for CI/CD, and participate in Agile sprints, code reviews, and cross-team collaboration.",
     requirements: [
       "Bachelor's degree in Computer Science or related field",
       "5+ years of software development experience",
@@ -158,7 +158,7 @@ export const mockJobs: JobListing[] = [
     type: "Full-time",
     salary: { min: 150000, max: 250000, currency: "USD" },
     description:
-      "Lead product strategy and execution for Meta's family of apps. Drive product vision, strategy, and roadmap for products used by billions of people worldwide.",
+      "Lead product strategy and execution for Meta's family of apps. Drive product vision, strategy, and roadmap for products used by billions of people worldwide. You will work closely with engineering, design, and data science teams, using tools like Figma, Jira, and Tableau. Experience with consumer internet products, A/B testing, and data-driven decision making is essential.",
     requirements: [
       "Bachelor's degree in Engineering, Computer Science, or related field",
       "5+ years of product management experience",
@@ -188,7 +188,7 @@ export const mockJobs: JobListing[] = [
     type: "Full-time",
     salary: { min: 140000, max: 200000, currency: "USD" },
     description:
-      "Join Netflix's data science team to drive insights that shape our content strategy and improve member experience through advanced analytics and machine learning.",
+      "Join Netflix's data science team to drive insights that shape our content strategy and improve member experience through advanced analytics and machine learning. You will use Python, R, SQL, and big data tools like Spark and Hadoop. Experience with machine learning frameworks (TensorFlow, PyTorch), data visualization (Tableau, Looker), and cloud platforms (AWS, GCP) is highly valued.",
     requirements: [
       "Master's or PhD in Statistics, Computer Science, or related field",
       "4+ years of data science experience",
@@ -218,7 +218,7 @@ export const mockJobs: JobListing[] = [
     type: "Full-time",
     salary: { min: 120000, max: 180000, currency: "USD" },
     description:
-      "Build beautiful, intuitive user experiences that help millions of people belong anywhere. Work with React, TypeScript, and modern frontend technologies.",
+      "Build beautiful, intuitive user experiences that help millions of people belong anywhere. Work with React, TypeScript, and modern frontend technologies. Our stack includes Next.js, Redux, Styled Components, and Storybook. You’ll collaborate with designers using Figma, and ensure quality with Jest, Cypress, and automated CI/CD pipelines.",
     requirements: [
       "Bachelor's degree in Computer Science or related field",
       "3+ years of frontend development experience",
