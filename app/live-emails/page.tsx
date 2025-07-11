@@ -2,20 +2,16 @@
 
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { emailService } from "@/services/email-service"
 import type { EmailRecipient, EmailStatus } from "@/types/email"
-import { RefreshCw, Mail, CheckCircle, XCircle, List, Send, Info } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
+import { RefreshCw, Mail, CheckCircle, XCircle, List, Send } from "lucide-react"
 
 export default function LiveEmailsPage() {
   const [queued, setQueued] = useState<EmailRecipient[]>([])
   const [sending, setSending] = useState<EmailRecipient[]>([])
   const [sent, setSent] = useState<EmailRecipient[]>([])
   const [failed, setFailed] = useState<EmailRecipient[]>([])
-  const [isSendingActive, setIsSendingActive] = useState(false)
-  const { toast } = useToast()
 
   useEffect(() => {
     const updateStatus = () => {
@@ -24,30 +20,20 @@ export default function LiveEmailsPage() {
       setSending(status.sending)
       setSent(status.sent)
       setFailed(status.failed)
-      setIsSendingActive(status.queued.length > 0 || status.sending.length > 0)
     }
 
-    // Initial load
-    updateStatus()
+    // Start continuous simulation on mount
+    emailService.startContinuousAlertsSimulation(2000) // Trigger a new job alert every 2 seconds
 
-    // Poll for updates every 200ms
+    // Poll for updates every 200ms to reflect state changes
     const interval = setInterval(updateStatus, 200)
 
-    return () => clearInterval(interval)
+    return () => {
+      clearInterval(interval)
+      emailService.stopContinuousAlertsSimulation() // Stop simulation on unmount
+      emailService.clearAllEmails() // Clear all emails when leaving the page
+    }
   }, [])
-
-  const handleClearAll = () => {
-    emailService.clearAllEmails()
-    setQueued([])
-    setSending([])
-    setSent([])
-    setFailed([])
-    setIsSendingActive(false)
-    toast({
-      title: "Email Queues Cleared",
-      description: "All simulated email sending data has been reset.",
-    })
-  }
 
   const getStatusColor = (status: EmailStatus) => {
     switch (status) {
@@ -95,15 +81,13 @@ export default function LiveEmailsPage() {
         {email.jobTitle} at {email.company}
       </p>
       <p className="text-xs text-gray-500 mt-1">
-        {new Date(email.timestamp).toLocaleTimeString()} - {email.message || "Processing..."}
+        {new Date(email.timestamp).toLocaleTimeString()} - {email.message}
       </p>
     </div>
   )
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50/30 via-white to-purple-50/30 p-4 md:p-8">
-      {" "}
-      {/* Adjusted responsive padding */}
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
           <div>
@@ -111,37 +95,12 @@ export default function LiveEmailsPage() {
               Live Email Alerts
             </h1>
             <p className="text-gray-600 text-base md:text-lg">
-              Monitor the status of job alert emails being sent to subscribers.
+              Monitoring real-time job alert notifications being sent to subscribers.
             </p>
           </div>
-          <Button
-            onClick={handleClearAll}
-            variant="outline"
-            disabled={!isSendingActive && sent.length === 0 && failed.length === 0}
-            className="mt-4 sm:mt-0 bg-transparent"
-          >
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Clear All
-          </Button>
         </div>
 
-        {/* Information Card */}
-        <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
-          <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
-            <Info className="w-5 h-5 text-blue-600 flex-shrink-0" />
-            <div>
-              <p className="font-medium text-blue-800">Email alerts are triggered by backend processes.</p>
-              <p className="text-sm text-blue-700">
-                For a real demonstration, you would integrate the `emailService.sendNewJobAlerts()` call into your
-                scraper or a dedicated serverless function.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
         <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-          {" "}
-          {/* Made responsive */}
           <Card className="bg-gray-50 border-gray-200">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2 text-gray-700">

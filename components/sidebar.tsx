@@ -22,10 +22,9 @@ import {
   Settings,
   HelpCircle,
   Bell,
-  Database,
   Mail,
 } from "lucide-react"
-import { useState } from "react" // Keep useState for potential future desktop collapse
+import { useState } from "react"
 import { useAuth } from "@/contexts/auth-context"
 import { LoginModal } from "@/components/login-modal"
 import { ProfileModal } from "@/components/profile-modal"
@@ -35,7 +34,7 @@ const navigationItems = [
   { name: "Search Jobs", href: "/", icon: Search, color: "text-blue-600 bg-blue-100" },
   { name: "Main Dashboard", href: "/dashboard", icon: LayoutDashboard, color: "text-green-600 bg-green-100" },
   { name: "Personal Dashboard", href: "/personal", icon: User, color: "text-purple-600 bg-purple-100" },
-  { name: "Job Scraper", href: "/scraper", icon: Database, color: "text-indigo-600 bg-indigo-100" },
+  // Removed Job Scraper: { name: "Job Scraper", href: "/scraper", icon: Database, color: "text-indigo-600 bg-indigo-100" },
   { name: "Live Emails", href: "/live-emails", icon: Mail, color: "text-pink-600 bg-pink-100" },
   { name: "Resume ATS Scoring", href: "/resume-scoring", icon: FileText, color: "text-orange-600 bg-orange-100" },
 ]
@@ -53,8 +52,6 @@ export function Sidebar({}: SidebarProps) {
     logout()
   }
 
-  // isCollapsed state is kept but not actively used for mobile responsiveness here
-  // It could be used for a desktop collapse feature if desired later.
   const [isCollapsed, setIsCollapsed] = useState(false) // Keeping for potential future use
 
   return (

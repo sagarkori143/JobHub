@@ -4,22 +4,20 @@ import type { EmailRecipient } from "@/types/email"
 // Mock user subscriptions based on job preferences
 // In a real app, this would come from a database
 const mockSubscriptions: Record<string, string[]> = {
-  Technology: ["sagar@example.com", "alice@example.com"],
-  React: ["sagar@example.com", "bob@example.com"],
-  Finance: ["charlie@example.com"],
-  Remote: ["sagar@example.com", "alice@example.com", "charlie@example.com"],
-  Marketing: ["david@example.com"],
-  Design: ["eve@example.com"],
-  Senior: ["sagar@example.com", "alice@example.com"],
-  Mid: ["bob@example.com", "david@example.com"],
+  "sagar@example.com": ["Technology", "React", "Remote", "Senior"],
+  "alice@example.com": ["Technology", "Remote", "Senior"],
+  "bob@example.com": ["React", "Mid"],
+  "charlie@example.com": ["Finance", "Remote"],
+  "david@example.com": ["Marketing", "Mid"],
+  "eve@example.com": ["Design"],
 }
 
-// Mock new jobs to trigger alerts (subset of mockJobs for demonstration)
-const mockNewJobs: JobListing[] = [
+// Mock new jobs to trigger alerts (expanded for more variety)
+const allMockJobs: JobListing[] = [
   {
-    id: "new-1",
+    id: "job-1",
     title: "Senior Frontend Engineer",
-    company: "InnovateTech",
+    company: "Google",
     location: "Remote",
     type: "Full-time",
     salary: { min: 130000, max: 190000, currency: "USD" },
@@ -34,10 +32,10 @@ const mockNewJobs: JobListing[] = [
     companyLogo: "/placeholder.svg?height=40&width=40",
   },
   {
-    id: "new-2",
+    id: "job-2",
     title: "Product Designer",
-    company: "CreativeFlow",
-    location: "New York, NY",
+    company: "Apple",
+    location: "Cupertino, CA",
     type: "Full-time",
     salary: { min: 90000, max: 140000, currency: "USD" },
     description: "Join our team as a Product Designer to shape user experiences.",
@@ -51,9 +49,9 @@ const mockNewJobs: JobListing[] = [
     companyLogo: "/placeholder.svg?height=40&width=40",
   },
   {
-    id: "new-3",
+    id: "job-3",
     title: "Financial Analyst",
-    company: "GlobalInvest",
+    company: "Microsoft",
     location: "London, UK",
     type: "Full-time",
     salary: { min: 70000, max: 100000, currency: "GBP" },
@@ -67,6 +65,57 @@ const mockNewJobs: JobListing[] = [
     remote: false,
     companyLogo: "/placeholder.svg?height=40&width=40",
   },
+  {
+    id: "job-4",
+    title: "Software Engineer",
+    company: "Amazon",
+    location: "Seattle, WA",
+    type: "Full-time",
+    salary: { min: 110000, max: 160000, currency: "USD" },
+    description: "Develop scalable software solutions for our cloud platform.",
+    requirements: ["Java", "AWS", "Distributed Systems"],
+    benefits: ["Health", "401k", "Stock Options"],
+    postedDate: "2024-07-11",
+    applicationDeadline: "2024-08-11",
+    industry: "Technology",
+    experienceLevel: "Mid",
+    remote: false,
+    companyLogo: "/placeholder.svg?height=40&width=40",
+  },
+  {
+    id: "job-5",
+    title: "Marketing Specialist",
+    company: "Netflix",
+    location: "Los Angeles, CA",
+    type: "Full-time",
+    salary: { min: 80000, max: 120000, currency: "USD" },
+    description: "Drive marketing campaigns for our new content.",
+    requirements: ["Digital Marketing", "Content Creation", "Analytics"],
+    benefits: ["Health", "Unlimited PTO"],
+    postedDate: "2024-07-10",
+    applicationDeadline: "2024-08-10",
+    industry: "Marketing",
+    experienceLevel: "Entry",
+    remote: false,
+    companyLogo: "/placeholder.svg?height=40&width=40",
+  },
+  {
+    id: "job-6",
+    title: "Data Scientist",
+    company: "Uber",
+    location: "San Francisco, CA",
+    type: "Full-time",
+    salary: { min: 120000, max: 180000, currency: "USD" },
+    description: "Apply statistical methods and machine learning to large datasets.",
+    requirements: ["Python", "SQL", "Machine Learning"],
+    benefits: ["Health", "Stock Options", "Commuter Benefits"],
+    postedDate: "2024-07-09",
+    applicationDeadline: "2024-08-09",
+    industry: "Technology",
+    experienceLevel: "Senior",
+    remote: false,
+    companyLogo: "/placeholder.svg?height=40&width=40",
+  },
 ]
 
 class EmailService {
@@ -76,6 +125,7 @@ class EmailService {
   private sentEmails: EmailRecipient[] = []
   private failedEmails: EmailRecipient[] = []
   private sendingInterval: NodeJS.Timeout | null = null
+  private simulationInterval: NodeJS.Timeout | null = null
 
   static getInstance(): EmailService {
     if (!EmailService.instance) {
@@ -84,41 +134,63 @@ class EmailService {
     return EmailService.instance
   }
 
+  // Starts a continuous simulation of new job alerts being detected and queued
+  startContinuousAlertsSimulation(intervalMs = 2000) {
+    if (this.simulationInterval) {
+      clearInterval(this.simulationInterval)
+    }
+    console.log("Starting continuous email alert simulation...")
+    this.simulationInterval = setInterval(() => {
+      const randomJob = allMockJobs[Math.floor(Math.random() * allMockJobs.length)]
+      this.sendNewJobAlerts([randomJob])
+    }, intervalMs)
+  }
+
+  stopContinuousAlertsSimulation() {
+    if (this.simulationInterval) {
+      clearInterval(this.simulationInterval)
+      this.simulationInterval = null
+      console.log("Stopped continuous email alert simulation.")
+    }
+  }
+
   // Simulates detecting new jobs and queuing emails
-  // This function is intended to be called by a backend process (e.g., scraper)
-  sendNewJobAlerts(newJobs: JobListing[] = mockNewJobs): boolean {
+  sendNewJobAlerts(newJobs: JobListing[]): boolean {
     if (newJobs.length === 0) {
-      console.log("No new jobs to send alerts for.")
       return false
     }
 
-    console.log(`Processing ${newJobs.length} new jobs for email alerts...`)
-    const recipientsToSend: Record<string, EmailRecipient> = {} // Use a map to ensure unique recipients per job
+    const recipientsToSend: Record<string, EmailRecipient> = {}
 
     newJobs.forEach((job) => {
-      const jobKeywords = [
-        job.title,
-        job.description,
-        job.industry,
-        job.experienceLevel,
-        job.remote ? "Remote" : "",
-      ].map((s) => s.toLowerCase())
+      // Iterate through mockSubscriptions by email to find matching preferences
+      Object.entries(mockSubscriptions).forEach(([email, preferences]) => {
+        const jobKeywords = [
+          job.title,
+          job.description,
+          job.industry,
+          job.experienceLevel,
+          job.remote ? "Remote" : "",
+        ].map((s) => s.toLowerCase())
 
-      Object.entries(mockSubscriptions).forEach(([tag, emails]) => {
-        if (jobKeywords.some((keyword) => keyword.includes(tag.toLowerCase()))) {
-          emails.forEach((email) => {
-            const recipientId = `${email}-${job.id}` // Unique ID for this email-job pair
-            if (!recipientsToSend[recipientId]) {
-              recipientsToSend[recipientId] = {
-                id: recipientId,
-                email,
-                jobTitle: job.title,
-                company: job.company,
-                status: "queued",
-                timestamp: new Date().toISOString(),
-              }
+        // Check if any of the user's preferences match job keywords
+        const matchesPreference = preferences.some((pref) =>
+          jobKeywords.some((keyword) => keyword.includes(pref.toLowerCase())),
+        )
+
+        if (matchesPreference) {
+          const recipientId = `${email}-${job.id}` // Unique ID for this email-job pair
+          if (!recipientsToSend[recipientId]) {
+            recipientsToSend[recipientId] = {
+              id: recipientId,
+              email,
+              jobTitle: job.title,
+              company: job.company,
+              status: "queued",
+              timestamp: new Date().toISOString(),
+              message: `Sending notification to ${email.split("@")[0]} for a new ${job.title} job opening at ${job.company}.`,
             }
-          })
+          }
         }
       })
     })
@@ -126,18 +198,17 @@ class EmailService {
     const newRecipients = Object.values(recipientsToSend)
     if (newRecipients.length > 0) {
       this.queuedEmails.push(...newRecipients)
-      console.log(`Queued ${newRecipients.length} emails for sending.`)
       this.startSendingProcess()
       return true
     } else {
-      console.log("No matching subscribers found for new jobs.")
       return false
     }
   }
 
   private startSendingProcess() {
     if (this.sendingInterval) {
-      clearInterval(this.sendingInterval)
+      // If already sending, don't start a new interval
+      return
     }
 
     this.sendingInterval = setInterval(() => {
@@ -153,13 +224,12 @@ class EmailService {
           () => {
             this.completeSending(email)
           },
-          Math.random() * 2000 + 500,
-        ) // 0.5 to 2.5 seconds
+          Math.random() * 1500 + 500, // 0.5 to 2 seconds
+        )
       } else if (this.sendingEmails.length === 0) {
-        // All emails processed
+        // All emails processed from the current queue
         clearInterval(this.sendingInterval!)
         this.sendingInterval = null
-        console.log("Email sending simulation completed.")
       }
     }, 300) // Process a new email every 300ms if available
   }
@@ -171,13 +241,13 @@ class EmailService {
     if (Math.random() > 0.1) {
       // 90% success rate
       email.status = "sent"
-      email.message = "Email sent successfully."
+      email.message = `Notification sent to ${email.email.split("@")[0]} for ${email.jobTitle} at ${email.company}.`
       email.timestamp = new Date().toISOString()
       this.sentEmails.push(email)
     } else {
       // 10% failure rate
       email.status = "failed"
-      email.message = "Failed to send email."
+      email.message = `Failed to send notification to ${email.email.split("@")[0]} for ${email.jobTitle} at ${email.company}.`
       email.timestamp = new Date().toISOString()
       this.failedEmails.push(email)
     }
@@ -201,7 +271,10 @@ class EmailService {
       clearInterval(this.sendingInterval)
       this.sendingInterval = null
     }
-    console.log("All email queues cleared.")
+    if (this.simulationInterval) {
+      clearInterval(this.simulationInterval)
+      this.simulationInterval = null
+    }
   }
 }
 
