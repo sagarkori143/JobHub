@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { TrendingUp, Users, MapPin, Briefcase } from "lucide-react"
-import { mockJobs } from "@/data/mock-jobs"
+import { mockJobs } from "@/data/mock-jobs" // Using mockJobs for dashboard stats
 
 export default function MainDashboard() {
   const totalJobs = mockJobs.length
@@ -29,14 +29,17 @@ export default function MainDashboard() {
   )
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 p-4 md:p-0">
+      {" "}
+      {/* Added responsive padding */}
       <div>
-        <h1 className="text-3xl font-bold mb-2">Job Market Overview</h1>
-        <p className="text-gray-600">Latest insights and trends in the job market</p>
+        <h1 className="text-2xl md:text-3xl font-bold mb-2">Job Market Overview</h1>
+        <p className="text-gray-600 text-base md:text-lg">Latest insights and trends in the job market</p>
       </div>
-
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        {" "}
+        {/* Made responsive */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Jobs Available</CardTitle>
@@ -47,7 +50,6 @@ export default function MainDashboard() {
             <p className="text-xs text-muted-foreground">Active job listings</p>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Remote Opportunities</CardTitle>
@@ -58,7 +60,6 @@ export default function MainDashboard() {
             <p className="text-xs text-muted-foreground">{Math.round((remoteJobs / totalJobs) * 100)}% of all jobs</p>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Average Salary</CardTitle>
@@ -69,7 +70,6 @@ export default function MainDashboard() {
             <p className="text-xs text-muted-foreground">Across all positions</p>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Companies</CardTitle>
@@ -81,7 +81,6 @@ export default function MainDashboard() {
           </CardContent>
         </Card>
       </div>
-
       {/* Top Industries */}
       <Card>
         <CardHeader>
@@ -99,7 +98,6 @@ export default function MainDashboard() {
           </div>
         </CardContent>
       </Card>
-
       {/* Recent Job Postings */}
       <Card>
         <CardHeader>
@@ -108,14 +106,17 @@ export default function MainDashboard() {
         <CardContent>
           <div className="space-y-4">
             {mockJobs.slice(0, 5).map((job) => (
-              <div key={job.id} className="flex items-center justify-between p-4 border rounded-lg">
+              <div
+                key={job.id}
+                className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border rounded-lg"
+              >
                 <div>
                   <h3 className="font-semibold">{job.title}</h3>
                   <p className="text-sm text-gray-600">
                     {job.company} • {job.location}
                   </p>
                 </div>
-                <div className="text-right">
+                <div className="text-left sm:text-right mt-2 sm:mt-0">
                   <Badge>{job.type}</Badge>
                   <p className="text-sm text-gray-600 mt-1">
                     ${(job.salary.min / 1000).toFixed(0)}k - ${(job.salary.max / 1000).toFixed(0)}k

@@ -6,4 +6,5 @@ export type Job = {
   status: "Applied" | "Interviewing" | "Offer" | "Rejected"
   industry: string
   estimatedSalary?: number
+  jobType?: "Full-time" | "Part-time" | "Contract" | "Internship"
 }

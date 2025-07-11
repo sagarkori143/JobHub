@@ -1,14 +1,16 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { JobListingCard } from "@/components/job-listing-card"
 import { JobFilters } from "@/components/job-filters"
 import { JobDetailsModal } from "@/components/job-details-modal"
 import { Pagination } from "@/components/pagination"
-import { mockJobs } from "@/data/mock-jobs"
 import { useToast } from "@/hooks/use-toast"
+import { jobDataService } from "@/services/job-data-service"
 import type { JobListing, JobFilters as JobFiltersType } from "@/types/job-search"
 import type { Job } from "@/types/job"
+import { RefreshCw, Database, AlertCircle } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
 
 const initialFilters: JobFiltersType = {
   search: "",
@@ -27,10 +29,40 @@ export default function JobSearchPage() {
   const [selectedJob, setSelectedJob] = useState<JobListing | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
+  const [allJobs, setAllJobs] = useState<JobListing[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null)
   const { toast } = useToast()
 
+  // Load jobs on component mount
+  useEffect(() => {
+    loadJobs()
+  }, [])
+
+  const loadJobs = async () => {
+    setIsLoading(true)
+    try {
+      const jobs = await jobDataService.loadJobs()
+      setAllJobs(jobs)
+
+      const metadata = jobDataService.getMetadata()
+      setLastUpdated(metadata?.lastUpdated || null)
+
+      console.log(`📊 Loaded ${jobs.length} jobs for display`)
+    } catch (error) {
+      console.error("Error loading jobs:", error)
+      toast({
+        title: "Error Loading Jobs",
+        description: "Failed to load job data. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const filteredJobs = useMemo(() => {
-    return mockJobs.filter((job) => {
+    return allJobs.filter((job) => {
       // Search filter
       if (
         filters.search &&
@@ -73,7 +105,7 @@ export default function JobSearchPage() {
 
       return true
     })
-  }, [filters])
+  }, [filters, allJobs])
 
   // Pagination logic
   const totalPages = Math.ceil(filteredJobs.length / JOBS_PER_PAGE)
@@ -99,7 +131,6 @@ export default function JobSearchPage() {
   }
 
   const handleAddToPersonal = (job: Omit<Job, "id">) => {
-    // In a real app, this would save to a database or state management
     console.log("Adding job to personal dashboard:", job)
     toast({
       title: "Job Added!",
@@ -108,12 +139,24 @@ export default function JobSearchPage() {
     })
   }
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50/30 via-white to-purple-50/30 flex items-center justify-center p-4">
+        <div className="text-center space-y-4">
+          <RefreshCw className="w-12 h-12 animate-spin text-blue-600 mx-auto" />
+          <h2 className="text-xl font-semibold">Loading Jobs...</h2>
+          <p className="text-gray-600">Fetching the latest job opportunities</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50/30 via-white to-purple-50/30">
-      <div className="flex gap-6">
+      <div className="flex flex-col lg:flex-row gap-6">
         {/* Filters Sidebar */}
-        <div className="w-80 flex-shrink-0">
-          <div className="sticky top-6">
+        <div className="w-full lg:w-80 flex-shrink-0">
+          <div className="lg:sticky lg:top-6">
             <JobFilters filters={filters} onFiltersChange={setFilters} />
           </div>
         </div>
@@ -121,13 +164,50 @@ export default function JobSearchPage() {
         {/* Job Listings */}
         <div className="flex-1">
           <div className="mb-6">
-            <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Find Your Dream Job
-            </h1>
-            <p className="text-gray-600 text-lg">
-              {filteredJobs.length} job{filteredJobs.length !== 1 ? "s" : ""} found
-              {currentPage > 1 && ` • Page ${currentPage} of ${totalPages}`}
-            </p>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+              <div>
+                <h1 className="text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  Find Your Dream Job
+                </h1>
+                <p className="text-gray-600 text-base md:text-lg">
+                  {filteredJobs.length} job{filteredJobs.length !== 1 ? "s" : ""} found
+                  {currentPage > 1 && ` • Page ${currentPage} of ${totalPages}`}
+                </p>
+              </div>
+            </div>
+
+            {/* Data Status Card */}
+            {lastUpdated && (
+              <Card className="mb-6 bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
+                <CardContent className="p-4">
+                  <div className="flex items-center space-x-2">
+                    <Database className="w-5 h-5 text-green-600" />
+                    <div>
+                      <p className="text-sm font-medium text-green-800">Real job data from company career pages</p>
+                      <p className="text-xs text-green-600">Last updated: {new Date(lastUpdated).toLocaleString()}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* No Data Warning */}
+            {allJobs.length === 0 && (
+              <Card className="mb-6 bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200">
+                <CardContent className="p-4">
+                  <div className="flex items-center space-x-2">
+                    <AlertCircle className="w-5 h-5 text-yellow-600" />
+                    <div>
+                      <p className="text-sm font-medium text-yellow-800">No scraped job data available</p>
+                      <p className="text-xs text-yellow-600">
+                        Run <code className="bg-yellow-100 px-1 rounded">npm run scrape-jobs</code> to fetch real job
+                        data
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           <div className="space-y-6">
@@ -136,8 +216,8 @@ export default function JobSearchPage() {
             ))}
           </div>
 
-          {filteredJobs.length === 0 && (
-            <div className="text-center py-16">
+          {filteredJobs.length === 0 && allJobs.length > 0 && (
+            <div className="text-center py-16 px-4">
               <div className="bg-gradient-to-br from-gray-100 to-gray-200 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-4">
                 <span className="text-4xl">🔍</span>
               </div>

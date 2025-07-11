@@ -1,8 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { JobCard } from "@/components/job-card"
 import { Button } from "@/components/ui/button"
 import { PlusCircle, LogIn, User } from "lucide-react"
 import {
@@ -16,119 +15,226 @@ import {
 } from "@/components/ui/dialog"
 import { JobForm } from "@/components/job-form"
 import { LoginModal } from "@/components/login-modal"
+import { JobCard } from "@/components/job-card"
 import type { Job } from "@/types/job"
 import { useAuth } from "@/contexts/auth-context"
+import { supabase } from "@/lib/supabase"
+import { useToast } from "@/hooks/use-toast"
 
-const initialJobs: Job[] = [
+const initialMockJobs: Omit<Job, "id">[] = [
   {
-    id: "1",
     company: "Tech Corp",
     position: "Software Engineer",
     dateApplied: "2023-05-01",
     status: "Applied",
     industry: "Technology",
     estimatedSalary: 80000,
+    jobType: "Full-time",
   },
   {
-    id: "2",
     company: "Data Inc",
     position: "Data Analyst",
     dateApplied: "2023-05-03",
     status: "Applied",
     industry: "Technology",
     estimatedSalary: 70000,
+    jobType: "Full-time",
   },
   {
-    id: "3",
     company: "Design Solutions",
     position: "UX Designer",
     dateApplied: "2023-05-05",
     status: "Applied",
-    industry: "Technology",
+    industry: "Design",
     estimatedSalary: 75000,
+    jobType: "Full-time",
   },
   {
-    id: "4",
     company: "City High School",
     position: "Teacher",
     dateApplied: "2023-04-15",
     status: "Interviewing",
     industry: "Education",
     estimatedSalary: 55000,
+    jobType: "Full-time",
   },
   {
-    id: "5",
     company: "Investment Bank",
     position: "Financial Analyst",
     dateApplied: "2023-04-20",
     status: "Interviewing",
     industry: "Finance",
     estimatedSalary: 85000,
+    jobType: "Full-time",
   },
   {
-    id: "6",
     company: "Retail Chain",
     position: "Store Manager",
     dateApplied: "2023-03-10",
     status: "Offer",
     industry: "Retail",
     estimatedSalary: 60000,
+    jobType: "Full-time",
   },
   {
-    id: "7",
     company: "City Hospital",
     position: "Nurse",
     dateApplied: "2023-03-15",
     status: "Offer",
     industry: "Healthcare",
     estimatedSalary: 70000,
+    jobType: "Full-time",
   },
   {
-    id: "8",
     company: "University",
     position: "Professor",
     dateApplied: "2023-02-01",
     status: "Rejected",
     industry: "Education",
     estimatedSalary: 90000,
+    jobType: "Full-time",
   },
   {
-    id: "9",
     company: "Fashion Outlet",
     position: "Sales Associate",
     dateApplied: "2023-02-15",
     status: "Rejected",
     industry: "Retail",
     estimatedSalary: 35000,
+    jobType: "Part-time",
+  },
+  {
+    company: "Global Consulting",
+    position: "Consultant",
+    dateApplied: "2023-01-20",
+    status: "Applied",
+    industry: "Technology",
+    estimatedSalary: 100000,
+    jobType: "Contract",
+  },
+  {
+    company: "Startup X",
+    position: "Software Engineer Intern",
+    dateApplied: "2023-06-01",
+    status: "Applied",
+    industry: "Technology",
+    estimatedSalary: 40000,
+    jobType: "Internship",
   },
 ]
 
+const toDbColumns = (job: Omit<Job, "id"> | Job) => ({
+  company: job.company,
+  position: job.position,
+  date_applied: job.dateApplied,
+  status: job.status,
+  industry: job.industry,
+  estimated_salary: job.estimatedSalary,
+  job_type: job.jobType,
+})
+
 export default function PersonalDashboard() {
-  const [jobs, setJobs] = useState(initialJobs)
+  const [jobs, setJobs] = useState<Job[]>([])
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [jobToDelete, setJobToDelete] = useState<Job | null>(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
+  const [loadingJobs, setLoadingJobs] = useState(true)
 
-  const { user, isAuthenticated } = useAuth()
+  const { user, isAuthenticated, loading: authLoading, supabaseUser } = useAuth()
+  const { toast } = useToast()
 
-  // Show sign-in prompt if not authenticated
+  const fetchJobs = useCallback(async () => {
+    if (!supabaseUser) {
+      setJobs([])
+      setLoadingJobs(false)
+      return
+    }
+
+    setLoadingJobs(true)
+    const { data, error } = await supabase
+      .from("user_job_applications")
+      .select("*")
+      .eq("user_id", supabaseUser.id)
+      .order("date_applied", { ascending: false })
+
+    if (error) {
+      console.error("Error fetching jobs:", error)
+      toast({
+        title: "Error",
+        description: "Failed to load your job applications.",
+        variant: "destructive",
+      })
+      setJobs([])
+    } else {
+      const fetchedJobs: Job[] = data.map((item) => ({
+        id: item.id,
+        company: item.company,
+        position: item.position,
+        dateApplied: item.date_applied,
+        status: item.status as Job["status"],
+        industry: item.industry,
+        estimatedSalary: item.estimated_salary,
+        jobType: item.job_type as Job["jobType"],
+      }))
+      setJobs(fetchedJobs)
+
+      if (fetchedJobs.length === 0) {
+        await seedInitialJobs(supabaseUser.id)
+      }
+    }
+    setLoadingJobs(false)
+  }, [supabaseUser, toast])
+
+  const seedInitialJobs = useCallback(
+    async (userId: string) => {
+      const jobsToInsert = initialMockJobs.map((job) => ({
+        user_id: userId,
+        ...toDbColumns(job),
+      }))
+
+      const { error } = await supabase.from("user_job_applications").insert(jobsToInsert)
+
+      if (error) {
+        console.error("Error seeding initial jobs:", error)
+        toast({
+          title: "Error",
+          description: "Failed to seed initial job data.",
+          variant: "destructive",
+        })
+      } else {
+        toast({
+          title: "Welcome!",
+          description: "We've added some sample job applications for you.",
+        })
+        fetchJobs()
+      }
+    },
+    [fetchJobs, toast],
+  )
+
+  useEffect(() => {
+    if (!authLoading) {
+      fetchJobs()
+    }
+  }, [authLoading, fetchJobs])
+
   if (!isAuthenticated) {
     return (
       <>
-        <div className="min-h-screen bg-gradient-to-br from-purple-50/30 via-white to-pink-50/30 flex items-center justify-center">
-          <div className="text-center space-y-6 max-w-md mx-auto p-8">
+        <div className="min-h-screen bg-gradient-to-br from-purple-50/30 via-white to-pink-50/30 flex items-center justify-center p-4">
+          <div className="text-center space-y-6 max-w-md mx-auto p-4 sm:p-8">
             <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto">
               <User className="w-12 h-12 text-blue-600" />
             </div>
-
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
+              <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
                 Personal Dashboard
               </h1>
-              <p className="text-gray-600 text-lg">Sign in to access your job applications and track your progress</p>
+              <p className="text-gray-600 text-base sm:text-lg">
+                Sign in to access your job applications and track your progress
+              </p>
             </div>
-
             <div className="space-y-4">
               <Button
                 onClick={() => setIsLoginModalOpen(true)}
@@ -139,9 +245,8 @@ export default function PersonalDashboard() {
                 Sign In to Continue
               </Button>
 
-              <div className="text-sm text-gray-500">Demo account: sagar@gmail.com / sagarkori</div>
+              <div className="text-sm text-gray-500">Demo credentials: sagar@gmail.com / sagarkori</div>
             </div>
-
             <Card className="bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200">
               <CardContent className="p-6">
                 <h3 className="font-semibold text-blue-800 mb-2">What you'll get access to:</h3>
@@ -162,62 +267,173 @@ export default function PersonalDashboard() {
     )
   }
 
+  if (loadingJobs || authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Loading your dashboard...</p>
+      </div>
+    )
+  }
+
   const appliedJobs = jobs.filter((job) => job.status === "Applied")
   const interviewingJobs = jobs.filter((job) => job.status === "Interviewing")
   const offerJobs = jobs.filter((job) => job.status === "Offer")
   const rejectedJobs = jobs.filter((job) => job.status === "Rejected")
 
-  const handleAddJob = (newJob: Omit<Job, "id">) => {
-    const jobWithId = { ...newJob, id: (jobs.length + 1).toString() }
-    setJobs([...jobs, jobWithId])
-    setIsDialogOpen(false)
+  const handleAddJob = async (newJob: Omit<Job, "id">) => {
+    if (!supabaseUser) return
+
+    const { data, error } = await supabase
+      .from("user_job_applications")
+      .insert({
+        user_id: supabaseUser.id,
+        ...toDbColumns(newJob),
+      })
+      .select()
+
+    if (error) {
+      console.error("Error adding job:", error)
+      toast({
+        title: "Error",
+        description: "Failed to add job application.",
+        variant: "destructive",
+      })
+    } else if (data && data[0]) {
+      setJobs((prevJobs) => [
+        {
+          id: data[0].id,
+          company: data[0].company,
+          position: data[0].position,
+          dateApplied: data[0].date_applied,
+          status: data[0].status,
+          industry: data[0].industry,
+          estimatedSalary: data[0].estimated_salary,
+          jobType: data[0].job_type,
+        },
+        ...prevJobs,
+      ])
+      toast({
+        title: "Success!",
+        description: "Job application added successfully.",
+      })
+      setIsDialogOpen(false)
+    }
   }
 
-  const handleUpdateJob = (updatedJob: Job) => {
-    setJobs(jobs.map((job) => (job.id === updatedJob.id ? updatedJob : job)))
+  const handleUpdateJob = async (updatedJob: Job) => {
+    if (!supabaseUser) return
+
+    const { error } = await supabase
+      .from("user_job_applications")
+      .update({
+        company: updatedJob.company,
+        position: updatedJob.position,
+        date_applied: updatedJob.dateApplied,
+        status: updatedJob.status,
+        industry: updatedJob.industry,
+        estimated_salary: updatedJob.estimatedSalary,
+        job_type: updatedJob.jobType,
+      })
+      .eq("id", updatedJob.id)
+      .eq("user_id", supabaseUser.id)
+
+    if (error) {
+      console.error("Error updating job:", error)
+      toast({
+        title: "Error",
+        description: "Failed to update job application.",
+        variant: "destructive",
+      })
+    } else {
+      setJobs((prevJobs) => prevJobs.map((job) => (job.id === updatedJob.id ? updatedJob : job)))
+      toast({
+        title: "Success!",
+        description: "Job application updated successfully.",
+      })
+    }
   }
 
-  const handleDeleteJob = (jobToDelete: Job) => {
-    setJobToDelete(jobToDelete)
+  const handleDeleteJob = (job: Job) => {
+    setJobToDelete(job)
     setIsDeleteDialogOpen(true)
   }
 
-  const confirmDeleteJob = () => {
-    if (jobToDelete) {
-      setJobs(jobs.filter((job) => job.id !== jobToDelete.id))
+  const confirmDeleteJob = async () => {
+    if (!jobToDelete || !supabaseUser) return
+
+    const { error } = await supabase
+      .from("user_job_applications")
+      .delete()
+      .eq("id", jobToDelete.id)
+      .eq("user_id", supabaseUser.id)
+
+    if (error) {
+      console.error("Error deleting job:", error)
+      toast({
+        title: "Error",
+        description: "Failed to delete job application.",
+        variant: "destructive",
+      })
+    } else {
+      setJobs((prevJobs) => prevJobs.filter((job) => job.id !== jobToDelete.id))
+      toast({
+        title: "Success!",
+        description: "Job application deleted successfully.",
+      })
       setJobToDelete(null)
       setIsDeleteDialogOpen(false)
     }
   }
 
-  const handleMoveStatus = (job: Job, direction: "forward" | "backward") => {
+  const handleMoveStatus = async (job: Job, direction: "forward" | "backward") => {
+    if (!supabaseUser) return
+
     const statusOrder = ["Applied", "Interviewing", "Offer", "Rejected"]
     const currentIndex = statusOrder.indexOf(job.status)
     const newIndex = direction === "forward" ? currentIndex + 1 : currentIndex - 1
 
     if (newIndex >= 0 && newIndex < statusOrder.length) {
-      const updatedJob = { ...job, status: statusOrder[newIndex] as Job["status"] }
-      setJobs(jobs.map((j) => (j.id === job.id ? updatedJob : j)))
+      const newStatus = statusOrder[newIndex] as Job["status"]
+      const { error } = await supabase
+        .from("user_job_applications")
+        .update({ status: newStatus })
+        .eq("id", job.id)
+        .eq("user_id", supabaseUser.id)
+
+      if (error) {
+        console.error("Error moving job status:", error)
+        toast({
+          title: "Error",
+          description: "Failed to update job status.",
+          variant: "destructive",
+        })
+      } else {
+        setJobs((prevJobs) => prevJobs.map((j) => (j.id === job.id ? { ...j, status: newStatus } : j)))
+        toast({
+          title: "Success!",
+          description: `Job status moved to ${newStatus}.`,
+        })
+      }
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50/30 via-white to-pink-50/30 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50/30 via-white to-pink-50/30 p-4 md:p-8">
       <div className="space-y-8">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
           <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+            <h1 className="text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
               Hello, {user?.name || "Guest"}! 👋
             </h1>
-            <p className="text-gray-600 text-lg mt-2">Welcome back to your job application dashboard</p>
+            <p className="text-gray-600 text-base md:text-lg mt-2">Welcome back to your job application dashboard</p>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg">
+              <Button className="mt-4 sm:mt-0 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg">
                 <PlusCircle className="mr-2 h-4 w-4" /> New Job Application
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
                 <DialogTitle>Add New Job Application</DialogTitle>
               </DialogHeader>
@@ -226,7 +442,7 @@ export default function PersonalDashboard() {
           </Dialog>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-8">
           <Card className="bg-gradient-to-br from-blue-100 to-blue-200 border-blue-300 shadow-lg">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-blue-800">Total Applications</CardTitle>
@@ -263,8 +479,8 @@ export default function PersonalDashboard() {
           </Card>
         </div>
 
-        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 auto-rows-auto">
-          <div className={`space-y-4 ${appliedJobs.length > 5 ? "sm:col-span-2 lg:col-span-2" : ""}`}>
+        <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4 auto-rows-auto">
+          <div className={`space-y-4 ${appliedJobs.length > 5 ? "md:col-span-2 lg:col-span-2" : ""}`}>
             <h2 className="text-xl font-semibold mb-4 text-blue-600">Applied Jobs ({appliedJobs.length})</h2>
             {appliedJobs.map((job) => (
               <JobCard
@@ -277,7 +493,7 @@ export default function PersonalDashboard() {
               />
             ))}
           </div>
-          <div className={`space-y-4 ${interviewingJobs.length > 5 ? "sm:col-span-2 lg:col-span-2" : ""}`}>
+          <div className={`space-y-4 ${interviewingJobs.length > 5 ? "md:col-span-2 lg:col-span-2" : ""}`}>
             <h2 className="text-xl font-semibold mb-4 text-yellow-600">Interviewing ({interviewingJobs.length})</h2>
             {interviewingJobs.map((job) => (
               <JobCard
@@ -290,7 +506,7 @@ export default function PersonalDashboard() {
               />
             ))}
           </div>
-          <div className={`space-y-4 ${offerJobs.length > 5 ? "sm:col-span-2 lg:col-span-2" : ""}`}>
+          <div className={`space-y-4 ${offerJobs.length > 5 ? "md:col-span-2 lg:col-span-2" : ""}`}>
             <h2 className="text-xl font-semibold mb-4 text-green-600">Offers ({offerJobs.length})</h2>
             {offerJobs.map((job) => (
               <JobCard
@@ -303,7 +519,7 @@ export default function PersonalDashboard() {
               />
             ))}
           </div>
-          <div className={`space-y-4 ${rejectedJobs.length > 5 ? "sm:col-span-2 lg:col-span-2" : ""}`}>
+          <div className={`space-y-4 ${rejectedJobs.length > 5 ? "md:col-span-2 lg:col-span-2" : ""}`}>
             <h2 className="text-xl font-semibold mb-4 text-red-600">Rejected ({rejectedJobs.length})</h2>
             {rejectedJobs.map((job) => (
               <JobCard
@@ -319,7 +535,7 @@ export default function PersonalDashboard() {
         </div>
 
         <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-          <DialogContent>
+          <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>Confirm Deletion</DialogTitle>
             </DialogHeader>

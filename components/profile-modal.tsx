@@ -38,11 +38,12 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="max-w-[95vw] sm:max-w-md">
+        {" "}
+        {/* Made responsive */}
         <DialogHeader>
           <DialogTitle className="text-center text-xl font-bold">Profile Settings</DialogTitle>
         </DialogHeader>
-
         <div className="flex flex-col items-center space-y-4">
           <Avatar className="w-20 h-20 ring-4 ring-blue-200">
             <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
@@ -61,7 +62,6 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
             </p>
           </div>
         </div>
-
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="name" className="flex items-center gap-2">
@@ -89,7 +89,9 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
               placeholder="e.g., Software Engineer"
             />
           </div>
-          <div className="flex space-x-2">
+          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+            {" "}
+            {/* Made responsive */}
             <Button type="submit" className="flex-1">
               Save Changes
             </Button>
