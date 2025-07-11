@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { JobListingCard } from "@/components/job-listing-card"
 import { JobFilters } from "@/components/job-filters"
 import { JobDetailsModal } from "@/components/job-details-modal"
@@ -9,6 +9,7 @@ import { mockJobs } from "@/data/mock-jobs"
 import { useToast } from "@/hooks/use-toast"
 import type { JobListing, JobFilters as JobFiltersType } from "@/types/job-search"
 import type { Job } from "@/types/job"
+import { jobIntegrationService } from "@/services/job-integration-service"
 
 const initialFilters: JobFiltersType = {
   search: "",
@@ -27,10 +28,19 @@ export default function JobSearchPage() {
   const [selectedJob, setSelectedJob] = useState<JobListing | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
+  const [allJobs, setAllJobs] = useState<JobListing[]>([])
   const { toast } = useToast()
 
+  // Load jobs on component mount
+  useEffect(() => {
+    // Load scraped jobs and integrate with existing jobs
+    jobIntegrationService.loadScrapedJobs()
+    const integratedJobs = jobIntegrationService.getAllJobs(mockJobs)
+    setAllJobs(integratedJobs)
+  }, [])
+
   const filteredJobs = useMemo(() => {
-    return mockJobs.filter((job) => {
+    return allJobs.filter((job) => {
       // Search filter
       if (
         filters.search &&
@@ -73,7 +83,7 @@ export default function JobSearchPage() {
 
       return true
     })
-  }, [filters])
+  }, [filters, allJobs])
 
   // Pagination logic
   const totalPages = Math.ceil(filteredJobs.length / JOBS_PER_PAGE)
