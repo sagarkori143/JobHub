@@ -23,23 +23,29 @@ declare global {
 
 /**
  * Loads the browser build of PDF.js only once and returns the pdfjsLib object.
- * We use the UMD bundle because it’s served with the correct MIME-type.
+ * Updated to use a more reliable loading method with better error handling.
  */
 async function loadPdfJs(): Promise<any> {
   if (typeof window === "undefined") return null // SSR guard (shouldn't run)
   if (window.pdfjsLib) return window.pdfjsLib
 
-  await new Promise<void>((resolve, reject) => {
-    const script = document.createElement("script")
-    script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.js"
-    script.onload = () => resolve()
-    script.onerror = () => reject(new Error("Failed to load PDF.js"))
-    document.head.appendChild(script)
-  })
+  try {
+    // Load PDF.js from CDN
+    await new Promise<void>((resolve, reject) => {
+      const script = document.createElement("script")
+      script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"
+      script.onload = () => resolve()
+      script.onerror = () => reject(new Error("Failed to load PDF.js"))
+      document.head.appendChild(script)
+    })
 
-  // Point the worker to our local stub to avoid CORS/MIME headaches
-  window.pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.js"
-  return window.pdfjsLib
+    // Configure the worker
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"
+    return window.pdfjsLib
+  } catch (error) {
+    console.error("Failed to load PDF.js:", error)
+    throw new Error("PDF.js failed to load. Please try pasting your resume text directly.")
+  }
 }
 // --------------------------------------------------------------------------
 

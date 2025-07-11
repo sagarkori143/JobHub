@@ -14,6 +14,35 @@ async function retryGenerateText(model: any, prompt: string, maxAttempts = 3, de
   }
 }
 
+// List of models to try in order of preference
+const MODELS_TO_TRY = [
+  "gemini-2.0-flash",           // Fastest, good for most tasks
+  "gemini-2.0-flash-lite",      // Even faster, good for simple tasks
+  "gemini-1.5-flash",           // Fallback to 1.5 series
+  "gemini-1.5-pro",             // Most capable but slower
+]
+
+async function tryModelsWithFallback(apiKey: string, prompt: string) {
+  for (const modelName of MODELS_TO_TRY) {
+    try {
+      console.log(`🔄 Trying model: ${modelName}`)
+      const model = google(modelName, { apiKey })
+      const result = await retryGenerateText(model, prompt)
+      if (result && result.text) {
+        console.log(`✅ Success with model: ${modelName}`)
+        return result.text
+      }
+    } catch (error: any) {
+      console.warn(`❌ Model ${modelName} failed: ${error.message}`)
+      // Continue to next model if this one fails
+      continue
+    }
+  }
+  
+  // If all models fail, throw the last error
+  throw new Error("All available models failed. Please try again later.")
+}
+
 export async function POST(req: Request) {
   try {
     const { resumeText, jobDescription } = await req.json()
@@ -62,9 +91,7 @@ Ensure all arrays are populated, even if empty.
 
     // Use the specified model for free plans
     try {
-      const model = google("models/gemini-1.0-pro", { apiKey })
-      const result = await retryGenerateText(model, prompt)
-      text = result.text
+      text = await tryModelsWithFallback(apiKey, prompt)
     } catch (e) {
       console.error("❌ Error with Gemini Pro model:", e)
       return NextResponse.json(
