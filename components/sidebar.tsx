@@ -25,6 +25,7 @@ import {
   HelpCircle,
   Bell,
   Database,
+  Mail,
 } from "lucide-react"
 import { useState } from "react"
 import { useAuth } from "@/contexts/auth-context"
@@ -37,6 +38,7 @@ const navigationItems = [
   { name: "Main Dashboard", href: "/dashboard", icon: LayoutDashboard, color: "text-green-600 bg-green-100" },
   { name: "Personal Dashboard", href: "/personal", icon: User, color: "text-purple-600 bg-purple-100" },
   { name: "Job Scraper", href: "/scraper", icon: Database, color: "text-indigo-600 bg-indigo-100" },
+  { name: "Live Emails", href: "/live-emails", icon: Mail, color: "text-pink-600 bg-pink-100" }, // New item
   { name: "Resume ATS Scoring", href: "/resume-scoring", icon: FileText, color: "text-orange-600 bg-orange-100" },
 ]
 
