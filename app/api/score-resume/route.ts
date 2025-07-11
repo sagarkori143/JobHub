@@ -1,61 +1,66 @@
-/**
- * POST /api/score-resume
- * Body: { resumeText: string; jobDescription: string }
- * Response: JSON { score, strengths[], improvements[], keywords: { found[], missing[] } }
- */
-import { NextResponse } from "next/server"
-import { generateText } from "ai"
 import { google } from "@ai-sdk/google"
+import { generateText } from "ai"
+import { NextResponse } from "next/server"
 
 export async function POST(req: Request) {
   try {
-    const { resumeText, jobDescription } = (await req.json()) as {
-      resumeText?: string
-      jobDescription?: string
-    }
+    const { resumeText, jobDescription } = await req.json()
 
     if (!resumeText || !jobDescription) {
-      return NextResponse.json({ error: "Both resumeText and jobDescription are required." }, { status: 400 })
+      return NextResponse.json({ error: "Resume text and job description are required." }, { status: 400 })
     }
 
     const apiKey = process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY
+
     if (!apiKey) {
-      return NextResponse.json(
-        { error: "Missing GOOGLE_API_KEY (or GOOGLE_GENERATIVE_AI_API_KEY) in environment." },
-        { status: 500 },
-      )
+      return NextResponse.json({ error: "Google Generative AI API key is missing." }, { status: 500 })
     }
 
-    /* Use a model that is available on the free tier */
-    const model = google("models/gemini-1.0-pro", { apiKey })
+    // ✅ Use the lighter model
+    const model = google("models/gemini-1.5-flash-latest", { apiKey })
 
     const prompt = `
-You are an expert Applicant Tracking System (ATS) analyst.
-Compare the resume to the job description and respond with strictly-valid JSON matching this schema:
+      You are an expert ATS (Applicant Tracking System) and resume analyst.
+      Your task is to analyze a given resume against a job description and provide a compatibility score (out of 100),
+      identify strengths, areas for improvement, and list keywords found and missing.
 
-{
-  "score": number,          // 0–100
-  "strengths": string[],    // up to 5 bullets
-  "improvements": string[], // up to 5 bullets
-  "keywords": {
-    "found": string[],      // present in resume
-    "missing": string[]     // absent from resume (max 10)
-  }
-}
+      Resume:
+      ${resumeText}
 
-Job Description:
-${jobDescription}
+      Job Description:
+      ${jobDescription}
 
-Resume:
-${resumeText}
-`
+      Provide your analysis in a JSON format with the following structure:
+      {
+        "score": number, 
+        "strengths": string[], 
+        "improvements": string[], 
+        "keywords": {
+          "found": string[], 
+          "missing": string[]
+        }
+      }
+      Ensure all arrays are populated, even if empty.
+    `
 
-    const { text } = await generateText({ model, prompt, temperature: 0.6 })
-    const parsed = JSON.parse(text)
+    const { text } = await generateText({
+      model: model,
+      prompt: prompt,
+    })
 
-    return NextResponse.json(parsed)
-  } catch (err: any) {
-    console.error("Resume-scoring route error:", err)
-    return NextResponse.json({ error: err?.message ?? "Internal Server Error" }, { status: 500 })
+    // 🛠 Clean possible markdown code block formatting
+    let cleanedText = text.trim()
+    if (cleanedText.startsWith("```json")) {
+      cleanedText = cleanedText.slice(7, -3).trim()
+    } else if (cleanedText.startsWith("```")) {
+      cleanedText = cleanedText.slice(3, -3).trim()
+    }
+
+    const result = JSON.parse(cleanedText)
+
+    return NextResponse.json(result)
+  } catch (error: any) {
+    console.error("Error processing resume scoring request:", error)
+    return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 })
   }
 }
