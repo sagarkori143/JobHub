@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { FileText, CheckCircle, AlertCircle, XCircle, Sparkles, Loader2, Upload, ChevronDown } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { mockJobs } from "@/data/mock-jobs" // Assuming mockJobs is suitable for client-side use
+import { mockJobs } from "@/data/mock-jobs"
 
 // ---- PDF.js dynamic loader ----------------------------------------------
 declare global {
@@ -21,24 +21,19 @@ declare global {
   }
 }
 
-/**
- * Loads the browser build of PDF.js only once and returns the pdfjsLib object.
- * We use the UMD bundle because it’s served with the correct MIME-type.
- */
 async function loadPdfJs(): Promise<any> {
-  if (typeof window === "undefined") return null // SSR guard (shouldn't run)
+  if (typeof window === "undefined") return null
   if (window.pdfjsLib) return window.pdfjsLib
 
   await new Promise<void>((resolve, reject) => {
     const script = document.createElement("script")
-    script.src = "/pdf.min.js"
+    script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.js"
     script.onload = () => resolve()
     script.onerror = () => reject(new Error("Failed to load PDF.js"))
     document.head.appendChild(script)
   })
 
-  // Point the worker to our local stub to avoid CORS/MIME headaches
-  window.pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.js"
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.js"
   return window.pdfjsLib
 }
 // --------------------------------------------------------------------------
@@ -72,7 +67,7 @@ export default function ResumeScoringPage() {
     for (let i = 0; i < pdf.numPages; i++) {
       const page = await pdf.getPage(i + 1)
       const textContent = await page.getTextContent()
-      fullText += textContent.items.map((item: any) => item.str).join(" ")
+      fullText += textContent.items.map((item: any) => item.str).join(" ") + "\n"
     }
     return fullText
   }
@@ -81,25 +76,18 @@ export default function ResumeScoringPage() {
     const file = event.target.files?.[0]
     if (file) {
       setResumeFile(file)
-      setResumeText("") // Clear text if file is uploaded
+      setResumeText("")
       setResult(null)
 
       if (file.type === "application/pdf") {
         try {
-          setIsAnalyzing(true) // Indicate that PDF parsing is happening
+          setIsAnalyzing(true)
           const extractedText = await extractTextFromPdf(file)
           setResumeText(extractedText)
-          toast({
-            title: "PDF Parsed",
-            description: "Text extracted from your resume PDF.",
-          })
+          toast({ title: "PDF Parsed", description: "Text extracted from your resume PDF." })
         } catch (error) {
           console.error("Error parsing PDF:", error)
-          toast({
-            title: "PDF Parsing Failed",
-            description: "Could not extract text from PDF. Please try pasting text directly.",
-            variant: "destructive",
-          })
+          toast({ title: "PDF Parsing Failed", description: "Could not extract text from PDF. Please try pasting text directly.", variant: "destructive" })
           setResumeFile(null)
           setResumeText("")
         } finally {
@@ -109,18 +97,11 @@ export default function ResumeScoringPage() {
         const reader = new FileReader()
         reader.onload = (e) => {
           setResumeText(e.target?.result as string)
-          toast({
-            title: "Text File Loaded",
-            description: "Content extracted from your text file.",
-          })
+          toast({ title: "Text File Loaded", description: "Content extracted from your text file." })
         }
         reader.readAsText(file)
       } else {
-        toast({
-          title: "Unsupported File Type",
-          description: "Please upload a PDF or plain text file.",
-          variant: "destructive",
-        })
+        toast({ title: "Unsupported File Type", description: "Please upload a PDF or plain text file.", variant: "destructive" })
         setResumeFile(null)
         setResumeText("")
       }
@@ -129,21 +110,13 @@ export default function ResumeScoringPage() {
 
   const handleJobSelect = (jobDescription: string) => {
     setJobDescription(jobDescription)
-    toast({
-      title: "Job Description Selected",
-      description: "The job description has been loaded into the text area.",
-    })
+    toast({ title: "Job Description Selected", description: "The job description has been loaded into the text area." })
   }
 
   const analyzeResume = async () => {
     const finalResumeContent = resumeText.trim()
-
     if (!finalResumeContent || !jobDescription.trim()) {
-      toast({
-        title: "Missing Information",
-        description: "Please provide either resume text/file and job description.",
-        variant: "destructive",
-      })
+      toast({ title: "Missing Information", description: "Please provide resume and job description.", variant: "destructive" })
       return
     }
 
@@ -153,9 +126,7 @@ export default function ResumeScoringPage() {
     try {
       const response = await fetch("/api/score-resume", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ resumeText: finalResumeContent, jobDescription }),
       })
 
@@ -166,18 +137,10 @@ export default function ResumeScoringPage() {
 
       const data: ATSResult = await response.json()
       setResult(data)
-
-      toast({
-        title: "Resume Scored!",
-        description: `Your resume scored ${data.score}%.`,
-      })
+      toast({ title: "Resume Scored!", description: `Your resume scored ${data.score}%.` })
     } catch (error: any) {
       console.error("Error scoring resume:", error)
-      toast({
-        title: "Error",
-        description: error.message || "Failed to score resume. Please try again.",
-        variant: "destructive",
-      })
+      toast({ title: "Error", description: error.message || "Failed to score resume.", variant: "destructive" })
     } finally {
       setIsAnalyzing(false)
     }
@@ -194,6 +157,7 @@ export default function ResumeScoringPage() {
     if (score >= 60) return <AlertCircle className="w-6 h-6 text-yellow-600" />
     return <XCircle className="w-6 h-6 text-red-600" />
   }
+
 
   return (
     <div className="space-y-8 p-4 md:p-0">
