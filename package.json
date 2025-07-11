@@ -53,7 +53,7 @@
     "next-themes": "^0.3.0",
     "node-cron": "latest",
     "path": "latest",
-    "pdfjs-dist": "latest",
+    "pdfjs-dist": "^4.1.381",
     "puppeteer": "latest",
     "react": "^18",
     "react-day-picker": "^8.10.1",

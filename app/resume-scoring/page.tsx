@@ -11,12 +11,37 @@ import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { FileText, CheckCircle, AlertCircle, XCircle, Sparkles, Loader2, Upload, ChevronDown } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
-import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { mockJobs } from "@/data/mock-jobs" // Assuming mockJobs is suitable for client-side use
 
-// Serve the worker from our own domain to avoid CORS/MIME issues.
-pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.js"
+// ---- PDF.js dynamic loader ----------------------------------------------
+declare global {
+  interface Window {
+    pdfjsLib: any
+  }
+}
+
+/**
+ * Loads the browser build of PDF.js only once and returns the pdfjsLib object.
+ * We use the UMD bundle because it’s served with the correct MIME-type.
+ */
+async function loadPdfJs(): Promise<any> {
+  if (typeof window === "undefined") return null // SSR guard (shouldn't run)
+  if (window.pdfjsLib) return window.pdfjsLib
+
+  await new Promise<void>((resolve, reject) => {
+    const script = document.createElement("script")
+    script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.js"
+    script.onload = () => resolve()
+    script.onerror = () => reject(new Error("Failed to load PDF.js"))
+    document.head.appendChild(script)
+  })
+
+  // Point the worker to our local stub to avoid CORS/MIME headaches
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.js"
+  return window.pdfjsLib
+}
+// --------------------------------------------------------------------------
 
 interface ATSResult {
   score: number
@@ -37,9 +62,13 @@ export default function ResumeScoringPage() {
   const resumeFileInputRef = useRef<HTMLInputElement>(null)
 
   const extractTextFromPdf = async (file: File): Promise<string> => {
+    const pdfjs = await loadPdfJs()
+    if (!pdfjs) throw new Error("PDF.js failed to load")
+
     const arrayBuffer = await file.arrayBuffer()
-    const pdf = await pdfjs.getDocument(arrayBuffer).promise
+    const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise
     let fullText = ""
+
     for (let i = 0; i < pdf.numPages; i++) {
       const page = await pdf.getPage(i + 1)
       const textContent = await page.getTextContent()
