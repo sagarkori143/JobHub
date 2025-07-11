@@ -1,173 +1,158 @@
 "use client"
 
+import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import {
+  Briefcase,
+  LayoutDashboard,
+  User,
+  Mail,
+  Settings,
+  BarChart,
+  FileText,
+  LogOut,
+  ChevronRight,
+  ChevronLeft,
+} from "lucide-react"
+
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Separator } from "@/components/ui/separator"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import {
-  Search,
-  LayoutDashboard,
-  User,
-  FileText,
-  Briefcase,
-  LogOut,
-  Settings,
-  HelpCircle,
-  Bell,
-  Mail,
-} from "lucide-react"
-import { useState } from "react"
 import { useAuth } from "@/contexts/auth-context"
-import { LoginModal } from "@/components/login-modal"
-import { ProfileModal } from "@/components/profile-modal"
-import { JobPreferencesModal } from "@/components/job-preferences-modal"
 
-const navigationItems = [
-  { name: "Search Jobs", href: "/", icon: Search, color: "text-blue-600 bg-blue-100" },
-  { name: "Main Dashboard", href: "/dashboard", icon: LayoutDashboard, color: "text-green-600 bg-green-100" },
-  { name: "Personal Dashboard", href: "/personal", icon: User, color: "text-purple-600 bg-purple-100" },
-  // Removed Job Scraper: { name: "Job Scraper", href: "/scraper", icon: Database, color: "text-indigo-600 bg-indigo-100" },
-  { name: "Live Emails", href: "/live-emails", icon: Mail, color: "text-pink-600 bg-pink-100" },
-  { name: "Resume ATS Scoring", href: "/resume-scoring", icon: FileText, color: "text-orange-600 bg-orange-100" },
-]
+interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {}
 
-type SidebarProps = {}
-
-export function Sidebar({}: SidebarProps) {
+export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname()
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
-  const [isJobPreferencesModalOpen, setIsJobPreferencesModalOpen] = useState(false)
-  const { user, isAuthenticated, logout } = useAuth()
+  const { user, logout } = useAuth()
+  const [isCollapsed, setIsCollapsed] = React.useState(false) // State for desktop collapse
 
-  const handleLogout = () => {
-    logout()
-  }
-
-  const [isCollapsed, setIsCollapsed] = useState(false) // Keeping for potential future use
+  const navItems = [
+    {
+      href: "/",
+      icon: LayoutDashboard,
+      label: "Dashboard",
+      active: pathname === "/",
+    },
+    {
+      href: "/personal",
+      icon: User,
+      label: "Personal Dashboard",
+      active: pathname === "/personal",
+    },
+    {
+      href: "/live-emails",
+      icon: Mail,
+      label: "Live Emails",
+      active: pathname === "/live-emails",
+    },
+    {
+      href: "/resume-scoring",
+      icon: FileText,
+      label: "Resume Scoring",
+      active: pathname === "/resume-scoring",
+    },
+    {
+      href: "/dashboard",
+      icon: BarChart,
+      label: "Analytics Dashboard",
+      active: pathname === "/dashboard",
+    },
+  ]
 
   return (
-    <>
-      <div
-        className={`flex h-full max-h-screen flex-col gap-2 border-r bg-gradient-to-b from-slate-50 to-white shadow-lg w-64 dark:from-gray-800 dark:to-gray-900`}
-      >
-        <div className="flex h-[60px] items-center border-b px-4 bg-gradient-to-r from-blue-500 to-purple-600">
-          <Link className="flex items-center gap-2 font-semibold text-white" href="/">
-            <Briefcase className="h-6 w-6" />
-            <span className="text-lg">JobHub</span>
-          </Link>
-        </div>
-
-        <ScrollArea className="flex-1">
-          <div className="space-y-4 py-4 px-2">
-            <div>
-              <h2 className="mb-2 px-2 text-lg font-semibold tracking-tight text-gray-700">Navigation</h2>
-              <div className="space-y-2">
-                {navigationItems.map((item) => (
-                  <Button
-                    key={item.name}
-                    variant="ghost"
-                    className={`w-full justify-start h-12 transition-all duration-200 hover:scale-105 ${
-                      pathname === item.href ? `${item.color} shadow-md` : "hover:bg-gray-100 text-gray-600"
-                    }`}
-                    asChild
-                  >
-                    <Link href={item.href}>
-                      <item.icon className="h-5 w-5" />
-                      <span className="ml-3">{item.name}</span>
-                    </Link>
-                  </Button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </ScrollArea>
-
-        {/* User Section */}
-        <div className="mt-auto p-4 border-t bg-gradient-to-r from-gray-50 to-gray-100">
-          {isAuthenticated && user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className={`w-full justify-start h-12 hover:bg-white/50`}>
-                  <div className={`flex items-center gap-3`}>
-                    <Avatar className="ring-2 ring-blue-200">
-                      <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
-                      <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
-                        {user.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="text-left">
-                      <p className="text-sm font-medium text-gray-800">{user.name}</p>
-                      <p className="text-xs text-gray-500">{user.email}</p>
-                    </div>
-                  </div>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <div className="flex items-center space-x-2 p-2">
-                  <Avatar>
-                    <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
-                    <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
-                      {user.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="text-sm font-medium">{user.name}</p>
-                    <p className="text-xs text-gray-500">{user.role}</p>
-                  </div>
-                </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setIsProfileModalOpen(true)}>
-                  <User className="mr-2 h-4 w-4" />
-                  Profile Settings
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setIsJobPreferencesModalOpen(true)}>
-                  <Bell className="mr-2 h-4 w-4" />
-                  Job Preferences
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Settings className="mr-2 h-4 w-4" />
-                  Account Settings
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <HelpCircle className="mr-2 h-4 w-4" />
-                  Help & Support
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="text-red-600">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sign Out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <Button
-              onClick={() => setIsLoginModalOpen(true)}
-              className={`w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white`}
-            >
-              Sign In
-            </Button>
-          )}
-        </div>
+    <aside
+      className={cn(
+        "flex flex-col h-full border-r bg-gradient-to-b from-blue-500 to-purple-600 text-white transition-all duration-300 ease-in-out",
+        isCollapsed ? "w-16" : "w-64",
+        className,
+      )}
+    >
+      <div className="flex items-center justify-between h-16 px-4 shrink-0">
+        <Link href="/" className={cn("flex items-center gap-2 font-semibold", isCollapsed && "justify-center w-full")}>
+          <Briefcase className="h-6 w-6" />
+          {!isCollapsed && <span className="text-lg">JobHub</span>}
+        </Link>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="hidden lg:flex h-7 w-7 text-white hover:bg-white/20"
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+        </Button>
       </div>
 
-      <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
-      <ProfileModal isOpen={isProfileModalOpen} onClose={() => setIsProfileModalOpen(false)} />
-      <JobPreferencesModal isOpen={isJobPreferencesModalOpen} onClose={() => setIsJobPreferencesModalOpen(false)} />
-    </>
+      <nav className="flex-1 flex flex-col gap-2 px-2 py-4 overflow-y-auto">
+        {navItems.map((item) => (
+          <TooltipProvider key={item.href} delayDuration={0}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all hover:bg-white/20",
+                    item.active ? "bg-white/30 text-white" : "text-white/80",
+                    isCollapsed && "justify-center",
+                  )}
+                >
+                  <item.icon className="h-5 w-5" />
+                  {!isCollapsed && item.label}
+                  {isCollapsed && <span className="sr-only">{item.label}</span>}
+                </Link>
+              </TooltipTrigger>
+              {isCollapsed && <TooltipContent side="right">{item.label}</TooltipContent>}
+            </Tooltip>
+          </TooltipProvider>
+        ))}
+      </nav>
+
+      <div className="mt-auto p-2">
+        <Separator className="my-2 bg-white/30" />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              className={cn(
+                "w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-white/80 hover:bg-white/20 hover:text-white",
+                isCollapsed && "justify-center",
+              )}
+            >
+              <Avatar className="h-7 w-7">
+                <AvatarImage src={user?.avatar || "/placeholder-user.jpg"} alt="User Avatar" />
+                <AvatarFallback>{user?.name ? user.name.charAt(0) : "U"}</AvatarFallback>
+              </Avatar>
+              {!isCollapsed && <span className="flex-1 text-left truncate">{user?.name || "Guest User"}</span>}
+              {isCollapsed && <span className="sr-only">User Profile</span>}
+              {!isCollapsed && <ChevronRight className="ml-auto h-4 w-4" />}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="right" align="end" className="w-56">
+            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem>
+              <Settings className="mr-2 h-4 w-4" />
+              <span>Settings</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={logout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Log out</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </aside>
   )
 }
