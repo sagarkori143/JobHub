@@ -16,7 +16,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Google Generative AI API key is missing." }, { status: 500 })
     }
 
-    const model = google("models/gemini-1.5-pro-latest", { apiKey })
+    // Changed model to 'gemini-pro' for broader free-tier compatibility
+    const model = google("gemini-pro", { apiKey })
 
     const prompt = `
       You are an expert ATS (Applicant Tracking System) and resume analyst.
