@@ -85,6 +85,7 @@ class EmailService {
   }
 
   // Simulates detecting new jobs and queuing emails
+  // This function is intended to be called by a backend process (e.g., scraper)
   sendNewJobAlerts(newJobs: JobListing[] = mockNewJobs): boolean {
     if (newJobs.length === 0) {
       console.log("No new jobs to send alerts for.")

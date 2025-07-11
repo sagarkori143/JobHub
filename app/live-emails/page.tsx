@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { emailService } from "@/services/email-service"
 import type { EmailRecipient, EmailStatus } from "@/types/email"
-import { Play, RefreshCw, Mail, CheckCircle, XCircle, List, Send } from "lucide-react"
+import { RefreshCw, Mail, CheckCircle, XCircle, List, Send, Info } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 export default function LiveEmailsPage() {
@@ -35,22 +35,6 @@ export default function LiveEmailsPage() {
 
     return () => clearInterval(interval)
   }, [])
-
-  const handleSendMockEmails = () => {
-    const sent = emailService.sendNewJobAlerts()
-    if (sent) {
-      toast({
-        title: "Email Sending Started",
-        description: "Simulating sending new job alerts to subscribers.",
-      })
-    } else {
-      toast({
-        title: "No New Job Alerts",
-        description: "No new jobs detected or no matching subscribers for mock data.",
-        variant: "default",
-      })
-    }
-  }
 
   const handleClearAll = () => {
     emailService.clearAllEmails()
@@ -96,20 +80,23 @@ export default function LiveEmailsPage() {
   }
 
   const EmailItem = ({ email }: { email: EmailRecipient }) => (
-    <div className="flex items-center justify-between p-3 border rounded-lg bg-white shadow-sm">
-      <div className="flex items-center space-x-3">
-        <Mail className="w-5 h-5 text-blue-500" />
-        <div>
-          <p className="font-medium text-gray-800">{email.email}</p>
-          <p className="text-sm text-gray-600">
-            {email.jobTitle} at {email.company}
-          </p>
+    <div className="flex flex-col p-3 border rounded-lg bg-white shadow-sm">
+      <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center space-x-2">
+          <Mail className="w-4 h-4 text-blue-500" />
+          <p className="font-medium text-gray-800 text-sm">{email.email}</p>
         </div>
+        <Badge className={getStatusColor(email.status)}>
+          {getStatusIcon(email.status)}
+          <span className="ml-1 capitalize text-xs">{email.status}</span>
+        </Badge>
       </div>
-      <Badge className={getStatusColor(email.status)}>
-        {getStatusIcon(email.status)}
-        <span className="ml-1 capitalize">{email.status}</span>
-      </Badge>
+      <p className="text-xs text-gray-600 truncate">
+        {email.jobTitle} at {email.company}
+      </p>
+      <p className="text-xs text-gray-500 mt-1">
+        {new Date(email.timestamp).toLocaleTimeString()} - {email.message || "Processing..."}
+      </p>
     </div>
   )
 
@@ -123,25 +110,29 @@ export default function LiveEmailsPage() {
             </h1>
             <p className="text-gray-600">Monitor the status of job alert emails being sent to subscribers.</p>
           </div>
-          <div className="flex space-x-3">
-            <Button
-              onClick={handleSendMockEmails}
-              disabled={isSendingActive}
-              className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg"
-            >
-              <Play className="w-4 h-4 mr-2" />
-              Simulate New Job Alerts
-            </Button>
-            <Button
-              onClick={handleClearAll}
-              variant="outline"
-              disabled={!isSendingActive && sent.length === 0 && failed.length === 0}
-            >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Clear All
-            </Button>
-          </div>
+          <Button
+            onClick={handleClearAll}
+            variant="outline"
+            disabled={!isSendingActive && sent.length === 0 && failed.length === 0}
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Clear All
+          </Button>
         </div>
+
+        {/* Information Card */}
+        <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+          <CardContent className="p-4 flex items-center space-x-3">
+            <Info className="w-5 h-5 text-blue-600" />
+            <div>
+              <p className="font-medium text-blue-800">Email alerts are triggered by backend processes.</p>
+              <p className="text-sm text-blue-700">
+                For a real demonstration, you would integrate the `emailService.sendNewJobAlerts()` call into your
+                scraper or a dedicated serverless function.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <Card className="bg-gray-50 border-gray-200">
@@ -153,7 +144,7 @@ export default function LiveEmailsPage() {
             </CardHeader>
             <CardContent className="space-y-3 max-h-96 overflow-y-auto">
               {queued.length === 0 ? (
-                <p className="text-sm text-gray-500">No emails in queue.</p>
+                <p className="text-sm text-gray-500 text-center py-4">No emails in queue.</p>
               ) : (
                 queued.map((email) => <EmailItem key={email.id} email={email} />)
               )}
@@ -169,7 +160,7 @@ export default function LiveEmailsPage() {
             </CardHeader>
             <CardContent className="space-y-3 max-h-96 overflow-y-auto">
               {sending.length === 0 ? (
-                <p className="text-sm text-yellow-600">No emails currently sending.</p>
+                <p className="text-sm text-yellow-600 text-center py-4">No emails currently sending.</p>
               ) : (
                 sending.map((email) => <EmailItem key={email.id} email={email} />)
               )}
@@ -185,7 +176,7 @@ export default function LiveEmailsPage() {
             </CardHeader>
             <CardContent className="space-y-3 max-h-96 overflow-y-auto">
               {sent.length === 0 ? (
-                <p className="text-sm text-green-600">No emails sent yet.</p>
+                <p className="text-sm text-green-600 text-center py-4">No emails sent yet.</p>
               ) : (
                 sent.map((email) => <EmailItem key={email.id} email={email} />)
               )}
@@ -201,7 +192,7 @@ export default function LiveEmailsPage() {
             </CardHeader>
             <CardContent className="space-y-3 max-h-96 overflow-y-auto">
               {failed.length === 0 ? (
-                <p className="text-sm text-red-600">No failed emails.</p>
+                <p className="text-sm text-red-600 text-center py-4">No failed emails.</p>
               ) : (
                 failed.map((email) => <EmailItem key={email.id} email={email} />)
               )}
