@@ -15,8 +15,8 @@ import * as pdfjs from "pdfjs-dist"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { mockJobs } from "@/data/mock-jobs" // Assuming mockJobs is suitable for client-side use
 
-// Set up PDF.js worker path (served with correct MIME type)
-pdfjs.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.js"
+// Serve the worker from our own domain to avoid CORS/MIME issues.
+pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.js"
 
 interface ATSResult {
   score: number
