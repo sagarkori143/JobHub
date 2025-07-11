@@ -11,7 +11,7 @@ import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { FileText, CheckCircle, AlertCircle, XCircle, Sparkles, Loader2, Upload, ChevronDown } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
-import * as pdfjs from "pdfjs-dist/legacy/build/pdf"
+import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { mockJobs } from "@/data/mock-jobs" // Assuming mockJobs is suitable for client-side use
 
