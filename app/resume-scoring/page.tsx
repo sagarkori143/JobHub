@@ -10,9 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Loader2, FileText } from "lucide-react"
 import * as pdfjsLib from "pdfjs-dist"
 
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-  // @ts-ignore – pdfjs-dist exposes the worker file at this path
-  `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
+pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js"
 
 async function extractTextFromPDF(file: File) {
   const arrayBuffer = await file.arrayBuffer()
