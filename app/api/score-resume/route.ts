@@ -23,7 +23,6 @@ export async function POST(req: Request) {
       )
     }
 
-    // ✅ Use lighter model
     const model = google("models/gemini-1.5-flash-latest", { apiKey })
 
     const prompt = `
@@ -50,12 +49,9 @@ Provide your analysis in a JSON format with the following structure:
 Ensure all arrays are populated, even if empty.
     `
 
-    const { text } = await generateText({
-      model: model,
-      prompt: prompt,
-    })
+    const { text } = await generateText({ model, prompt })
 
-    // 🧹 Clean markdown formatting
+    // Clean output from markdown if needed
     let cleanedText = text.trim()
     if (cleanedText.startsWith("```json")) {
       cleanedText = cleanedText.slice(7, -3).trim()
@@ -63,22 +59,22 @@ Ensure all arrays are populated, even if empty.
       cleanedText = cleanedText.slice(3, -3).trim()
     }
 
-    let result
+    // Try to parse JSON
     try {
-      result = JSON.parse(cleanedText)
+      const result = JSON.parse(cleanedText)
+      return NextResponse.json(result)
     } catch (parseError) {
-      console.error("Failed to parse Gemini response as JSON:", cleanedText)
+      console.error("❌ Invalid JSON from Gemini:", cleanedText)
       return NextResponse.json(
         {
-          error: "Gemini response was not valid JSON. Raw response: " + cleanedText,
+          error: "Gemini did not return valid JSON.",
+          rawResponse: cleanedText,
         },
-        { status: 500 }
+        { status: 502 } // Bad Gateway = upsteam service failure
       )
     }
-
-    return NextResponse.json(result)
   } catch (error: any) {
-    console.error("Error processing resume scoring request:", error)
+    console.error("❌ Error processing resume scoring request:", error)
     return NextResponse.json(
       { error: error.message || "Internal server error" },
       { status: 500 }
