@@ -1,6 +1,14 @@
 import { generateText } from "ai"
 import { google } from "@ai-sdk/google"
 
+const GEMINI_API_KEY = process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY
+
+if (!GEMINI_API_KEY) {
+  throw new Error(
+    "A Gemini API key is required. Set GOOGLE_API_KEY or GOOGLE_GENERATIVE_AI_API_KEY in your environment.",
+  )
+}
+
 export async function POST(req: Request) {
   try {
     const { resumeText, jobDescription } = await req.json()
@@ -41,9 +49,10 @@ export async function POST(req: Request) {
       For missing keywords, list the most relevant ones that are absent.
     `
 
+    const model = google("gemini-1.5-pro-latest", { apiKey: GEMINI_API_KEY })
     const { text } = await generateText({
-      model: google("models/gemini-pro"), // Using gemini-pro model
-      prompt: prompt,
+      model,
+      prompt,
     })
 
     // Attempt to parse the JSON response from the AI
