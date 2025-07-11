@@ -20,6 +20,29 @@ export interface Job {
   atsScore?: number // Optional ATS score
 }
 
+export interface JobListing {
+  id: string
+  title: string
+  company: string
+  location: string
+  type: "Full-time" | "Part-time" | "Contract" | "Internship"
+  salary: {
+    min: number
+    max: number
+    currency: string
+  }
+  description: string
+  requirements: string[]
+  benefits: string[]
+  postedDate: string
+  applicationDeadline: string
+  industry: string
+  experienceLevel: "Entry" | "Mid" | "Senior" | "Executive"
+  remote: boolean
+  companyLogo?: string
+  isActive?: boolean
+}
+
 export interface User {
   id: string
   name: string

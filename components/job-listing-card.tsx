@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { MapPin, Clock, DollarSign, Building, ExternalLink } from "lucide-react"
 import type { JobListing } from "@/types/job-search"
+import { getCompanyLogo } from "@/lib/company-logos"
 
 interface JobListingCardProps {
   job: JobListing
@@ -39,6 +40,8 @@ export function JobListingCard({ job, onViewDetails, onApply }: JobListingCardPr
     onViewDetails(job)
   }
 
+  const companyLogo = getCompanyLogo(job.company)
+
   return (
     <Card
       className="hover:shadow-lg transition-all duration-200 cursor-pointer border-l-4 border-l-blue-500 bg-gradient-to-r from-white to-blue-50/30"
@@ -47,12 +50,25 @@ export function JobListingCard({ job, onViewDetails, onApply }: JobListingCardPr
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg flex items-center justify-center shadow-sm">
-              <Building className="w-6 h-6 text-blue-600" />
+            <div className="w-12 h-12 rounded-lg flex items-center justify-center shadow-sm overflow-hidden bg-white">
+              <img 
+                src={companyLogo} 
+                alt={`${job.company} logo`}
+                className="w-full h-full object-contain"
+                onError={(e) => {
+                  // Fallback to building icon if image fails to load
+                  const target = e.target as HTMLImageElement
+                  target.style.display = 'none'
+                  target.nextElementSibling?.classList.remove('hidden')
+                }}
+              />
+              <Building className="w-6 h-6 text-blue-600 hidden" />
             </div>
             <div>
               <h3 className="font-semibold text-lg text-gray-800">{job.title}</h3>
-              <p className="text-gray-600 font-medium">{job.company}</p>
+              <p className="text-gray-600 font-medium text-sm" title={job.company}>
+                {job.company}
+              </p>
             </div>
           </div>
           <Badge

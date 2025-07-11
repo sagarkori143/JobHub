@@ -21,108 +21,6 @@ import { useAuth } from "@/contexts/auth-context"
 import { supabase } from "@/lib/supabase"
 import { useToast } from "@/hooks/use-toast"
 
-const initialMockJobs: Omit<Job, "id">[] = [
-  {
-    company: "Tech Corp",
-    position: "Software Engineer",
-    dateApplied: "2023-05-01",
-    status: "Applied",
-    industry: "Technology",
-    estimatedSalary: 80000,
-    jobType: "Full-time",
-  },
-  {
-    company: "Data Inc",
-    position: "Data Analyst",
-    dateApplied: "2023-05-03",
-    status: "Applied",
-    industry: "Technology",
-    estimatedSalary: 70000,
-    jobType: "Full-time",
-  },
-  {
-    company: "Design Solutions",
-    position: "UX Designer",
-    dateApplied: "2023-05-05",
-    status: "Applied",
-    industry: "Design",
-    estimatedSalary: 75000,
-    jobType: "Full-time",
-  },
-  {
-    company: "City High School",
-    position: "Teacher",
-    dateApplied: "2023-04-15",
-    status: "Interviewing",
-    industry: "Education",
-    estimatedSalary: 55000,
-    jobType: "Full-time",
-  },
-  {
-    company: "Investment Bank",
-    position: "Financial Analyst",
-    dateApplied: "2023-04-20",
-    status: "Interviewing",
-    industry: "Finance",
-    estimatedSalary: 85000,
-    jobType: "Full-time",
-  },
-  {
-    company: "Retail Chain",
-    position: "Store Manager",
-    dateApplied: "2023-03-10",
-    status: "Offer",
-    industry: "Retail",
-    estimatedSalary: 60000,
-    jobType: "Full-time",
-  },
-  {
-    company: "City Hospital",
-    position: "Nurse",
-    dateApplied: "2023-03-15",
-    status: "Offer",
-    industry: "Healthcare",
-    estimatedSalary: 70000,
-    jobType: "Full-time",
-  },
-  {
-    company: "University",
-    position: "Professor",
-    dateApplied: "2023-02-01",
-    status: "Rejected",
-    industry: "Education",
-    estimatedSalary: 90000,
-    jobType: "Full-time",
-  },
-  {
-    company: "Fashion Outlet",
-    position: "Sales Associate",
-    dateApplied: "2023-02-15",
-    status: "Rejected",
-    industry: "Retail",
-    estimatedSalary: 35000,
-    jobType: "Part-time",
-  },
-  {
-    company: "Global Consulting",
-    position: "Consultant",
-    dateApplied: "2023-01-20",
-    status: "Applied",
-    industry: "Technology",
-    estimatedSalary: 100000,
-    jobType: "Contract",
-  },
-  {
-    company: "Startup X",
-    position: "Software Engineer Intern",
-    dateApplied: "2023-06-01",
-    status: "Applied",
-    industry: "Technology",
-    estimatedSalary: 40000,
-    jobType: "Internship",
-  },
-]
-
 const toDbColumns = (job: Omit<Job, "id"> | Job) => ({
   company: job.company,
   position: job.position,
@@ -178,40 +76,9 @@ export default function PersonalDashboard() {
         jobType: item.job_type as Job["jobType"],
       }))
       setJobs(fetchedJobs)
-
-      if (fetchedJobs.length === 0) {
-        await seedInitialJobs(supabaseUser.id)
-      }
     }
     setLoadingJobs(false)
   }, [supabaseUser, toast])
-
-  const seedInitialJobs = useCallback(
-    async (userId: string) => {
-      const jobsToInsert = initialMockJobs.map((job) => ({
-        user_id: userId,
-        ...toDbColumns(job),
-      }))
-
-      const { error } = await supabase.from("user_job_applications").insert(jobsToInsert)
-
-      if (error) {
-        console.error("Error seeding initial jobs:", error)
-        toast({
-          title: "Error",
-          description: "Failed to seed initial job data.",
-          variant: "destructive",
-        })
-      } else {
-        toast({
-          title: "Welcome!",
-          description: "We've added some sample job applications for you.",
-        })
-        fetchJobs()
-      }
-    },
-    [fetchJobs, toast],
-  )
 
   useEffect(() => {
     if (!authLoading) {
@@ -480,58 +347,88 @@ export default function PersonalDashboard() {
         </div>
 
         <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4 auto-rows-auto">
-          <div className={`space-y-4 ${appliedJobs.length > 5 ? "md:col-span-2 lg:col-span-2" : ""}`}>
-            <h2 className="text-xl font-semibold mb-4 text-blue-600">Applied Jobs ({appliedJobs.length})</h2>
-            {appliedJobs.map((job) => (
-              <JobCard
-                key={job.id}
-                job={job}
-                className="bg-blue-50 border-blue-200"
-                onUpdate={handleUpdateJob}
-                onDelete={handleDeleteJob}
-                onMoveStatus={handleMoveStatus}
-              />
-            ))}
-          </div>
-          <div className={`space-y-4 ${interviewingJobs.length > 5 ? "md:col-span-2 lg:col-span-2" : ""}`}>
-            <h2 className="text-xl font-semibold mb-4 text-yellow-600">Interviewing ({interviewingJobs.length})</h2>
-            {interviewingJobs.map((job) => (
-              <JobCard
-                key={job.id}
-                job={job}
-                className="bg-yellow-50 border-yellow-200"
-                onUpdate={handleUpdateJob}
-                onDelete={handleDeleteJob}
-                onMoveStatus={handleMoveStatus}
-              />
-            ))}
-          </div>
-          <div className={`space-y-4 ${offerJobs.length > 5 ? "md:col-span-2 lg:col-span-2" : ""}`}>
-            <h2 className="text-xl font-semibold mb-4 text-green-600">Offers ({offerJobs.length})</h2>
-            {offerJobs.map((job) => (
-              <JobCard
-                key={job.id}
-                job={job}
-                className="bg-green-50 border-green-200"
-                onUpdate={handleUpdateJob}
-                onDelete={handleDeleteJob}
-                onMoveStatus={handleMoveStatus}
-              />
-            ))}
-          </div>
-          <div className={`space-y-4 ${rejectedJobs.length > 5 ? "md:col-span-2 lg:col-span-2" : ""}`}>
-            <h2 className="text-xl font-semibold mb-4 text-red-600">Rejected ({rejectedJobs.length})</h2>
-            {rejectedJobs.map((job) => (
-              <JobCard
-                key={job.id}
-                job={job}
-                className="bg-red-50 border-red-200"
-                onUpdate={handleUpdateJob}
-                onDelete={handleDeleteJob}
-                onMoveStatus={handleMoveStatus}
-              />
-            ))}
-          </div>
+          {jobs.length === 0 ? (
+            <div className="md:col-span-2 lg:col-span-4">
+              <Card className="bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200">
+                <CardContent className="p-8 text-center">
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <PlusCircle className="w-8 h-8 text-blue-600" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-800 mb-2">Welcome to your Job Dashboard!</h3>
+                  <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                    Start tracking your job applications by adding your first job. You can also add jobs from the job search page.
+                  </p>
+                  <div className="space-y-3">
+                    <Button 
+                      onClick={() => setIsDialogOpen(true)}
+                      className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white"
+                    >
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Add Your First Job
+                    </Button>
+                    <p className="text-sm text-gray-500">
+                      Or browse jobs and add them from the main job search page
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            <>
+              <div className={`space-y-4 ${appliedJobs.length > 5 ? "md:col-span-2 lg:col-span-2" : ""}`}>
+                <h2 className="text-xl font-semibold mb-4 text-blue-600">Applied Jobs ({appliedJobs.length})</h2>
+                {appliedJobs.map((job) => (
+                  <JobCard
+                    key={job.id}
+                    job={job}
+                    className="bg-blue-50 border-blue-200"
+                    onUpdate={handleUpdateJob}
+                    onDelete={handleDeleteJob}
+                    onMoveStatus={handleMoveStatus}
+                  />
+                ))}
+              </div>
+              <div className={`space-y-4 ${interviewingJobs.length > 5 ? "md:col-span-2 lg:col-span-2" : ""}`}>
+                <h2 className="text-xl font-semibold mb-4 text-yellow-600">Interviewing ({interviewingJobs.length})</h2>
+                {interviewingJobs.map((job) => (
+                  <JobCard
+                    key={job.id}
+                    job={job}
+                    className="bg-yellow-50 border-yellow-200"
+                    onUpdate={handleUpdateJob}
+                    onDelete={handleDeleteJob}
+                    onMoveStatus={handleMoveStatus}
+                  />
+                ))}
+              </div>
+              <div className={`space-y-4 ${offerJobs.length > 5 ? "md:col-span-2 lg:col-span-2" : ""}`}>
+                <h2 className="text-xl font-semibold mb-4 text-green-600">Offers ({offerJobs.length})</h2>
+                {offerJobs.map((job) => (
+                  <JobCard
+                    key={job.id}
+                    job={job}
+                    className="bg-green-50 border-green-200"
+                    onUpdate={handleUpdateJob}
+                    onDelete={handleDeleteJob}
+                    onMoveStatus={handleMoveStatus}
+                  />
+                ))}
+              </div>
+              <div className={`space-y-4 ${rejectedJobs.length > 5 ? "md:col-span-2 lg:col-span-2" : ""}`}>
+                <h2 className="text-xl font-semibold mb-4 text-red-600">Rejected ({rejectedJobs.length})</h2>
+                {rejectedJobs.map((job) => (
+                  <JobCard
+                    key={job.id}
+                    job={job}
+                    className="bg-red-50 border-red-200"
+                    onUpdate={handleUpdateJob}
+                    onDelete={handleDeleteJob}
+                    onMoveStatus={handleMoveStatus}
+                  />
+                ))}
+              </div>
+            </>
+          )}
         </div>
 
         <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>

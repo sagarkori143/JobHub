@@ -11,6 +11,8 @@ import type { JobListing, JobFilters as JobFiltersType } from "@/types/job-searc
 import type { Job } from "@/types/job"
 import { RefreshCw, Database, AlertCircle } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
+import { useAuth } from "@/contexts/auth-context"
+import { supabase } from "@/lib/supabase"
 
 const initialFilters: JobFiltersType = {
   search: "",
@@ -33,6 +35,7 @@ export default function JobSearchPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [lastUpdated, setLastUpdated] = useState<string | null>(null)
   const { toast } = useToast()
+  const { user, supabaseUser } = useAuth()
 
   // Load jobs on component mount
   useEffect(() => {
@@ -124,19 +127,60 @@ export default function JobSearchPage() {
 
   const handleApply = (job: JobListing) => {
     toast({
-      title: "Application Submitted!",
-      description: `Your application for ${job.title} at ${job.company} has been submitted successfully.`,
+      title: "ℹ️ Application Link Not Available",
+      description: `The application link for ${job.title} at ${job.company} has not been updated yet. Please stay tuned for updates!`,
       duration: 5000,
+      className: "bg-blue-50 border-blue-300 text-blue-900",
     })
   }
 
-  const handleAddToPersonal = (job: Omit<Job, "id">) => {
-    console.log("Adding job to personal dashboard:", job)
-    toast({
-      title: "Job Added!",
-      description: "Job has been added to your personal dashboard.",
-      duration: 3000,
-    })
+  const handleAddToPersonal = async (job: Omit<Job, "id">) => {
+    if (!supabaseUser) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to add jobs to your personal dashboard.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("user_job_applications")
+        .insert({
+          user_id: supabaseUser.id,
+          company: job.company,
+          position: job.position,
+          date_applied: job.dateApplied,
+          status: job.status,
+          industry: job.industry,
+          estimated_salary: job.estimatedSalary,
+          job_type: job.jobType,
+        })
+        .select()
+
+      if (error) {
+        console.error("Error adding job:", error)
+        toast({
+          title: "Error",
+          description: "Failed to add job to your personal dashboard.",
+          variant: "destructive",
+        })
+      } else {
+        toast({
+          title: "Job Added!",
+          description: "Job has been added to your personal dashboard.",
+          duration: 3000,
+        })
+      }
+    } catch (error) {
+      console.error("Error adding job:", error)
+      toast({
+        title: "Error",
+        description: "Failed to add job to your personal dashboard.",
+        variant: "destructive",
+      })
+    }
   }
 
   if (isLoading) {

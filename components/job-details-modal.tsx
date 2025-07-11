@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator"
 import { Building, MapPin, DollarSign, Clock, FileText, Sparkles } from "lucide-react"
 import type { JobListing } from "@/types/job-search"
 import type { Job } from "@/types/job"
+import { getCompanyLogo } from "@/lib/company-logos"
 
 interface JobDetailsModalProps {
   job: JobListing | null
@@ -82,6 +83,8 @@ export function JobDetailsModal({ job, isOpen, onClose, onAddToPersonal, onApply
     onClose()
   }
 
+  const companyLogo = getCompanyLogo(job.company)
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-[95vw] md:max-w-4xl max-h-[95vh] overflow-y-auto">
@@ -93,10 +96,21 @@ export function JobDetailsModal({ job, isOpen, onClose, onAddToPersonal, onApply
             {/* Adjusted responsive padding */}
             <DialogHeader>
               <DialogTitle className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden bg-white shadow-sm">
                   {" "}
                   {/* Adjusted size */}
-                  <Building className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />
+                  <img 
+                    src={companyLogo} 
+                    alt={`${job.company} logo`}
+                    className="w-full h-full object-contain"
+                    onError={(e) => {
+                      // Fallback to building icon if image fails to load
+                      const target = e.target as HTMLImageElement
+                      target.style.display = 'none'
+                      target.nextElementSibling?.classList.remove('hidden')
+                    }}
+                  />
+                  <Building className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600 hidden" />
                 </div>
                 <div>
                   <h2 className="text-xl sm:text-2xl font-bold">{job.title}</h2> {/* Adjusted font size */}
@@ -138,7 +152,7 @@ export function JobDetailsModal({ job, isOpen, onClose, onAddToPersonal, onApply
               <div>
                 <h3 className="text-lg font-semibold mb-3">Requirements</h3>
                 <ul className="space-y-2">
-                  {job.requirements.map((req, index) => (
+                  {job.requirements.map((req: string, index: number) => (
                     <li key={index} className="flex items-start space-x-2">
                       <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></span>
                       <span className="text-gray-700 text-sm">{req}</span> {/* Adjusted font size */}
@@ -150,7 +164,7 @@ export function JobDetailsModal({ job, isOpen, onClose, onAddToPersonal, onApply
               <div>
                 <h3 className="text-lg font-semibold mb-3">Benefits</h3>
                 <ul className="space-y-2">
-                  {job.benefits.map((benefit, index) => (
+                  {job.benefits.map((benefit: string, index: number) => (
                     <li key={index} className="flex items-start space-x-2">
                       <span className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></span>
                       <span className="text-gray-700 text-sm">{benefit}</span> {/* Adjusted font size */}
