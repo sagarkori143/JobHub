@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { JobCard } from "@/components/job-card"
 import { Button } from "@/components/ui/button"
 import { PlusCircle, LogIn, User } from "lucide-react"
 import {
@@ -16,6 +15,7 @@ import {
 } from "@/components/ui/dialog"
 import { JobForm } from "@/components/job-form"
 import { LoginModal } from "@/components/login-modal"
+import { JobCard } from "@/components/job-card" // Import JobCard component
 import type { Job } from "@/types/job"
 import { useAuth } from "@/contexts/auth-context"
 
@@ -117,11 +117,7 @@ export default function PersonalDashboard() {
     return (
       <>
         <div className="min-h-screen bg-gradient-to-br from-purple-50/30 via-white to-pink-50/30 flex items-center justify-center p-4">
-          {" "}
-          {/* Added responsive padding */}
           <div className="text-center space-y-6 max-w-md mx-auto p-4 sm:p-8">
-            {" "}
-            {/* Added responsive padding */}
             <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto">
               <User className="w-12 h-12 text-blue-600" />
             </div>
@@ -206,8 +202,6 @@ export default function PersonalDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50/30 via-white to-pink-50/30 p-4 md:p-8">
-      {" "}
-      {/* Adjusted responsive padding */}
       <div className="space-y-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
           <div>
@@ -223,8 +217,6 @@ export default function PersonalDashboard() {
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
-              {" "}
-              {/* Adjusted for responsiveness */}
               <DialogHeader>
                 <DialogTitle>Add New Job Application</DialogTitle>
               </DialogHeader>
@@ -234,8 +226,6 @@ export default function PersonalDashboard() {
         </div>
 
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-          {" "}
-          {/* Made responsive */}
           <Card className="bg-gradient-to-br from-blue-100 to-blue-200 border-blue-300 shadow-lg">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-blue-800">Total Applications</CardTitle>
@@ -273,8 +263,6 @@ export default function PersonalDashboard() {
         </div>
 
         <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4 auto-rows-auto">
-          {" "}
-          {/* Made responsive */}
           <div className={`space-y-4 ${appliedJobs.length > 5 ? "md:col-span-2 lg:col-span-2" : ""}`}>
             <h2 className="text-xl font-semibold mb-4 text-blue-600">Applied Jobs ({appliedJobs.length})</h2>
             {appliedJobs.map((job) => (
@@ -331,8 +319,6 @@ export default function PersonalDashboard() {
 
         <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
           <DialogContent className="sm:max-w-[425px]">
-            {" "}
-            {/* Adjusted for responsiveness */}
             <DialogHeader>
               <DialogTitle>Confirm Deletion</DialogTitle>
             </DialogHeader>
