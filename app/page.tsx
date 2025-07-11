@@ -5,11 +5,13 @@ import { JobListingCard } from "@/components/job-listing-card"
 import { JobFilters } from "@/components/job-filters"
 import { JobDetailsModal } from "@/components/job-details-modal"
 import { Pagination } from "@/components/pagination"
-import { mockJobs } from "@/data/mock-jobs"
 import { useToast } from "@/hooks/use-toast"
+import { jobDataService } from "@/services/job-data-service"
 import type { JobListing, JobFilters as JobFiltersType } from "@/types/job-search"
 import type { Job } from "@/types/job"
-import { jobIntegrationService } from "@/services/job-integration-service"
+import { RefreshCw, Database, AlertCircle } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
 
 const initialFilters: JobFiltersType = {
   search: "",
@@ -29,15 +31,69 @@ export default function JobSearchPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [allJobs, setAllJobs] = useState<JobListing[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const { toast } = useToast()
 
   // Load jobs on component mount
   useEffect(() => {
-    // Load scraped jobs and integrate with existing jobs
-    jobIntegrationService.loadScrapedJobs()
-    const integratedJobs = jobIntegrationService.getAllJobs(mockJobs)
-    setAllJobs(integratedJobs)
+    loadJobs()
   }, [])
+
+  const loadJobs = async () => {
+    setIsLoading(true)
+    try {
+      const jobs = await jobDataService.loadJobs()
+      setAllJobs(jobs)
+
+      const metadata = jobDataService.getMetadata()
+      setLastUpdated(metadata?.lastUpdated || null)
+
+      if (jobs.length === 0) {
+        toast({
+          title: "No Job Data Available",
+          description: "Run the job scraper to fetch real job data from company career pages.",
+          variant: "destructive",
+        })
+      } else {
+        console.log(`📊 Loaded ${jobs.length} jobs for display`)
+      }
+    } catch (error) {
+      console.error("Error loading jobs:", error)
+      toast({
+        title: "Error Loading Jobs",
+        description: "Failed to load job data. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const refreshJobs = async () => {
+    setIsRefreshing(true)
+    try {
+      const jobs = await jobDataService.refreshJobs()
+      setAllJobs(jobs)
+
+      const metadata = jobDataService.getMetadata()
+      setLastUpdated(metadata?.lastUpdated || null)
+
+      toast({
+        title: "Jobs Refreshed",
+        description: `Loaded ${jobs.length} jobs from latest scraping data.`,
+      })
+    } catch (error) {
+      toast({
+        title: "Refresh Failed",
+        description: "Could not refresh job data. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
 
   const filteredJobs = useMemo(() => {
     return allJobs.filter((job) => {
@@ -109,13 +165,24 @@ export default function JobSearchPage() {
   }
 
   const handleAddToPersonal = (job: Omit<Job, "id">) => {
-    // In a real app, this would save to a database or state management
     console.log("Adding job to personal dashboard:", job)
     toast({
       title: "Job Added!",
       description: "Job has been added to your personal dashboard.",
       duration: 3000,
     })
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50/30 via-white to-purple-50/30 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <RefreshCw className="w-12 h-12 animate-spin text-blue-600 mx-auto" />
+          <h2 className="text-xl font-semibold">Loading Jobs...</h2>
+          <p className="text-gray-600">Fetching the latest job opportunities</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -131,13 +198,59 @@ export default function JobSearchPage() {
         {/* Job Listings */}
         <div className="flex-1">
           <div className="mb-6">
-            <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Find Your Dream Job
-            </h1>
-            <p className="text-gray-600 text-lg">
-              {filteredJobs.length} job{filteredJobs.length !== 1 ? "s" : ""} found
-              {currentPage > 1 && ` • Page ${currentPage} of ${totalPages}`}
-            </p>
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  Find Your Dream Job
+                </h1>
+                <p className="text-gray-600 text-lg">
+                  {filteredJobs.length} job{filteredJobs.length !== 1 ? "s" : ""} found
+                  {currentPage > 1 && ` • Page ${currentPage} of ${totalPages}`}
+                </p>
+              </div>
+              <Button
+                onClick={refreshJobs}
+                disabled={isRefreshing}
+                variant="outline"
+                className="flex items-center space-x-2 bg-transparent"
+              >
+                <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`} />
+                <span>{isRefreshing ? "Refreshing..." : "Refresh Jobs"}</span>
+              </Button>
+            </div>
+
+            {/* Data Status Card */}
+            {lastUpdated && (
+              <Card className="mb-6 bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
+                <CardContent className="p-4">
+                  <div className="flex items-center space-x-2">
+                    <Database className="w-5 h-5 text-green-600" />
+                    <div>
+                      <p className="text-sm font-medium text-green-800">Real job data from company career pages</p>
+                      <p className="text-xs text-green-600">Last updated: {new Date(lastUpdated).toLocaleString()}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* No Data Warning */}
+            {allJobs.length === 0 && (
+              <Card className="mb-6 bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200">
+                <CardContent className="p-4">
+                  <div className="flex items-center space-x-2">
+                    <AlertCircle className="w-5 h-5 text-yellow-600" />
+                    <div>
+                      <p className="text-sm font-medium text-yellow-800">No scraped job data available</p>
+                      <p className="text-xs text-yellow-600">
+                        Run <code className="bg-yellow-100 px-1 rounded">npm run scrape-jobs</code> to fetch real job
+                        data
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           <div className="space-y-6">
@@ -146,7 +259,7 @@ export default function JobSearchPage() {
             ))}
           </div>
 
-          {filteredJobs.length === 0 && (
+          {filteredJobs.length === 0 && allJobs.length > 0 && (
             <div className="text-center py-16">
               <div className="bg-gradient-to-br from-gray-100 to-gray-200 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-4">
                 <span className="text-4xl">🔍</span>

@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { useToast } from "@/hooks/use-toast"
-import { Play, RefreshCw, Download, CheckCircle, XCircle, Clock, Building, Database, Calendar } from "lucide-react"
+import { jobDataService } from "@/services/job-data-service"
+import { Play, RefreshCw, CheckCircle, XCircle, Clock, Building, Database, Calendar, AlertTriangle } from "lucide-react"
 
 interface ScrapingResult {
   company: string
@@ -27,38 +28,25 @@ export function JobScraperDashboard() {
   const [isRunning, setIsRunning] = useState(false)
   const [progress, setProgress] = useState(0)
   const [currentSession, setCurrentSession] = useState<ScrapingSession | null>(null)
-  const [lastSession, setLastSession] = useState<ScrapingSession | null>(null)
-  const [scrapedJobs, setScrapedJobs] = useState<any[]>([])
+  const [jobStats, setJobStats] = useState<any>(null)
+  const [metadata, setMetadata] = useState<any>(null)
   const { toast } = useToast()
 
-  // Load last scraping session on component mount
+  // Load job statistics on component mount
   useEffect(() => {
-    loadLastSession()
-    loadScrapedJobs()
+    loadJobStats()
   }, [])
 
-  const loadLastSession = async () => {
+  const loadJobStats = async () => {
     try {
-      // In a real app, this would fetch from your API or file system
-      // For demo, we'll simulate loading saved data
-      const savedSession = localStorage.getItem("lastScrapingSession")
-      if (savedSession) {
-        setLastSession(JSON.parse(savedSession))
-      }
-    } catch (error) {
-      console.error("Error loading last session:", error)
-    }
-  }
+      await jobDataService.loadJobs()
+      const stats = jobDataService.getStats()
+      const meta = jobDataService.getMetadata()
 
-  const loadScrapedJobs = async () => {
-    try {
-      // In a real app, this would load from your scraped jobs file
-      const savedJobs = localStorage.getItem("scrapedJobs")
-      if (savedJobs) {
-        setScrapedJobs(JSON.parse(savedJobs))
-      }
+      setJobStats(stats)
+      setMetadata(meta)
     } catch (error) {
-      console.error("Error loading scraped jobs:", error)
+      console.error("Error loading job stats:", error)
     }
   }
 
@@ -66,119 +54,75 @@ export function JobScraperDashboard() {
     setIsRunning(true)
     setProgress(0)
 
-    const companies = ["Google", "Amazon", "Microsoft", "Cisco"]
-    const session: ScrapingSession = {
-      timestamp: new Date().toISOString(),
-      totalCompanies: companies.length,
-      results: [],
-    }
-
-    setCurrentSession(session)
-
     toast({
       title: "Scraping Started",
-      description: "Beginning to scrape job data from company career pages...",
+      description: "This will trigger the actual job scraper. Check your terminal for progress.",
     })
 
-    // Simulate scraping process
-    for (let i = 0; i < companies.length; i++) {
-      const company = companies[i]
+    try {
+      // In a real implementation, this would trigger the actual scraper
+      // For now, we'll simulate the process and show instructions
 
-      // Update current session with running status
-      session.results.push({
-        company,
-        jobsFound: 0,
-        status: "running",
-        scrapedAt: new Date().toISOString(),
-      })
-      setCurrentSession({ ...session })
-
-      // Simulate scraping delay
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-
-      // Simulate results
-      const jobsFound = Math.floor(Math.random() * 15) + 5
-      const success = Math.random() > 0.1 // 90% success rate
-
-      session.results[i] = {
-        company,
-        jobsFound: success ? jobsFound : 0,
-        status: success ? "success" : "error",
-        error: success ? undefined : "Failed to connect to career page",
-        scrapedAt: new Date().toISOString(),
+      const companies = ["Google", "Amazon", "Microsoft", "Apple", "Meta", "Netflix", "Uber", "Cisco"]
+      const session: ScrapingSession = {
+        timestamp: new Date().toISOString(),
+        totalCompanies: companies.length,
+        results: [],
       }
 
-      setCurrentSession({ ...session })
-      setProgress(((i + 1) / companies.length) * 100)
-    }
+      setCurrentSession(session)
 
-    // Calculate total jobs
-    session.totalJobs = session.results.reduce((sum, result) => sum + result.jobsFound, 0)
+      // Simulate scraping process
+      for (let i = 0; i < companies.length; i++) {
+        const company = companies[i]
 
-    // Save session
-    localStorage.setItem("lastScrapingSession", JSON.stringify(session))
-    setLastSession(session)
-    setCurrentSession(null)
-    setIsRunning(false)
+        session.results.push({
+          company,
+          jobsFound: 0,
+          status: "running",
+          scrapedAt: new Date().toISOString(),
+        })
+        setCurrentSession({ ...session })
 
-    // Generate mock scraped jobs
-    const mockScrapedJobs = generateMockScrapedJobs(session.totalJobs)
-    localStorage.setItem("scrapedJobs", JSON.stringify(mockScrapedJobs))
-    setScrapedJobs(mockScrapedJobs)
+        await new Promise((resolve) => setTimeout(resolve, 1500))
 
-    toast({
-      title: "Scraping Completed!",
-      description: `Successfully scraped ${session.totalJobs} jobs from ${session.results.filter((r) => r.status === "success").length} companies.`,
-    })
-  }
+        // Simulate completion
+        session.results[i] = {
+          company,
+          jobsFound: Math.floor(Math.random() * 25) + 10,
+          status: "success",
+          scrapedAt: new Date().toISOString(),
+        }
 
-  const generateMockScrapedJobs = (totalJobs: number) => {
-    const companies = ["Google", "Amazon", "Microsoft", "Cisco"]
-    const titles = [
-      "Software Engineer",
-      "Product Manager",
-      "Data Scientist",
-      "UX Designer",
-      "DevOps Engineer",
-      "Machine Learning Engineer",
-      "Frontend Developer",
-      "Backend Developer",
-      "Full Stack Developer",
-      "Cloud Architect",
-    ]
+        setCurrentSession({ ...session })
+        setProgress(((i + 1) / companies.length) * 100)
+      }
 
-    return Array.from({ length: totalJobs }, (_, i) => ({
-      id: `scraped-${Date.now()}-${i}`,
-      title: titles[Math.floor(Math.random() * titles.length)],
-      company: companies[Math.floor(Math.random() * companies.length)],
-      location: ["San Francisco, CA", "Seattle, WA", "Remote"][Math.floor(Math.random() * 3)],
-      scrapedAt: new Date().toISOString(),
-      source: "career_page_scraper",
-    }))
-  }
+      session.totalJobs = session.results.reduce((sum, result) => sum + result.jobsFound, 0)
+      setCurrentSession(null)
+      setIsRunning(false)
 
-  const exportData = () => {
-    if (scrapedJobs.length === 0) {
       toast({
-        title: "No Data to Export",
-        description: "Run a scraping session first to generate data.",
+        title: "Scraping Simulation Completed!",
+        description: `To run real scraping, use: npm run scrape-jobs`,
+      })
+
+      // Refresh job stats
+      await loadJobStats()
+    } catch (error) {
+      setIsRunning(false)
+      toast({
+        title: "Scraping Failed",
+        description: "An error occurred during the scraping process.",
         variant: "destructive",
       })
-      return
     }
+  }
 
-    const dataStr = JSON.stringify(scrapedJobs, null, 2)
-    const dataBlob = new Blob([dataStr], { type: "application/json" })
-    const url = URL.createObjectURL(dataBlob)
-    const link = document.createElement("a")
-    link.href = url
-    link.download = `scraped-jobs-${new Date().toISOString().split("T")[0]}.json`
-    link.click()
-    URL.revokeObjectURL(url)
-
+  const triggerRealScraping = () => {
     toast({
-      title: "Data Exported",
-      description: "Scraped job data has been downloaded as JSON file.",
+      title: "Real Scraping Instructions",
+      description: "Run 'npm run scrape-jobs' in your terminal to start real job scraping.",
     })
   }
 
@@ -204,28 +148,53 @@ export function JobScraperDashboard() {
         </div>
         <div className="flex space-x-2">
           <Button
-            onClick={startScraping}
-            disabled={isRunning}
-            className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+            onClick={triggerRealScraping}
+            className="bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700"
           >
+            <Database className="w-4 h-4 mr-2" />
+            Run Real Scraper
+          </Button>
+          <Button onClick={startScraping} disabled={isRunning} variant="outline">
             {isRunning ? (
               <>
                 <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                Scraping...
+                Simulating...
               </>
             ) : (
               <>
                 <Play className="w-4 h-4 mr-2" />
-                Start Scraping
+                Simulate Scraping
               </>
             )}
           </Button>
-          <Button onClick={exportData} variant="outline">
-            <Download className="w-4 h-4 mr-2" />
-            Export Data
-          </Button>
         </div>
       </div>
+
+      {/* Instructions Card */}
+      <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <AlertTriangle className="w-5 h-5 text-blue-600" />
+            <span>Real Scraping Commands</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            <div>
+              <p className="font-medium text-blue-800">One-time scraping:</p>
+              <code className="bg-blue-100 px-2 py-1 rounded text-sm">npm run scrape-jobs</code>
+            </div>
+            <div>
+              <p className="font-medium text-blue-800">Start hourly cron job:</p>
+              <code className="bg-blue-100 px-2 py-1 rounded text-sm">npm run start-cron</code>
+            </div>
+            <div>
+              <p className="font-medium text-blue-800">Build-time merge:</p>
+              <code className="bg-blue-100 px-2 py-1 rounded text-sm">npm run merge-jobs</code>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Progress Bar */}
       {isRunning && (
@@ -270,94 +239,69 @@ export function JobScraperDashboard() {
         </Card>
       )}
 
-      {/* Last Session Results */}
-      {lastSession && (
+      {/* Job Statistics */}
+      {jobStats && (
         <div className="grid gap-6 md:grid-cols-2">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Database className="w-5 h-5 text-green-600" />
-                <span>Last Scraping Session</span>
+                <span>Current Job Data</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <p className="text-gray-600">Total Jobs Found</p>
-                    <p className="text-2xl font-bold text-green-600">{lastSession.totalJobs || 0}</p>
+                    <p className="text-gray-600">Total Jobs</p>
+                    <p className="text-2xl font-bold text-green-600">{jobStats.totalJobs}</p>
                   </div>
                   <div>
-                    <p className="text-gray-600">Companies Scraped</p>
-                    <p className="text-2xl font-bold text-blue-600">
-                      {lastSession.results.filter((r) => r.status === "success").length}/{lastSession.totalCompanies}
-                    </p>
+                    <p className="text-gray-600">Companies</p>
+                    <p className="text-2xl font-bold text-blue-600">{Object.keys(jobStats.companies || {}).length}</p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-2 text-sm text-gray-600">
-                  <Calendar className="w-4 h-4" />
-                  <span>Last run: {new Date(lastSession.timestamp).toLocaleString()}</span>
-                </div>
+                {jobStats.lastUpdated && (
+                  <div className="flex items-center space-x-2 text-sm text-gray-600">
+                    <Calendar className="w-4 h-4" />
+                    <span>Last updated: {new Date(jobStats.lastUpdated).toLocaleString()}</span>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle>Company Results</CardTitle>
+              <CardTitle>Company Breakdown</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {lastSession.results.map((result) => (
-                  <div key={result.company} className="flex items-center justify-between p-2 border rounded">
+              <div className="space-y-3 max-h-60 overflow-y-auto">
+                {Object.entries(jobStats.companies || {}).map(([company, stats]: [string, any]) => (
+                  <div key={company} className="flex items-center justify-between p-2 border rounded">
                     <div className="flex items-center space-x-2">
-                      {getStatusIcon(result.status)}
-                      <span className="font-medium">{result.company}</span>
+                      <Building className="w-4 h-4 text-gray-500" />
+                      <span className="font-medium capitalize">{company}</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      {result.status === "success" ? (
-                        <Badge variant="secondary" className="bg-green-100 text-green-800">
-                          {result.jobsFound} jobs
+                      <Badge variant="secondary" className="bg-green-100 text-green-800">
+                        {stats.active || 0} active
+                      </Badge>
+                      {stats.expired > 0 && (
+                        <Badge variant="outline" className="text-gray-600">
+                          {stats.expired} expired
                         </Badge>
-                      ) : (
-                        <Badge variant="destructive">Failed</Badge>
                       )}
                     </div>
                   </div>
                 ))}
+                {Object.keys(jobStats.companies || {}).length === 0 && (
+                  <p className="text-center text-gray-500 text-sm">No company data available</p>
+                )}
               </div>
             </CardContent>
           </Card>
         </div>
-      )}
-
-      {/* Scraped Jobs Preview */}
-      {scrapedJobs.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Recently Scraped Jobs ({scrapedJobs.length})</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2 max-h-60 overflow-y-auto">
-              {scrapedJobs.slice(0, 10).map((job) => (
-                <div key={job.id} className="flex items-center justify-between p-2 border rounded text-sm">
-                  <div>
-                    <p className="font-medium">{job.title}</p>
-                    <p className="text-gray-600">
-                      {job.company} • {job.location}
-                    </p>
-                  </div>
-                  <Badge variant="outline" className="text-xs">
-                    {new Date(job.scrapedAt).toLocaleDateString()}
-                  </Badge>
-                </div>
-              ))}
-              {scrapedJobs.length > 10 && (
-                <p className="text-center text-gray-500 text-sm">... and {scrapedJobs.length - 10} more jobs</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
       )}
     </div>
   )
