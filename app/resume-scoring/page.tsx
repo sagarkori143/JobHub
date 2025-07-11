@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+
 import { useState, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -8,9 +9,11 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
-import { FileText, CheckCircle, AlertCircle, XCircle, Sparkles, Loader2, Upload } from "lucide-react"
+import { FileText, CheckCircle, AlertCircle, XCircle, Sparkles, Loader2, Upload, ChevronDown } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import * as pdfjs from "pdfjs-dist"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { mockJobs } from "@/data/mock-jobs" // Assuming mockJobs is suitable for client-side use
 
 // Set up PDF.js worker path
 pdfjs.GlobalWorkerOptions.workerSrc = `/pdf.worker.min.js`
@@ -31,7 +34,7 @@ export default function ResumeScoringPage() {
   const [jobDescription, setJobDescription] = useState("")
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [result, setResult] = useState<ATSResult | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const resumeFileInputRef = useRef<HTMLInputElement>(null)
 
   const extractTextFromPdf = async (file: File): Promise<string> => {
     const arrayBuffer = await file.arrayBuffer()
@@ -48,10 +51,11 @@ export default function ResumeScoringPage() {
   const handleResumeUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
+      setResumeFile(file)
+      setResumeText("") // Clear text if file is uploaded
+      setResult(null)
+
       if (file.type === "application/pdf") {
-        setResumeFile(file)
-        setResumeText("") // Clear text if file is uploaded
-        setResult(null)
         try {
           setIsAnalyzing(true) // Indicate that PDF parsing is happening
           const extractedText = await extractTextFromPdf(file)
@@ -76,8 +80,10 @@ export default function ResumeScoringPage() {
         const reader = new FileReader()
         reader.onload = (e) => {
           setResumeText(e.target?.result as string)
-          setResumeFile(file)
-          setResult(null)
+          toast({
+            title: "Text File Loaded",
+            description: "Content extracted from your text file.",
+          })
         }
         reader.readAsText(file)
       } else {
@@ -90,6 +96,14 @@ export default function ResumeScoringPage() {
         setResumeText("")
       }
     }
+  }
+
+  const handleJobSelect = (jobDescription: string) => {
+    setJobDescription(jobDescription)
+    toast({
+      title: "Job Description Selected",
+      description: "The job description has been loaded into the text area.",
+    })
   }
 
   const analyzeResume = async () => {
@@ -117,8 +131,8 @@ export default function ResumeScoringPage() {
       })
 
       if (!response.ok) {
-        const errorText = await response.text() // Read as text to avoid JSON parsing errors
-        throw new Error(errorText || "Failed to fetch ATS score.")
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to fetch ATS score.")
       }
 
       const data: ATSResult = await response.json()
@@ -195,9 +209,9 @@ export default function ResumeScoringPage() {
                   accept=".pdf,.txt"
                   onChange={handleResumeUpload}
                   className="hidden" // Hide the default input
-                  ref={fileInputRef}
+                  ref={resumeFileInputRef}
                 />
-                <Button onClick={() => fileInputRef.current?.click()} className="w-full mt-1" variant="outline">
+                <Button onClick={() => resumeFileInputRef.current?.click()} className="w-full mt-1" variant="outline">
                   <Upload className="mr-2 h-4 w-4" />
                   {resumeFile ? resumeFile.name : "Choose File"}
                 </Button>
@@ -221,6 +235,24 @@ export default function ResumeScoringPage() {
                 rows={10}
                 className="mt-1 min-h-[150px]"
               />
+              <div className="flex items-center justify-center text-gray-500 my-2">
+                <span className="mx-2">OR</span>
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="w-full bg-transparent">
+                    Select from Available Jobs
+                    <ChevronDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-[--radix-popper-anchor-width] max-h-60 overflow-y-auto">
+                  {mockJobs.map((job) => (
+                    <DropdownMenuItem key={job.id} onSelect={() => handleJobSelect(job.description)}>
+                      {job.title} ({job.company})
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 
