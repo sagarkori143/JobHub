@@ -1,304 +1,104 @@
-"use client"
+import { google } from "@ai-sdk/google"
+import { generateText } from "ai"
+import { NextResponse } from "next/server"
 
-import type React from "react"
-
-import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Progress } from "@/components/ui/progress"
-import { Badge } from "@/components/ui/badge"
-import { FileText, CheckCircle, AlertCircle, XCircle, Sparkles, Loader2 } from "lucide-react"
-import { toast } from "@/hooks/use-toast"
-
-interface ATSResult {
-  score: number
-  strengths: string[]
-  improvements: string[]
-  keywords: {
-    found: string[]
-    missing: string[]
+async function retryGenerateText(model: any, prompt: string, maxAttempts = 3, delayMs = 2000) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await generateText({ model, prompt })
+    } catch (error: any) {
+      console.warn(`⚠️ Attempt ${attempt} failed: ${error.message}`)
+      if (attempt === maxAttempts) throw error
+      await new Promise(res => setTimeout(res, delayMs * attempt)) // Exponential backoff
+    }
   }
 }
 
-export default function ResumeScoringPage() {
-  const [resumeFile, setResumeFile] = useState<File | null>(null)
-  const [resumeText, setResumeText] = useState("") // Added for direct text input
-  const [jobDescription, setJobDescription] = useState("")
-  const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [result, setResult] = useState<ATSResult | null>(null)
+export async function POST(req: Request) {
+  try {
+    const { resumeText, jobDescription } = await req.json()
 
-  const handleResumeUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file && file.type === "application/pdf") {
-      setResumeFile(file)
-      setResumeText("") // Clear text if file is uploaded
-      setResult(null)
+    if (!resumeText || !jobDescription) {
+      return NextResponse.json(
+        { error: "Resume text and job description are required." },
+        { status: 400 }
+      )
     }
+
+    const apiKey =
+      process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY
+
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: "Google Generative AI API key is missing." },
+        { status: 500 }
+      )
+    }
+
+    const prompt = `
+You are an expert ATS (Applicant Tracking System) and resume analyst.
+Your task is to analyze a given resume against a job description and provide a compatibility score (out of 100),
+identify strengths, areas for improvement, and list keywords found and missing.
+
+Resume:
+${resumeText}
+
+Job Description:
+${jobDescription}
+
+Provide your analysis in a JSON format with the following structure:
+{
+  "score": number,
+  "strengths": string[],
+  "improvements": string[],
+  "keywords": {
+    "found": string[],
+    "missing": string[]
   }
+}
+Ensure all arrays are populated, even if empty.
+    `
 
-  const analyzeResume = async () => {
-    const contentToAnalyze = resumeText || (resumeFile ? "FILE_UPLOADED" : "")
-    if (!contentToAnalyze || !jobDescription.trim()) {
-      toast({
-        title: "Missing Information",
-        description: "Please provide either resume text/file and job description.",
-        variant: "destructive",
-      })
-      return
+    let text: string = ""
+
+    // Try flash model first
+    try {
+      const model = google("models/gemini-1.5-flash-latest", { apiKey })
+      const result = await retryGenerateText(model, prompt)
+      text = result.text
+    } catch (e1) {
+      console.warn("⚠️ Flash model failed, trying Pro model instead...")
+      const fallbackModel = google("models/gemini-1.5-pro-latest", { apiKey })
+      const result = await retryGenerateText(fallbackModel, prompt)
+      text = result.text
     }
 
-    setIsAnalyzing(true)
-    setResult(null)
+    // Clean markdown-style response if any
+    let cleanedText = text.trim()
+    if (cleanedText.startsWith("```json")) {
+      cleanedText = cleanedText.slice(7, -3).trim()
+    } else if (cleanedText.startsWith("```")) {
+      cleanedText = cleanedText.slice(3, -3).trim()
+    }
 
     try {
-      const response = await fetch("/api/score-resume", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          resumeText: resumeText || "Resume content from uploaded PDF (parsing not implemented in this demo)",
-          jobDescription,
-        }),
-      })
-
-      let payload: any
-      const isJson = response.headers.get("content-type")?.toLowerCase().includes("application/json")
-
-      if (isJson) {
-        payload = await response.json()
-      } else {
-        payload = { error: await response.text() }
-      }
-
-      if (!response.ok) {
-        throw new Error(payload.error || "Server returned an error.")
-      }
-
-      setResult(payload as ATSResult)
-      toast({
-        title: "Resume Scored!",
-        description: `Your resume scored ${(payload as ATSResult).score}%.`,
-      })
-    } catch (err: any) {
-      console.error("Error scoring resume:", err)
-      toast({
-        title: "Error",
-        description: err.message || "Failed to score resume. Please try again.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsAnalyzing(false)
+      const parsed = JSON.parse(cleanedText)
+      return NextResponse.json(parsed)
+    } catch (parseError) {
+      console.error("❌ Failed to parse Gemini response:", cleanedText)
+      return NextResponse.json(
+        {
+          error: "Gemini did not return valid JSON.",
+          rawResponse: cleanedText,
+        },
+        { status: 502 }
+      )
     }
+  } catch (error: any) {
+    console.error("❌ Resume scoring failed:", error)
+    return NextResponse.json(
+      { error: error.message || "Internal server error" },
+      { status: 500 }
+    )
   }
-
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return "text-green-600"
-    if (score >= 60) return "text-yellow-600"
-    return "text-red-600"
-  }
-
-  const getScoreIcon = (score: number) => {
-    if (score >= 80) return <CheckCircle className="w-6 h-6 text-green-600" />
-    if (score >= 60) return <AlertCircle className="w-6 h-6 text-yellow-600" />
-    return <XCircle className="w-6 h-6 text-red-600" />
-  }
-
-  return (
-    <div className="space-y-8 p-4 md:p-0">
-      <div>
-        <h1 className="text-2xl md:text-3xl font-bold mb-2">AI Resume ATS Scoring</h1>
-        <p className="text-gray-600 text-base md:text-lg">
-          Upload or paste your resume and a job description to get an AI-powered compatibility score and optimization
-          suggestions.
-        </p>
-      </div>
-
-      {/* Input Section: Resume & Job Description in a single horizontal card */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Your Resume & Job Description</CardTitle>
-          <CardDescription>Provide your resume content and the job description for analysis.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
-            {/* Resume Input */}
-            <div>
-              <Label htmlFor="resume-text">Resume Text (or upload PDF below)</Label>
-              <Textarea
-                id="resume-text"
-                placeholder="Paste your resume text here..."
-                value={resumeText}
-                onChange={(e) => {
-                  setResumeText(e.target.value)
-                  setResumeFile(null) // Clear file if text is entered
-                }}
-                rows={10}
-                className="mt-1 min-h-[150px]"
-              />
-              <div className="flex items-center justify-center text-gray-500 my-2">
-                <span className="mx-2">OR</span>
-              </div>
-              <div>
-                <Label htmlFor="resume-file">Upload Resume (PDF)</Label>
-                <Input id="resume-file" type="file" accept=".pdf" onChange={handleResumeUpload} className="mt-1" />
-                {resumeFile && (
-                  <div className="flex items-center space-x-2 mt-2 text-sm text-gray-600">
-                    <FileText className="w-4 h-4" />
-                    <span>{resumeFile.name}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Job Description Input */}
-            <div>
-              <Label htmlFor="jobDescription">Job Description</Label>
-              <Textarea
-                id="jobDescription"
-                placeholder="Paste the job description here..."
-                value={jobDescription}
-                onChange={(e) => setJobDescription(e.target.value)}
-                rows={10}
-                className="mt-1 min-h-[150px]"
-              />
-            </div>
-          </div>
-
-          <Button
-            onClick={analyzeResume}
-            disabled={(!resumeText && !resumeFile) || !jobDescription.trim() || isAnalyzing}
-            className="w-full"
-          >
-            {isAnalyzing ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Analyzing Resume...
-              </>
-            ) : (
-              <>
-                <Sparkles className="mr-2 h-4 w-4" />
-                Analyze Resume
-              </>
-            )}
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* Results Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>ATS Analysis Results</CardTitle>
-          <CardDescription>Detailed insights from the AI analysis.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {!result && !isAnalyzing && (
-            <div className="text-center py-8 text-gray-500">
-              Provide your resume and job description to see AI-powered results.
-            </div>
-          )}
-
-          {isAnalyzing && (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Analyzing your resume with Gemini...</p>
-            </div>
-          )}
-
-          {result && (
-            <div className="space-y-6">
-              {/* Score */}
-              <div className="text-center">
-                <div className="flex items-center justify-center space-x-2 mb-2">
-                  {getScoreIcon(result.score)}
-                  <span className={`text-3xl font-bold ${getScoreColor(result.score)}`}>{result.score}%</span>
-                </div>
-                <Progress value={result.score} className="w-full" />
-                <p className="text-sm text-gray-600 mt-2">ATS Compatibility Score</p>
-              </div>
-
-              {/* Keywords */}
-              <div>
-                <h3 className="font-semibold mb-3">Keyword Analysis</h3>
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-sm font-medium text-green-600 mb-2">Found Keywords</p>
-                    <div className="flex flex-wrap gap-1">
-                      {result.keywords.found.length > 0 ? (
-                        result.keywords.found.map((keyword) => (
-                          <Badge key={keyword} variant="secondary" className="bg-green-100 text-green-800">
-                            {keyword}
-                          </Badge>
-                        ))
-                      ) : (
-                        <span className="text-sm text-gray-500">No specific keywords found.</span>
-                      )}
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-red-600 mb-2">Missing Keywords</p>
-                    <div className="flex flex-wrap gap-1">
-                      {result.keywords.missing.length > 0 ? (
-                        result.keywords.missing.map((keyword) => (
-                          <Badge key={keyword} variant="secondary" className="bg-red-100 text-red-800">
-                            {keyword}
-                          </Badge>
-                        ))
-                      ) : (
-                        <span className="text-sm text-gray-500">All key terms seem to be present!</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-      {/* Detailed Results */}
-      {result && (
-        <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-green-600">Strengths</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2">
-                {result.strengths.length > 0 ? (
-                  result.strengths.map((strength, index) => (
-                    <li key={index} className="flex items-start space-x-2">
-                      <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                      <span className="text-sm">{strength}</span>
-                    </li>
-                  ))
-                ) : (
-                  <span className="text-sm text-gray-500">No specific strengths identified.</span>
-                )}
-              </ul>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-orange-600">Areas for Improvement</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2">
-                {result.improvements.length > 0 ? (
-                  result.improvements.map((improvement, index) => (
-                    <li key={index} className="flex items-start space-x-2">
-                      <AlertCircle className="w-4 h-4 text-orange-600 mt-0.5 flex-shrink-0" />
-                      <span className="text-sm">{improvement}</span>
-                    </li>
-                  ))
-                ) : (
-                  <span className="text-sm text-gray-500">No specific improvements suggested.</span>
-                )}
-              </ul>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-    </div>
-  )
 }
