@@ -31,7 +31,7 @@ async function loadPdfJs(): Promise<any> {
 
   await new Promise<void>((resolve, reject) => {
     const script = document.createElement("script")
-    script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.js"
+    script.src = "/pdf.min.js"
     script.onload = () => resolve()
     script.onerror = () => reject(new Error("Failed to load PDF.js"))
     document.head.appendChild(script)
