@@ -80,15 +80,18 @@ export default function ResumeScoringPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 p-4 md:p-0">
+      {" "}
+      {/* Added responsive padding */}
       <div>
-        <h1 className="text-3xl font-bold mb-2">Resume ATS Scoring</h1>
-        <p className="text-gray-600">
+        <h1 className="text-2xl md:text-3xl font-bold mb-2">Resume ATS Scoring</h1>
+        <p className="text-gray-600 text-base md:text-lg">
           Upload your resume and job description to get an ATS compatibility score and optimization suggestions.
         </p>
       </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+        {" "}
+        {/* Made responsive */}
         {/* Upload Section */}
         <Card>
           <CardHeader>
@@ -137,7 +140,6 @@ export default function ResumeScoringPage() {
             </Button>
           </CardContent>
         </Card>
-
         {/* Results Section */}
         <Card>
           <CardHeader>
@@ -200,10 +202,11 @@ export default function ResumeScoringPage() {
           </CardContent>
         </Card>
       </div>
-
       {/* Detailed Results */}
       {result && (
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+          {" "}
+          {/* Made responsive */}
           <Card>
             <CardHeader>
               <CardTitle className="text-green-600">Strengths</CardTitle>
@@ -219,7 +222,6 @@ export default function ResumeScoringPage() {
               </ul>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader>
               <CardTitle className="text-orange-600">Areas for Improvement</CardTitle>

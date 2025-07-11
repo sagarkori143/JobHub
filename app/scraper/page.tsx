@@ -15,19 +15,21 @@ export default function ScraperPage() {
   if (!isAuthenticated) {
     return (
       <>
-        <div className="min-h-screen bg-gradient-to-br from-blue-50/30 via-white to-purple-50/30 flex items-center justify-center">
-          <div className="text-center space-y-6 max-w-md mx-auto p-8">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50/30 via-white to-purple-50/30 flex items-center justify-center p-4">
+          {" "}
+          {/* Added responsive padding */}
+          <div className="text-center space-y-6 max-w-md mx-auto p-4 sm:p-8">
+            {" "}
+            {/* Added responsive padding */}
             <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto">
               <Database className="w-12 h-12 text-blue-600" />
             </div>
-
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+              <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
                 Job Scraper Dashboard
               </h1>
-              <p className="text-gray-600 text-lg">Sign in to access the job scraping tools</p>
+              <p className="text-gray-600 text-base sm:text-lg">Sign in to access the job scraping tools</p>
             </div>
-
             <Card className="bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200">
               <CardContent className="p-6">
                 <div className="flex items-center space-x-2 mb-3">
@@ -43,7 +45,6 @@ export default function ScraperPage() {
                 </ul>
               </CardContent>
             </Card>
-
             <Button
               onClick={() => setIsLoginModalOpen(true)}
               className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg"
@@ -51,7 +52,6 @@ export default function ScraperPage() {
             >
               Sign In to Continue
             </Button>
-
             <div className="text-sm text-gray-500">Demo account: sagar@gmail.com / sagarkori</div>
           </div>
         </div>
@@ -62,7 +62,9 @@ export default function ScraperPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50/30 via-white to-purple-50/30 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50/30 via-white to-purple-50/30 p-4 md:p-8">
+      {" "}
+      {/* Adjusted responsive padding */}
       <JobScraperDashboard />
     </div>
   )

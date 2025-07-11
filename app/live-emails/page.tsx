@@ -101,19 +101,24 @@ export default function LiveEmailsPage() {
   )
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50/30 via-white to-purple-50/30 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50/30 via-white to-purple-50/30 p-4 md:p-8">
+      {" "}
+      {/* Adjusted responsive padding */}
       <div className="space-y-6">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
               Live Email Alerts
             </h1>
-            <p className="text-gray-600">Monitor the status of job alert emails being sent to subscribers.</p>
+            <p className="text-gray-600 text-base md:text-lg">
+              Monitor the status of job alert emails being sent to subscribers.
+            </p>
           </div>
           <Button
             onClick={handleClearAll}
             variant="outline"
             disabled={!isSendingActive && sent.length === 0 && failed.length === 0}
+            className="mt-4 sm:mt-0 bg-transparent"
           >
             <RefreshCw className="w-4 h-4 mr-2" />
             Clear All
@@ -122,8 +127,8 @@ export default function LiveEmailsPage() {
 
         {/* Information Card */}
         <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
-          <CardContent className="p-4 flex items-center space-x-3">
-            <Info className="w-5 h-5 text-blue-600" />
+          <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
+            <Info className="w-5 h-5 text-blue-600 flex-shrink-0" />
             <div>
               <p className="font-medium text-blue-800">Email alerts are triggered by backend processes.</p>
               <p className="text-sm text-blue-700">
@@ -134,7 +139,9 @@ export default function LiveEmailsPage() {
           </CardContent>
         </Card>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          {" "}
+          {/* Made responsive */}
           <Card className="bg-gray-50 border-gray-200">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2 text-gray-700">
@@ -150,7 +157,6 @@ export default function LiveEmailsPage() {
               )}
             </CardContent>
           </Card>
-
           <Card className="bg-yellow-50 border-yellow-200">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2 text-yellow-700">
@@ -166,7 +172,6 @@ export default function LiveEmailsPage() {
               )}
             </CardContent>
           </Card>
-
           <Card className="bg-green-50 border-green-200">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2 text-green-700">
@@ -182,7 +187,6 @@ export default function LiveEmailsPage() {
               )}
             </CardContent>
           </Card>
-
           <Card className="bg-red-50 border-red-200">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2 text-red-700">

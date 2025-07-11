@@ -141,7 +141,7 @@ export default function JobSearchPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50/30 via-white to-purple-50/30 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50/30 via-white to-purple-50/30 flex items-center justify-center p-4">
         <div className="text-center space-y-4">
           <RefreshCw className="w-12 h-12 animate-spin text-blue-600 mx-auto" />
           <h2 className="text-xl font-semibold">Loading Jobs...</h2>
@@ -153,10 +153,10 @@ export default function JobSearchPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50/30 via-white to-purple-50/30">
-      <div className="flex gap-6">
+      <div className="flex flex-col lg:flex-row gap-6">
         {/* Filters Sidebar */}
-        <div className="w-80 flex-shrink-0">
-          <div className="sticky top-6">
+        <div className="w-full lg:w-80 flex-shrink-0">
+          <div className="lg:sticky lg:top-6">
             <JobFilters filters={filters} onFiltersChange={setFilters} />
           </div>
         </div>
@@ -164,12 +164,12 @@ export default function JobSearchPage() {
         {/* Job Listings */}
         <div className="flex-1">
           <div className="mb-6">
-            <div className="flex justify-between items-start mb-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
               <div>
-                <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                <h1 className="text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                   Find Your Dream Job
                 </h1>
-                <p className="text-gray-600 text-lg">
+                <p className="text-gray-600 text-base md:text-lg">
                   {filteredJobs.length} job{filteredJobs.length !== 1 ? "s" : ""} found
                   {currentPage > 1 && ` • Page ${currentPage} of ${totalPages}`}
                 </p>
@@ -217,7 +217,7 @@ export default function JobSearchPage() {
           </div>
 
           {filteredJobs.length === 0 && allJobs.length > 0 && (
-            <div className="text-center py-16">
+            <div className="text-center py-16 px-4">
               <div className="bg-gradient-to-br from-gray-100 to-gray-200 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-4">
                 <span className="text-4xl">🔍</span>
               </div>

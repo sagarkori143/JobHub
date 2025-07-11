@@ -95,26 +95,32 @@ export function JobPreferencesModal({ isOpen, onClose }: JobPreferencesModalProp
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-[95vw] md:max-w-2xl max-h-[95vh] overflow-y-auto">
+        {" "}
+        {/* Made responsive */}
         <DialogHeader>
-          <DialogTitle className="flex items-center space-x-2">
+          <DialogTitle className="flex items-center space-x-2 text-xl">
+            {" "}
+            {/* Adjusted font size */}
             <Bell className="w-5 h-5 text-blue-600" />
             <span>Job Notification Preferences</span>
           </DialogTitle>
         </DialogHeader>
-
         <div className="space-y-6">
           {/* Keywords Section */}
           <div>
             <Label className="text-base font-semibold">Keywords & Skills</Label>
             <p className="text-sm text-gray-600 mb-3">Add keywords to get notified about relevant jobs</p>
 
-            <div className="flex space-x-2 mb-3">
+            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mb-3">
+              {" "}
+              {/* Made responsive */}
               <Input
                 placeholder="e.g., React, Python, Marketing"
                 value={newKeyword}
                 onChange={(e) => setNewKeyword(e.target.value)}
                 onKeyPress={(e) => e.key === "Enter" && addKeyword()}
+                className="flex-1"
               />
               <Button onClick={addKeyword} size="sm">
                 <Plus className="w-4 h-4" />
@@ -138,7 +144,9 @@ export function JobPreferencesModal({ isOpen, onClose }: JobPreferencesModalProp
           {/* Industries */}
           <div>
             <Label className="text-base font-semibold">Industries</Label>
-            <div className="grid grid-cols-2 gap-2 mt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+              {" "}
+              {/* Made responsive */}
               {availableIndustries.map((industry) => (
                 <div key={industry} className="flex items-center space-x-2">
                   <Checkbox
@@ -159,12 +167,15 @@ export function JobPreferencesModal({ isOpen, onClose }: JobPreferencesModalProp
             <Label className="text-base font-semibold">Preferred Locations</Label>
             <p className="text-sm text-gray-600 mb-3">Add cities or "Remote" for remote work</p>
 
-            <div className="flex space-x-2 mb-3">
+            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mb-3">
+              {" "}
+              {/* Made responsive */}
               <Input
                 placeholder="e.g., San Francisco, Remote, New York"
                 value={newLocation}
                 onChange={(e) => setNewLocation(e.target.value)}
                 onKeyPress={(e) => e.key === "Enter" && addLocation()}
+                className="flex-1"
               />
               <Button onClick={addLocation} size="sm">
                 <Plus className="w-4 h-4" />
@@ -188,7 +199,9 @@ export function JobPreferencesModal({ isOpen, onClose }: JobPreferencesModalProp
           {/* Job Types */}
           <div>
             <Label className="text-base font-semibold">Job Types</Label>
-            <div className="grid grid-cols-2 gap-2 mt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+              {" "}
+              {/* Made responsive */}
               {availableJobTypes.map((type) => (
                 <div key={type} className="flex items-center space-x-2">
                   <Checkbox
@@ -207,7 +220,9 @@ export function JobPreferencesModal({ isOpen, onClose }: JobPreferencesModalProp
           {/* Experience Levels */}
           <div>
             <Label className="text-base font-semibold">Experience Levels</Label>
-            <div className="grid grid-cols-2 gap-2 mt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+              {" "}
+              {/* Made responsive */}
               {availableExperienceLevels.map((level) => (
                 <div key={level} className="flex items-center space-x-2">
                   <Checkbox
@@ -316,7 +331,9 @@ export function JobPreferencesModal({ isOpen, onClose }: JobPreferencesModalProp
           </div>
 
           {/* Action Buttons */}
-          <div className="flex space-x-3 pt-4">
+          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 pt-4">
+            {" "}
+            {/* Made responsive */}
             <Button onClick={handleSave} className="flex-1">
               Save Preferences
             </Button>

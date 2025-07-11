@@ -116,19 +116,23 @@ export default function PersonalDashboard() {
   if (!isAuthenticated) {
     return (
       <>
-        <div className="min-h-screen bg-gradient-to-br from-purple-50/30 via-white to-pink-50/30 flex items-center justify-center">
-          <div className="text-center space-y-6 max-w-md mx-auto p-8">
+        <div className="min-h-screen bg-gradient-to-br from-purple-50/30 via-white to-pink-50/30 flex items-center justify-center p-4">
+          {" "}
+          {/* Added responsive padding */}
+          <div className="text-center space-y-6 max-w-md mx-auto p-4 sm:p-8">
+            {" "}
+            {/* Added responsive padding */}
             <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto">
               <User className="w-12 h-12 text-blue-600" />
             </div>
-
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
+              <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
                 Personal Dashboard
               </h1>
-              <p className="text-gray-600 text-lg">Sign in to access your job applications and track your progress</p>
+              <p className="text-gray-600 text-base sm:text-lg">
+                Sign in to access your job applications and track your progress
+              </p>
             </div>
-
             <div className="space-y-4">
               <Button
                 onClick={() => setIsLoginModalOpen(true)}
@@ -139,9 +143,8 @@ export default function PersonalDashboard() {
                 Sign In to Continue
               </Button>
 
-              <div className="text-sm text-gray-500">Demo account: sagar@gmail.com / sagarkori</div>
+              <div className="text-sm text-gray-500">Demo credentials: sagar@gmail.com / sagarkori</div>
             </div>
-
             <Card className="bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200">
               <CardContent className="p-6">
                 <h3 className="font-semibold text-blue-800 mb-2">What you'll get access to:</h3>
@@ -202,22 +205,26 @@ export default function PersonalDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50/30 via-white to-pink-50/30 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50/30 via-white to-pink-50/30 p-4 md:p-8">
+      {" "}
+      {/* Adjusted responsive padding */}
       <div className="space-y-8">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
           <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+            <h1 className="text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
               Hello, {user?.name || "Guest"}! 👋
             </h1>
-            <p className="text-gray-600 text-lg mt-2">Welcome back to your job application dashboard</p>
+            <p className="text-gray-600 text-base md:text-lg mt-2">Welcome back to your job application dashboard</p>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg">
+              <Button className="mt-4 sm:mt-0 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg">
                 <PlusCircle className="mr-2 h-4 w-4" /> New Job Application
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="sm:max-w-[425px]">
+              {" "}
+              {/* Adjusted for responsiveness */}
               <DialogHeader>
                 <DialogTitle>Add New Job Application</DialogTitle>
               </DialogHeader>
@@ -226,7 +233,9 @@ export default function PersonalDashboard() {
           </Dialog>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+          {" "}
+          {/* Made responsive */}
           <Card className="bg-gradient-to-br from-blue-100 to-blue-200 border-blue-300 shadow-lg">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-blue-800">Total Applications</CardTitle>
@@ -263,8 +272,10 @@ export default function PersonalDashboard() {
           </Card>
         </div>
 
-        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 auto-rows-auto">
-          <div className={`space-y-4 ${appliedJobs.length > 5 ? "sm:col-span-2 lg:col-span-2" : ""}`}>
+        <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4 auto-rows-auto">
+          {" "}
+          {/* Made responsive */}
+          <div className={`space-y-4 ${appliedJobs.length > 5 ? "md:col-span-2 lg:col-span-2" : ""}`}>
             <h2 className="text-xl font-semibold mb-4 text-blue-600">Applied Jobs ({appliedJobs.length})</h2>
             {appliedJobs.map((job) => (
               <JobCard
@@ -277,7 +288,7 @@ export default function PersonalDashboard() {
               />
             ))}
           </div>
-          <div className={`space-y-4 ${interviewingJobs.length > 5 ? "sm:col-span-2 lg:col-span-2" : ""}`}>
+          <div className={`space-y-4 ${interviewingJobs.length > 5 ? "md:col-span-2 lg:col-span-2" : ""}`}>
             <h2 className="text-xl font-semibold mb-4 text-yellow-600">Interviewing ({interviewingJobs.length})</h2>
             {interviewingJobs.map((job) => (
               <JobCard
@@ -290,7 +301,7 @@ export default function PersonalDashboard() {
               />
             ))}
           </div>
-          <div className={`space-y-4 ${offerJobs.length > 5 ? "sm:col-span-2 lg:col-span-2" : ""}`}>
+          <div className={`space-y-4 ${offerJobs.length > 5 ? "md:col-span-2 lg:col-span-2" : ""}`}>
             <h2 className="text-xl font-semibold mb-4 text-green-600">Offers ({offerJobs.length})</h2>
             {offerJobs.map((job) => (
               <JobCard
@@ -303,7 +314,7 @@ export default function PersonalDashboard() {
               />
             ))}
           </div>
-          <div className={`space-y-4 ${rejectedJobs.length > 5 ? "sm:col-span-2 lg:col-span-2" : ""}`}>
+          <div className={`space-y-4 ${rejectedJobs.length > 5 ? "md:col-span-2 lg:col-span-2" : ""}`}>
             <h2 className="text-xl font-semibold mb-4 text-red-600">Rejected ({rejectedJobs.length})</h2>
             {rejectedJobs.map((job) => (
               <JobCard
@@ -319,7 +330,9 @@ export default function PersonalDashboard() {
         </div>
 
         <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-          <DialogContent>
+          <DialogContent className="sm:max-w-[425px]">
+            {" "}
+            {/* Adjusted for responsiveness */}
             <DialogHeader>
               <DialogTitle>Confirm Deletion</DialogTitle>
             </DialogHeader>
