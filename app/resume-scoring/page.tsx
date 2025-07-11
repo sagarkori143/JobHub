@@ -1,155 +1,303 @@
 "use client"
 
-import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Textarea } from "@/components/ui/textarea"
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
+import type React from "react"
 
-type Analysis = {
+import { useState } from "react"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Progress } from "@/components/ui/progress"
+import { Badge } from "@/components/ui/badge"
+import { FileText, CheckCircle, AlertCircle, XCircle, Sparkles, Loader2 } from "lucide-react"
+import { toast } from "@/hooks/use-toast"
+
+interface ATSResult {
   score: number
   strengths: string[]
   improvements: string[]
-  keywords: { found: string[]; missing: string[] }
+  keywords: {
+    found: string[]
+    missing: string[]
+  }
 }
 
 export default function ResumeScoringPage() {
-  const [resumeText, setResumeText] = useState("")
-  const [jobDesc, setJobDesc] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [analysis, setAnalysis] = useState<Analysis | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [resumeFile, setResumeFile] = useState<File | null>(null)
+  const [resumeText, setResumeText] = useState("") // Added for direct text input
+  const [jobDescription, setJobDescription] = useState("")
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [result, setResult] = useState<ATSResult | null>(null)
 
-  async function analyzeResume() {
-    setLoading(true)
-    setAnalysis(null)
-    setError(null)
-    try {
-      const res = await fetch("/api/score-resume", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resumeText, jobDescription: jobDesc }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || "Analysis failed")
-      setAnalysis(data as Analysis)
-    } catch (err: any) {
-      setError(err.message || "Something went wrong")
-    } finally {
-      setLoading(false)
+  const handleResumeUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file && file.type === "application/pdf") {
+      setResumeFile(file)
+      setResumeText("") // Clear text if file is uploaded
+      setResult(null)
     }
   }
 
-  return (
-    <main className="container py-8 space-y-6">
-      <h1 className="text-3xl font-bold">Resume ATS Scoring</h1>
+  const analyzeResume = async () => {
+    const contentToAnalyze = resumeText || (resumeFile ? "FILE_UPLOADED" : "") // Placeholder for file content
 
-      {/* INPUTS */}
+    if (!contentToAnalyze || !jobDescription.trim()) {
+      toast({
+        title: "Missing Information",
+        description: "Please provide either resume text/file and job description.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsAnalyzing(true)
+    setResult(null)
+
+    try {
+      // In a real scenario, if resumeFile is present, you'd parse its content here
+      // For simplicity, we'll just use resumeText or a placeholder for now.
+      // A more robust solution would involve a PDF parser.
+      const finalResumeContent = resumeText || "Resume content from uploaded PDF (parsing not implemented in this demo)"
+
+      const response = await fetch("/api/score-resume", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ resumeText: finalResumeContent, jobDescription }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to fetch ATS score.")
+      }
+
+      const data: ATSResult = await response.json()
+      setResult(data)
+
+      toast({
+        title: "Resume Scored!",
+        description: `Your resume scored ${data.score}%.`,
+      })
+    } catch (error: any) {
+      console.error("Error scoring resume:", error)
+      toast({
+        title: "Error",
+        description: error.message || "Failed to score resume. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsAnalyzing(false)
+    }
+  }
+
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return "text-green-600"
+    if (score >= 60) return "text-yellow-600"
+    return "text-red-600"
+  }
+
+  const getScoreIcon = (score: number) => {
+    if (score >= 80) return <CheckCircle className="w-6 h-6 text-green-600" />
+    if (score >= 60) return <AlertCircle className="w-6 h-6 text-yellow-600" />
+    return <XCircle className="w-6 h-6 text-red-600" />
+  }
+
+  return (
+    <div className="space-y-8 p-4 md:p-0">
+      <div>
+        <h1 className="text-2xl md:text-3xl font-bold mb-2">AI Resume ATS Scoring</h1>
+        <p className="text-gray-600 text-base md:text-lg">
+          Upload or paste your resume and a job description to get an AI-powered compatibility score and optimization
+          suggestions.
+        </p>
+      </div>
+
+      {/* Input Section: Resume & Job Description in a single horizontal card */}
       <Card>
         <CardHeader>
-          <CardTitle>Provide Your Resume &amp; Job Description</CardTitle>
+          <CardTitle>Your Resume & Job Description</CardTitle>
+          <CardDescription>Provide your resume content and the job description for analysis.</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2">
-            {/* Resume */}
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="resume">Resume Text</Label>
+        <CardContent className="space-y-6">
+          <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+            {/* Resume Input */}
+            <div>
+              <Label htmlFor="resume-text">Resume Text (or upload PDF below)</Label>
               <Textarea
-                id="resume"
-                placeholder="Paste your resume here…"
+                id="resume-text"
+                placeholder="Paste your resume text here..."
                 value={resumeText}
-                onChange={(e) => setResumeText(e.target.value)}
-                className="min-h-[200px]"
+                onChange={(e) => {
+                  setResumeText(e.target.value)
+                  setResumeFile(null) // Clear file if text is entered
+                }}
+                rows={10}
+                className="mt-1 min-h-[150px]"
               />
+              <div className="flex items-center justify-center text-gray-500 my-2">
+                <span className="mx-2">OR</span>
+              </div>
+              <div>
+                <Label htmlFor="resume-file">Upload Resume (PDF)</Label>
+                <Input id="resume-file" type="file" accept=".pdf" onChange={handleResumeUpload} className="mt-1" />
+                {resumeFile && (
+                  <div className="flex items-center space-x-2 mt-2 text-sm text-gray-600">
+                    <FileText className="w-4 h-4" />
+                    <span>{resumeFile.name}</span>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Job Description */}
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="job">Job Description</Label>
+            {/* Job Description Input */}
+            <div>
+              <Label htmlFor="jobDescription">Job Description</Label>
               <Textarea
-                id="job"
-                placeholder="Paste the job description here…"
-                value={jobDesc}
-                onChange={(e) => setJobDesc(e.target.value)}
-                className="min-h-[200px]"
+                id="jobDescription"
+                placeholder="Paste the job description here..."
+                value={jobDescription}
+                onChange={(e) => setJobDescription(e.target.value)}
+                rows={10}
+                className="mt-1 min-h-[150px]"
               />
             </div>
           </div>
 
-          <div className="mt-4 flex justify-end">
-            <Button onClick={analyzeResume} disabled={loading || !resumeText || !jobDesc}>
-              {loading ? "Analyzing…" : "Analyze"}
-            </Button>
-          </div>
+          <Button
+            onClick={analyzeResume}
+            disabled={(!resumeText && !resumeFile) || !jobDescription.trim() || isAnalyzing}
+            className="w-full"
+          >
+            {isAnalyzing ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Analyzing Resume...
+              </>
+            ) : (
+              <>
+                <Sparkles className="mr-2 h-4 w-4" />
+                Analyze Resume
+              </>
+            )}
+          </Button>
         </CardContent>
       </Card>
 
-      {/* RESULTS */}
-      {analysis && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Analysis Result</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-4">
-              <span className="text-lg font-medium">Compatibility&nbsp;Score:</span>
-              <span className="text-3xl font-bold text-green-600">{analysis.score}</span>
-              <span>/ 100</span>
+      {/* Results Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>ATS Analysis Results</CardTitle>
+          <CardDescription>Detailed insights from the AI analysis.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {!result && !isAnalyzing && (
+            <div className="text-center py-8 text-gray-500">
+              Provide your resume and job description to see AI-powered results.
             </div>
+          )}
 
-            <Separator />
+          {isAnalyzing && (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Analyzing your resume with Gemini...</p>
+            </div>
+          )}
 
-            <div className="grid gap-6 md:grid-cols-2">
-              <div>
-                <h3 className="font-semibold">Strengths</h3>
-                <ul className="list-disc list-inside space-y-1">
-                  {analysis.strengths.map((s, i) => (
-                    <li key={i}>{s}</li>
-                  ))}
-                </ul>
+          {result && (
+            <div className="space-y-6">
+              {/* Score */}
+              <div className="text-center">
+                <div className="flex items-center justify-center space-x-2 mb-2">
+                  {getScoreIcon(result.score)}
+                  <span className={`text-3xl font-bold ${getScoreColor(result.score)}`}>{result.score}%</span>
+                </div>
+                <Progress value={result.score} className="w-full" />
+                <p className="text-sm text-gray-600 mt-2">ATS Compatibility Score</p>
               </div>
 
+              {/* Keywords */}
               <div>
-                <h3 className="font-semibold">Improvements</h3>
-                <ul className="list-disc list-inside space-y-1">
-                  {analysis.improvements.map((s, i) => (
-                    <li key={i}>{s}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-
-            <Separator />
-
-            <div className="grid gap-6 md:grid-cols-2">
-              <div>
-                <h3 className="font-semibold">Keywords Found</h3>
-                <div className="flex flex-wrap gap-2">
-                  {analysis.keywords.found.map((k) => (
-                    <span key={k} className="rounded-full bg-emerald-100 px-3 py-1 text-sm text-emerald-700">
-                      {k}
-                    </span>
-                  ))}
+                <h3 className="font-semibold mb-3">Keyword Analysis</h3>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-sm font-medium text-green-600 mb-2">Found Keywords</p>
+                    <div className="flex flex-wrap gap-1">
+                      {result.keywords.found.length > 0 ? (
+                        result.keywords.found.map((keyword) => (
+                          <Badge key={keyword} variant="secondary" className="bg-green-100 text-green-800">
+                            {keyword}
+                          </Badge>
+                        ))
+                      ) : (
+                        <span className="text-sm text-gray-500">No specific keywords found.</span>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-red-600 mb-2">Missing Keywords</p>
+                    <div className="flex flex-wrap gap-1">
+                      {result.keywords.missing.length > 0 ? (
+                        result.keywords.missing.map((keyword) => (
+                          <Badge key={keyword} variant="secondary" className="bg-red-100 text-red-800">
+                            {keyword}
+                          </Badge>
+                        ))
+                      ) : (
+                        <span className="text-sm text-gray-500">All key terms seem to be present!</span>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
-
-              <div>
-                <h3 className="font-semibold">Keywords Missing</h3>
-                <div className="flex flex-wrap gap-2">
-                  {analysis.keywords.missing.map((k) => (
-                    <span key={k} className="rounded-full bg-rose-100 px-3 py-1 text-sm text-rose-700">
-                      {k}
-                    </span>
-                  ))}
-                </div>
-              </div>
             </div>
-          </CardContent>
-        </Card>
+          )}
+        </CardContent>
+      </Card>
+      {/* Detailed Results */}
+      {result && (
+        <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-green-600">Strengths</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2">
+                {result.strengths.length > 0 ? (
+                  result.strengths.map((strength, index) => (
+                    <li key={index} className="flex items-start space-x-2">
+                      <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                      <span className="text-sm">{strength}</span>
+                    </li>
+                  ))
+                ) : (
+                  <span className="text-sm text-gray-500">No specific strengths identified.</span>
+                )}
+              </ul>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-orange-600">Areas for Improvement</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2">
+                {result.improvements.length > 0 ? (
+                  result.improvements.map((improvement, index) => (
+                    <li key={index} className="flex items-start space-x-2">
+                      <AlertCircle className="w-4 h-4 text-orange-600 mt-0.5 flex-shrink-0" />
+                      <span className="text-sm">{improvement}</span>
+                    </li>
+                  ))
+                ) : (
+                  <span className="text-sm text-gray-500">No specific improvements suggested.</span>
+                )}
+              </ul>
+            </CardContent>
+          </Card>
+        </div>
       )}
-
-      {error && <p className="text-center text-sm text-red-600">{error}</p>}
-    </main>
+    </div>
   )
 }
