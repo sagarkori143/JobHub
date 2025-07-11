@@ -1,4 +1,5 @@
 import type { JobListing } from "@/types/job-search"
+import { mockJobs } from "@/data/mock-jobs"
 
 export interface JobMetadata {
   lastUpdated: string
@@ -52,6 +53,11 @@ class JobDataService {
         this.lastFetch = now
 
         console.log(`📊 Loaded ${this.jobs.length} jobs from scraped data`)
+        // If scraped data is empty, use fallback
+        if (this.jobs.length === 0) {
+          console.log("⚠️ Scraped data is empty, falling back to mock jobs.")
+          return this.getFallbackJobs()
+        }
         return this.jobs
       } else {
         console.warn("Failed to fetch jobs from API, using fallback data")
@@ -64,27 +70,8 @@ class JobDataService {
   }
 
   private getFallbackJobs(): JobListing[] {
-    // Fallback to mock data if scraping hasn't run yet
-    return [
-      {
-        id: "fallback-1",
-        title: "Software Engineer",
-        company: "Tech Company",
-        location: "San Francisco, CA",
-        type: "Full-time",
-        salary: { min: 120000, max: 180000, currency: "USD" },
-        description: "Join our team as a Software Engineer. This is fallback data - run the scraper to see real jobs!",
-        requirements: ["Bachelor's degree", "3+ years experience", "JavaScript/TypeScript"],
-        benefits: ["Health insurance", "401k", "Remote work"],
-        postedDate: new Date().toISOString().split("T")[0],
-        applicationDeadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-        industry: "Technology",
-        experienceLevel: "Mid",
-        remote: true,
-        companyLogo: "/placeholder.svg?height=40&width=40",
-        source: "fallback",
-      },
-    ]
+    console.log("Using mock data as fallback.")
+    return mockJobs
   }
 
   async getCompanyJobs(companyName: string): Promise<JobListing[]> {

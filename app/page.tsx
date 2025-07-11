@@ -50,15 +50,7 @@ export default function JobSearchPage() {
       const metadata = jobDataService.getMetadata()
       setLastUpdated(metadata?.lastUpdated || null)
 
-      if (jobs.length === 0) {
-        toast({
-          title: "No Job Data Available",
-          description: "Run the job scraper to fetch real job data from company career pages.",
-          variant: "destructive",
-        })
-      } else {
-        console.log(`📊 Loaded ${jobs.length} jobs for display`)
-      }
+      console.log(`📊 Loaded ${jobs.length} jobs for display`)
     } catch (error) {
       console.error("Error loading jobs:", error)
       toast({
