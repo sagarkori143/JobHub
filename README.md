@@ -1,30 +1,110 @@
-# Job Apps Management Platform
+# JobHub - Job Applications Management Platform
 
-*Automatically synced with your [v0.dev](https://v0.dev) deployments*
+A comprehensive web application for managing job applications, tracking application status, and organizing your job search process.
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/sagarkori143s-projects/v0-job-apps-management-platform)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.dev-black?style=for-the-badge)](https://v0.dev/chat/projects/YjxXRb7LsKb)
+## Features
 
-## Overview
+### 🎯 Job Search & Discovery
+- Browse and search through job listings
+- Advanced filtering by location, job type, experience level, industry, and salary range
+- Detailed job information with company details and requirements
+- Apply directly to jobs with one-click application
 
-This repository will stay in sync with your deployed chats on [v0.dev](https://v0.dev).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.dev](https://v0.dev).
+### 📊 Application Tracking
+- **Applied**: Track all jobs you've applied to
+- **Interviewing**: Monitor jobs where you're in the interview process
+- **Offers**: Keep track of job offers received
+- **Rejected**: Document rejected applications for future reference
 
-## Deployment
+### 📈 Dashboard & Analytics
+- Job market overview with key statistics
+- Track total jobs available, remote opportunities, and average salaries
+- Monitor top industries and companies hiring
+- View recent job postings and market trends
 
-Your project is live at:
+### 📝 Personal Job Management
+- Save interesting jobs to your personal dashboard
+- Organize jobs by status and priority
+- Add notes and personal insights for each application
+- Custom categorization and tagging system
 
-**[https://vercel.com/sagarkori143s-projects/v0-job-apps-management-platform](https://vercel.com/sagarkori143s-projects/v0-job-apps-management-platform)**
+### 🎯 Resume Scoring
+- AI-powered resume analysis and scoring
+- Get feedback on resume strength and areas for improvement
+- Compare your resume against job requirements
+- Optimize your resume for specific positions
 
-## Build your app
+## Technology Stack
 
-Continue building your app on:
+- **Frontend**: Next.js 15 with React 19
+- **Styling**: Tailwind CSS with custom components
+- **UI Components**: Radix UI primitives with shadcn/ui
+- **Forms**: React Hook Form with Zod validation
+- **Charts**: Recharts for data visualization
+- **Icons**: Lucide React
+- **TypeScript**: Full type safety throughout the application
 
-**[https://v0.dev/chat/projects/YjxXRb7LsKb](https://v0.dev/chat/projects/YjxXRb7LsKb)**
+## Getting Started
 
-## How It Works
+### Prerequisites
+- Node.js 18+ 
+- pnpm (recommended) or npm
 
-1. Create and modify your project using [v0.dev](https://v0.dev)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+### Installation
+
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd JobHub
+```
+
+2. Install dependencies:
+```bash
+pnpm install
+```
+
+3. Run the development server:
+```bash
+pnpm dev
+```
+
+4. Open [http://localhost:3000](http://localhost:3000) in your browser
+
+### Available Scripts
+
+- `pnpm dev` - Start development server
+- `pnpm build` - Build for production
+- `pnpm start` - Start production server
+- `pnpm lint` - Run ESLint
+
+## Project Structure
+
+```
+JobHub/
+├── app/                    # Next.js app directory
+│   ├── dashboard/         # Job market overview
+│   ├── applied/          # Applied jobs tracking
+│   ├── interviewing/     # Interview process tracking
+│   ├── offers/          # Job offers management
+│   ├── rejected/        # Rejected applications
+│   ├── personal/        # Personal job management
+│   └── resume-scoring/  # Resume analysis tool
+├── components/           # Reusable UI components
+├── data/               # Mock data and utilities
+├── hooks/              # Custom React hooks
+├── lib/                # Utility functions
+├── styles/             # Global styles
+└── types/              # TypeScript type definitions
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License.
