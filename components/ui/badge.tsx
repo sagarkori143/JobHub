@@ -11,6 +11,12 @@ const badgeVariants = cva(
         secondary: "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
         destructive: "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
         outline: "text-foreground",
+        // Custom variants for job statuses
+        applied: "border-transparent bg-blue-500 text-white",
+        interviewing: "border-transparent bg-purple-500 text-white",
+        offers: "border-transparent bg-green-500 text-white",
+        rejected: "border-transparent bg-red-500 text-white",
+        wishlist: "border-transparent bg-gray-500 text-white",
       },
     },
     defaultVariants: {

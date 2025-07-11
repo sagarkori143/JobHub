@@ -1,90 +1,58 @@
-import fs from "fs/promises"
-import path from "path"
-import { fileURLToPath } from "url"
-import { mergeAllCompanyJobs } from "../services/job-integration-service.js"
+// This script simulates a build-time data merger.
+// In a real application, this might be part of a build step
+// to combine static data or pre-process scraped data before deployment.
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
+const fs = require("fs")
+const path = require("path")
 
-async function mergeBuildJobs() {
-  console.log("🔨 Build-time job merging started...")
+const dataDir = path.join(__dirname, "../data")
+const outputFilePath = path.join(dataDir, "merged-jobs.json")
 
-  const dataDir = path.join(__dirname, "..", "data")
+async function mergeJobData() {
+  console.log("Starting job data merge...")
+  const allJobs = []
+
   const companyFiles = [
     "google.json",
     "amazon.json",
     "microsoft.json",
+    "cisco.json",
     "apple.json",
     "meta.json",
     "netflix.json",
     "uber.json",
-    "cisco.json",
   ]
 
-  const allJobs = []
-  const buildStats = {}
-
-  for (const filename of companyFiles) {
+  for (const file of companyFiles) {
+    const filePath = path.join(dataDir, file)
     try {
-      const filePath = path.join(dataDir, filename)
-      const data = await fs.readFile(filePath, "utf8")
-      const jobs = JSON.parse(data)
-
-      // Only include active jobs
-      const activeJobs = jobs.filter((job) => job.isActive !== false)
-      allJobs.push(...activeJobs)
-
-      const companyName = filename.replace(".json", "")
-      buildStats[companyName] = {
-        total: jobs.length,
-        active: activeJobs.length,
-        expired: jobs.length - activeJobs.length,
-      }
-
-      console.log(`📊 ${companyName}: ${activeJobs.length} active jobs`)
+      const fileContent = fs.readFileSync(filePath, "utf8")
+      const jobs = JSON.parse(fileContent)
+      allJobs.push(...jobs)
+      console.log(`Merged ${jobs.length} jobs from ${file}`)
     } catch (error) {
-      console.log(`⚠️  Could not read ${filename}: ${error.message}`)
-      const companyName = filename.replace(".json", "")
-      buildStats[companyName] = { total: 0, active: 0, expired: 0 }
+      console.error(`Error merging data from ${file}:`, error.message)
     }
   }
 
-  // Save merged posts
-  const postsFile = path.join(dataDir, "posts.json")
-  await fs.writeFile(postsFile, JSON.stringify(allJobs, null, 2))
-
-  // Update build metadata
-  const buildMetadata = {
-    buildTime: new Date().toISOString(),
-    totalActiveJobs: allJobs.length,
-    companies: buildStats,
-    lastMerge: new Date().toISOString(),
-  }
-
-  const metadataFile = path.join(dataDir, "build-metadata.json")
-  await fs.writeFile(metadataFile, JSON.stringify(buildMetadata, null, 2))
-
-  console.log(
-    `✅ Build merge completed: ${allJobs.length} active jobs from ${Object.keys(buildStats).length} companies`,
+  // Deduplicate jobs if necessary (e.g., based on a unique identifier like title + company + location)
+  const uniqueJobs = Array.from(
+    new Map(allJobs.map((job) => [`${job.title}-${job.company}-${job.location}`, job])).values(),
   )
 
-  return buildMetadata
+  fs.writeFileSync(outputFilePath, JSON.stringify(uniqueJobs, null, 2), "utf8")
+  console.log(`Merged ${uniqueJobs.length} unique jobs into ${outputFilePath}`)
+  return uniqueJobs
 }
 
-async function runBuildMerger() {
-  console.log("Build merger started: Merging all company job data into posts.json...")
-  try {
-    await mergeAllCompanyJobs()
-    console.log("Build merger finished successfully.")
-  } catch (error) {
-    console.error("Build merger failed:", error)
-    process.exit(1) // Exit with error code if merge fails
-  }
+// This allows the script to be run directly
+if (require.main === module) {
+  mergeJobData()
+    .then(() => process.exit(0))
+    .catch((error) => {
+      console.error("Data merge failed:", error)
+      process.exit(1)
+    })
 }
 
-// Run if called directly
-if (import.meta.url === `file://${process.argv[1]}`) {
-  runBuildMerger().catch(console.error)
-}
-
-export default mergeBuildJobs
+module.exports = mergeJobData

@@ -33,3 +33,13 @@ export interface JobSearchFilters {
   salaryMin: string
   remote: boolean
 }
+
+export interface JobSearchCriteria {
+  keywords?: string
+  location?: string
+  jobType?: ("Full-time" | "Part-time" | "Contract" | "Temporary" | "Internship")[]
+  experienceLevel?: ("Entry-level" | "Associate" | "Mid-senior" | "Director" | "Executive")[]
+  salaryMin?: number
+  salaryMax?: number
+  company?: string
+}

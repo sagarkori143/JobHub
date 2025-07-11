@@ -1,35 +1,79 @@
-import type { JobListing } from "@/types/job-search"
+import type { Job } from "@/types/job"
+import { v4 as uuidv4 } from "uuid"
 import { mockJobs } from "@/data/mock-jobs"
 
-// In a real application, this would fetch from a backend API
-// For this example, we simulate fetching from a static JSON file
-// or falling back to mock data.
+// This is a mock in-memory data store for jobs.
+// In a real application, this would interact with a database (e.g., PostgreSQL, MongoDB).
+let jobs: Job[] = [...mockJobs] // Initialize with mock data
 
-export async function getJobs(): Promise<JobListing[]> {
-  try {
-    // In a real Next.js app, this would be a fetch to your API route:
-    // const response = await fetch('/api/jobs', { cache: 'no-store' });
-    // const jobs = await response.json();
+export const jobDataService = {
+  /**
+   * Retrieves all jobs from the data store.
+   * @returns A promise that resolves with an array of Job objects.
+   */
+  async getJobs(): Promise<Job[]> {
+    // Simulate network delay
+    await new Promise((resolve) => setTimeout(resolve, 300))
+    return JSON.parse(JSON.stringify(jobs)) // Return a deep copy to prevent direct modification
+  },
 
-    // For Next.js, we directly import the mock data or simulate a fetch
-    // from the merged posts.json if it were accessible directly.
-    // Since posts.json is generated server-side (or during build),
-    // we'll simulate its content or use mockJobs as a fallback.
+  /**
+   * Retrieves a single job by its ID.
+   * @param id The ID of the job to retrieve.
+   * @returns A promise that resolves with the Job object or null if not found.
+   */
+  async getJobById(id: string): Promise<Job | null> {
+    await new Promise((resolve) => setTimeout(resolve, 200))
+    const job = jobs.find((j) => j.id === id)
+    return job ? JSON.parse(JSON.stringify(job)) : null
+  },
 
-    // Simulate fetching from posts.json
-    const response = await fetch("/posts.json") // This path would work if posts.json was in public
-    if (response.ok) {
-      const jobs = await response.json()
-      if (jobs && jobs.length > 0) {
-        return jobs
-      }
+  /**
+   * Adds a new job to the data store.
+   * @param newJob The job object to add (without an ID).
+   * @returns A promise that resolves with the newly added Job object (including its generated ID).
+   */
+  async addJob(newJob: Omit<Job, "id">): Promise<Job> {
+    await new Promise((resolve) => setTimeout(resolve, 500))
+    const jobWithId: Job = { ...newJob, id: uuidv4() }
+    jobs.push(jobWithId)
+    return JSON.parse(JSON.stringify(jobWithId))
+  },
+
+  /**
+   * Updates an existing job in the data store.
+   * @param id The ID of the job to update.
+   * @param updatedFields An object containing the fields to update.
+   * @returns A promise that resolves with the updated Job object or null if the job was not found.
+   */
+  async updateJob(id: string, updatedFields: Partial<Job>): Promise<Job | null> {
+    await new Promise((resolve) => setTimeout(resolve, 500))
+    const index = jobs.findIndex((j) => j.id === id)
+    if (index > -1) {
+      jobs[index] = { ...jobs[index], ...updatedFields }
+      return JSON.parse(JSON.stringify(jobs[index]))
     }
+    return null
+  },
 
-    console.warn("Could not load jobs from /posts.json or it was empty. Falling back to mock data.")
-    return mockJobs
-  } catch (error) {
-    console.error("Error fetching jobs:", error)
-    // Fallback to mock data in case of any fetch error
-    return mockJobs
-  }
+  /**
+   * Deletes a job from the data store by its ID.
+   * @param id The ID of the job to delete.
+   * @returns A promise that resolves with true if the job was deleted, false otherwise.
+   */
+  async deleteJob(id: string): Promise<boolean> {
+    await new Promise((resolve) => setTimeout(resolve, 300))
+    const initialLength = jobs.length
+    jobs = jobs.filter((j) => j.id !== id)
+    return jobs.length < initialLength
+  },
+
+  /**
+   * Resets the job data to its initial mock state.
+   * Useful for testing or development.
+   */
+  async resetJobs(): Promise<void> {
+    await new Promise((resolve) => setTimeout(resolve, 100))
+    jobs = [...mockJobs]
+  },
 }

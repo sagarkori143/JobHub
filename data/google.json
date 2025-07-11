@@ -1,72 +1,117 @@
 [
   {
     "id": "google-1",
-    "title": "Software Engineer, L4",
+    "title": "Software Engineer, Google Cloud",
     "company": "Google",
-    "location": "Mountain View, CA",
-    "type": "Full-time",
-    "salary": {
-      "min": 150000,
-      "max": 220000,
-      "currency": "USD"
-    },
-    "description": "Design, develop, test, deploy, maintain, and enhance software solutions. Work on large-scale distributed systems.",
+    "location": "Sunnyvale, CA",
+    "description": "Design, develop, test, deploy, maintain and enhance software solutions for Google Cloud products.",
     "requirements": [
-      "Bachelor's degree in Computer Science or related field.",
-      "4 years of experience in software development.",
-      "Experience with data structures and algorithms.",
-      "Proficiency in C++, Java, Python, or Go."
+      "Bachelor's degree in Computer Science or related field",
+      "4 years of experience with data structures or algorithms",
+      "Experience in one or more of the following: C++, Java, Python, Go, JavaScript, TypeScript, or Rust"
     ],
-    "benefits": [
-      "Medical, dental, vision insurance",
-      "401(k) with matching",
-      "Paid time off",
-      "On-site amenities",
-      "Parental leave"
+    "responsibilities": [
+      "Work with a team to develop and maintain software for Google Cloud",
+      "Participate in design and code reviews",
+      "Debug and resolve technical issues"
     ],
-    "postedDate": "2024-07-01",
-    "applicationDeadline": "2024-08-15",
-    "industry": "Technology",
-    "experienceLevel": "Mid",
-    "remote": false,
-    "companyLogo": "/placeholder.svg?height=40&width=40",
-    "link": "https://careers.google.com/jobs/results/12345/",
-    "scrapedAt": "2024-07-10T10:00:00Z",
-    "sourceUrl": "https://careers.google.com/jobs/"
+    "salary": 160000,
+    "jobType": "Full-time",
+    "experienceLevel": "Mid-senior",
+    "datePosted": "2024-04-25",
+    "status": "Wishlist",
+    "skills": ["Cloud Computing", "Distributed Systems", "Go", "Python"]
   },
   {
     "id": "google-2",
-    "title": "Product Manager, Cloud AI",
+    "title": "Product Manager, AI/ML",
     "company": "Google",
-    "location": "Sunnyvale, CA",
-    "type": "Full-time",
-    "salary": {
-      "min": 160000,
-      "max": 230000,
-      "currency": "USD"
-    },
-    "description": "Lead product strategy and roadmap for Google Cloud AI services. Work with engineering and sales teams.",
+    "location": "Mountain View, CA",
+    "description": "Lead the product strategy and roadmap for AI/ML initiatives within Google.",
     "requirements": [
-      "Bachelor's degree in Computer Science, Engineering, or related technical field.",
-      "5 years of experience in product management.",
-      "Experience with AI/ML technologies.",
-      "Strong communication and leadership skills."
+      "Bachelor's degree or equivalent practical experience",
+      "5 years of experience in product management",
+      "Experience with AI/ML technologies and product development"
     ],
-    "benefits": [
-      "Medical, dental, vision insurance",
-      "401(k) with matching",
-      "Paid time off",
-      "On-site amenities",
-      "Parental leave"
+    "responsibilities": [
+      "Define and execute product strategy for AI/ML products",
+      "Collaborate with engineering, research, and design teams",
+      "Drive product launches and go-to-market strategies"
     ],
-    "postedDate": "2024-06-25",
-    "applicationDeadline": "2024-08-10",
-    "industry": "Technology",
-    "experienceLevel": "Senior",
-    "remote": false,
-    "companyLogo": "/placeholder.svg?height=40&width=40",
-    "link": "https://careers.google.com/jobs/results/67890/",
-    "scrapedAt": "2024-07-10T10:00:00Z",
-    "sourceUrl": "https://careers.google.com/jobs/"
+    "salary": 180000,
+    "jobType": "Full-time",
+    "experienceLevel": "Director",
+    "datePosted": "2024-04-20",
+    "status": "Wishlist",
+    "skills": ["Product Management", "AI", "Machine Learning", "Strategy"]
+  },
+  {
+    "id": "google-3",
+    "title": "Data Scientist, Ads",
+    "company": "Google",
+    "location": "New York, NY",
+    "description": "Apply statistical methods and machine learning to analyze large datasets and improve Google Ads products.",
+    "requirements": [
+      "Master's or PhD in a quantitative field (e.g., Statistics, Computer Science, Economics)",
+      "3 years of experience in data analysis or machine learning",
+      "Proficiency in SQL and Python or R"
+    ],
+    "responsibilities": [
+      "Design and analyze experiments",
+      "Build predictive models",
+      "Communicate insights to product and engineering teams"
+    ],
+    "salary": 150000,
+    "jobType": "Full-time",
+    "experienceLevel": "Mid-senior",
+    "datePosted": "2024-04-18",
+    "status": "Wishlist",
+    "skills": ["Data Science", "SQL", "Python", "Machine Learning", "Experimentation"]
+  },
+  {
+    "id": "google-4",
+    "title": "UX Designer, Search",
+    "company": "Google",
+    "location": "San Francisco, CA",
+    "description": "Design user-friendly and innovative experiences for Google Search products.",
+    "requirements": [
+      "Bachelor's degree in Design, HCI, or related field",
+      "4 years of experience in UX design",
+      "Proficiency with design tools (e.g., Figma, Sketch, Adobe XD)"
+    ],
+    "responsibilities": [
+      "Conduct user research and usability testing",
+      "Create wireframes, prototypes, and high-fidelity designs",
+      "Collaborate with product managers and engineers"
+    ],
+    "salary": 140000,
+    "jobType": "Full-time",
+    "experienceLevel": "Mid-senior",
+    "datePosted": "2024-04-15",
+    "status": "Wishlist",
+    "skills": ["UX Design", "User Research", "Figma", "Prototyping"]
+  },
+  {
+    "id": "google-5",
+    "title": "Software Engineer, Android",
+    "company": "Google",
+    "location": "Mountain View, CA",
+    "description": "Develop and maintain core Android platform features and applications.",
+    "requirements": [
+      "Bachelor's degree in Computer Science or related field",
+      "3 years of experience in Android development",
+      "Proficiency in Java or Kotlin"
+    ],
+    "responsibilities": [
+      "Design and implement new features for the Android platform",
+      "Optimize application performance and responsiveness",
+      "Work with cross-functional teams to deliver high-quality products"
+    ],
+    "salary": 165000,
+    "jobType": "Full-time",
+    "experienceLevel": "Mid-senior",
+    "datePosted": "2024-04-10",
+    "status": "Wishlist",
+    "skills": ["Android Development", "Java", "Kotlin", "Mobile Development"]
   }
 ]

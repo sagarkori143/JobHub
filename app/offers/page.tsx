@@ -1,98 +1,152 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import type { Job } from "@/types/job"
-import { JobCard } from "@/components/job-card"
-import { JobForm } from "@/components/job-form"
-import { JobEditForm } from "@/components/job-edit-form"
+import type React from "react"
+
+import { useState, useMemo, useEffect } from "react"
+import { JobListingCard } from "@/components/job-listing-card"
+import { JobDetailsModal } from "@/components/job-details-modal"
+import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { PlusCircle } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Search, X } from "lucide-react"
+import type { Job } from "@/types/job"
+import { jobDataService } from "@/services/job-data-service"
+import { Pagination } from "@/components/pagination"
+
+const JOBS_PER_PAGE = 10
 
 export default function OffersPage() {
   const [jobs, setJobs] = useState<Job[]>([])
-  const [isFormOpen, setIsFormOpen] = useState(false)
-  const [isEditFormOpen, setIsEditFormOpen] = useState(false)
-  const [editingJob, setEditingJob] = useState<Job | null>(null)
-  const { toast } = useToast()
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [currentPage, setCurrentPage] = useState(1)
 
   useEffect(() => {
-    // Load jobs from local storage on mount
-    const storedJobs = localStorage.getItem("jobApplications")
-    if (storedJobs) {
-      setJobs(JSON.parse(storedJobs))
+    const fetchOffers = async () => {
+      setLoading(true)
+      setError(null)
+      try {
+        const allJobs = await jobDataService.getJobs()
+        const offers = allJobs.filter((job) => job.status === "Offers")
+        setJobs(offers)
+      } catch (err) {
+        console.error("Failed to fetch offers:", err)
+        setError("Failed to load offers. Please try again later.")
+      } finally {
+        setLoading(false)
+      }
     }
+
+    fetchOffers()
   }, [])
 
-  useEffect(() => {
-    // Save jobs to local storage whenever they change
-    localStorage.setItem("jobApplications", JSON.stringify(jobs))
-  }, [jobs])
+  const filteredJobs = useMemo(() => {
+    let filtered = jobs
+    if (searchTerm) {
+      filtered = filtered.filter(
+        (job) =>
+          job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          job.description.toLowerCase().includes(searchTerm.toLowerCase()),
+      )
+    }
+    return filtered
+  }, [jobs, searchTerm])
 
-  const addJob = (newJob: Job) => {
-    setJobs((prevJobs) => [...prevJobs, newJob])
-    setIsFormOpen(false)
-    toast({
-      title: "Job Added",
-      description: `${newJob.title} at ${newJob.company} has been added to your applications.`,
-    })
+  const totalPages = Math.ceil(filteredJobs.length / JOBS_PER_PAGE)
+  const paginatedJobs = useMemo(() => {
+    const startIndex = (currentPage - 1) * JOBS_PER_PAGE
+    const endIndex = startIndex + JOBS_PER_PAGE
+    return filteredJobs.slice(startIndex, endIndex)
+  }, [filteredJobs, currentPage])
+
+  const handleCardClick = (job: Job) => {
+    setSelectedJob(job)
+    setIsModalOpen(true)
   }
 
-  const updateJob = (updatedJob: Job) => {
-    setJobs((prevJobs) => prevJobs.map((job) => (job.id === updatedJob.id ? updatedJob : job)))
-    setIsEditFormOpen(false)
-    setEditingJob(null)
-    toast({
-      title: "Job Updated",
-      description: `${updatedJob.title} at ${updatedJob.company} has been updated.`,
-    })
+  const handleCloseModal = () => {
+    setIsModalOpen(false)
+    setSelectedJob(null)
   }
 
-  const deleteJob = (id: string) => {
-    setJobs((prevJobs) => prevJobs.filter((job) => job.id !== id))
-    toast({
-      title: "Job Deleted",
-      description: "The job application has been removed.",
-      variant: "destructive",
-    })
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value)
+    setCurrentPage(1)
   }
 
-  const handleEditClick = (job: Job) => {
-    setEditingJob(job)
-    setIsEditFormOpen(true)
+  const handleClearSearch = () => {
+    setSearchTerm("")
+    setCurrentPage(1)
   }
 
-  const offerJobs = jobs.filter((job) => job.status === "Offer")
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+  }
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <p>Loading offers...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center h-64 text-red-500">
+        <p>{error}</p>
+      </div>
+    )
+  }
 
   return (
-    <div className="container mx-auto p-4">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Job Offers</h1>
-        <Button onClick={() => setIsFormOpen(true)}>
-          <PlusCircle className="mr-2 h-5 w-5" />
-          Add New Application
-        </Button>
-      </div>
-
-      {offerJobs.length === 0 ? (
-        <div className="text-center py-10 text-gray-500">No job offers recorded yet.</div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {offerJobs.map((job) => (
-            <JobCard key={job.id} job={job} onEdit={handleEditClick} onDelete={deleteJob} />
-          ))}
-        </div>
-      )}
-
-      <JobForm isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} onSubmit={addJob} />
-      {editingJob && (
-        <JobEditForm
-          isOpen={isEditFormOpen}
-          onClose={() => setIsEditFormOpen(false)}
-          onSubmit={updateJob}
-          job={editingJob}
-        />
-      )}
+    <div className="p-6">
+      <h1 className="text-3xl font-bold mb-6">Job Offers</h1>
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Your Offers</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="relative mb-4">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search offers..."
+              value={searchTerm}
+              onChange={handleSearchChange}
+              className="w-full pl-9 pr-9"
+            />
+            {searchTerm && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground hover:bg-transparent"
+                onClick={handleClearSearch}
+              >
+                <X className="h-4 w-4" />
+                <span className="sr-only">Clear search</span>
+              </Button>
+            )}
+          </div>
+          <div className="grid gap-4">
+            {paginatedJobs.length > 0 ? (
+              paginatedJobs.map((job) => <JobListingCard key={job.id} job={job} onClick={() => handleCardClick(job)} />)
+            ) : (
+              <p className="text-center text-muted-foreground">No offers found.</p>
+            )}
+          </div>
+          {totalPages > 1 && (
+            <div className="mt-6 flex justify-center">
+              <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+            </div>
+          )}
+        </CardContent>
+      </Card>
+      {selectedJob && <JobDetailsModal isOpen={isModalOpen} onClose={handleCloseModal} job={selectedJob} />}
     </div>
   )
 }

@@ -1,11 +1,7 @@
-export type EmailStatus = "queued" | "sending" | "sent" | "failed"
-
 export interface EmailRecipient {
   id: string
   email: string
-  jobTitle: string
-  company: string
-  status: EmailStatus
+  status: "queued" | "sending" | "sent" | "failed"
   timestamp: string // ISO string
-  message: string // Custom message for display
+  message?: string // For success or error messages
 }

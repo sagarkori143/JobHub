@@ -1,72 +1,117 @@
 [
   {
     "id": "amazon-1",
-    "title": "Software Development Engineer, II",
+    "title": "Software Development Engineer, AWS",
     "company": "Amazon",
     "location": "Seattle, WA",
-    "type": "Full-time",
-    "salary": {
-      "min": 130000,
-      "max": 190000,
-      "currency": "USD"
-    },
-    "description": "Build scalable, fault-tolerant, and high-performance software systems for Amazon's core services.",
+    "description": "Build scalable, high-performance, and reliable services for Amazon Web Services (AWS).",
     "requirements": [
-      "Bachelor's degree in Computer Science or equivalent.",
-      "3+ years of experience in software development.",
-      "Proficiency in Java, C++, or Python.",
-      "Experience with distributed systems."
+      "Bachelor's degree in Computer Science or equivalent",
+      "3+ years of experience in software development",
+      "Proficiency in Java, C++, or Python"
     ],
-    "benefits": [
-      "Health, dental, vision insurance",
-      "401(k) with company match",
-      "Restricted Stock Units (RSUs)",
-      "Paid time off",
-      "Employee discounts"
+    "responsibilities": [
+      "Design, develop, and deploy distributed systems",
+      "Participate in on-call rotations for service support",
+      "Mentor junior engineers"
     ],
-    "postedDate": "2024-07-05",
-    "applicationDeadline": "2024-08-20",
-    "industry": "Technology",
-    "experienceLevel": "Mid",
-    "remote": false,
-    "companyLogo": "/placeholder.svg?height=40&width=40",
-    "link": "https://www.amazon.jobs/en/jobs/123456",
-    "scrapedAt": "2024-07-10T10:00:00Z",
-    "sourceUrl": "https://www.amazon.jobs/"
+    "salary": 150000,
+    "jobType": "Full-time",
+    "experienceLevel": "Mid-senior",
+    "datePosted": "2024-04-26",
+    "status": "Wishlist",
+    "skills": ["AWS", "Distributed Systems", "Java", "Python"]
   },
   {
     "id": "amazon-2",
-    "title": "Data Engineer",
+    "title": "Senior Product Manager, Alexa",
+    "company": "Amazon",
+    "location": "Sunnyvale, CA",
+    "description": "Lead the product lifecycle for new Alexa features and devices.",
+    "requirements": [
+      "Bachelor's degree in a technical field",
+      "7+ years of product management experience",
+      "Experience with voice technology or consumer electronics"
+    ],
+    "responsibilities": [
+      "Define product vision and strategy",
+      "Work with engineering and design to deliver products",
+      "Analyze market trends and customer needs"
+    ],
+    "salary": 170000,
+    "jobType": "Full-time",
+    "experienceLevel": "Director",
+    "datePosted": "2024-04-22",
+    "status": "Wishlist",
+    "skills": ["Product Management", "Voice Technology", "Consumer Electronics"]
+  },
+  {
+    "id": "amazon-3",
+    "title": "Data Engineer, Retail",
+    "company": "Amazon",
+    "location": "Austin, TX",
+    "description": "Design, build, and maintain scalable data pipelines for Amazon's retail business.",
+    "requirements": [
+      "Bachelor's degree in Computer Science or related field",
+      "3+ years of experience in data engineering",
+      "Proficiency in SQL and experience with ETL tools"
+    ],
+    "responsibilities": [
+      "Develop and optimize data pipelines",
+      "Ensure data quality and integrity",
+      "Collaborate with data scientists and analysts"
+    ],
+    "salary": 130000,
+    "jobType": "Full-time",
+    "experienceLevel": "Mid-senior",
+    "datePosted": "2024-04-19",
+    "status": "Wishlist",
+    "skills": ["Data Engineering", "SQL", "ETL", "AWS Redshift"]
+  },
+  {
+    "id": "amazon-4",
+    "title": "Solutions Architect, Enterprise",
     "company": "Amazon",
     "location": "Remote",
-    "type": "Full-time",
-    "salary": {
-      "min": 120000,
-      "max": 180000,
-      "currency": "USD"
-    },
-    "description": "Design, implement, and operate stable, scalable, and efficient ETL pipelines and data solutions.",
+    "description": "Help enterprise customers design and implement scalable, secure, and cost-effective solutions on AWS.",
     "requirements": [
-      "Bachelor's degree in Computer Science, Engineering, or related field.",
-      "3+ years of experience in data engineering.",
-      "Proficiency in SQL and Python.",
-      "Experience with AWS data services (S3, Redshift, Glue, EMR)."
+      "Bachelor's degree in Computer Science or equivalent",
+      "7+ years of experience in IT architecture or consulting",
+      "AWS Certified Solutions Architect - Professional"
     ],
-    "benefits": [
-      "Health, dental, vision insurance",
-      "401(k) with company match",
-      "Restricted Stock Units (RSUs)",
-      "Paid time off",
-      "Employee discounts"
+    "responsibilities": [
+      "Provide architectural guidance to customers",
+      "Develop technical strategies for cloud adoption",
+      "Conduct workshops and presentations"
     ],
-    "postedDate": "2024-06-28",
-    "applicationDeadline": "2024-08-15",
-    "industry": "Data & Analytics",
-    "experienceLevel": "Mid",
-    "remote": true,
-    "companyLogo": "/placeholder.svg?height=40&width=40",
-    "link": "https://www.amazon.jobs/en/jobs/789012",
-    "scrapedAt": "2024-07-10T10:00:00Z",
-    "sourceUrl": "https://www.amazon.jobs/"
+    "salary": 160000,
+    "jobType": "Full-time",
+    "experienceLevel": "Executive",
+    "datePosted": "2024-04-16",
+    "status": "Wishlist",
+    "skills": ["Solutions Architecture", "AWS", "Cloud Computing", "Enterprise Sales"]
+  },
+  {
+    "id": "amazon-5",
+    "title": "Applied Scientist, Computer Vision",
+    "company": "Amazon",
+    "location": "Palo Alto, CA",
+    "description": "Research and develop cutting-edge computer vision algorithms for various Amazon products.",
+    "requirements": [
+      "PhD in Computer Science, Electrical Engineering, or related field",
+      "3+ years of experience in computer vision research",
+      "Proficiency in Python and deep learning frameworks (e.g., TensorFlow, PyTorch)"
+    ],
+    "responsibilities": [
+      "Conduct research in computer vision",
+      "Develop and implement algorithms",
+      "Publish research findings and patents"
+    ],
+    "salary": 185000,
+    "jobType": "Full-time",
+    "experienceLevel": "Mid-senior",
+    "datePosted": "2024-04-12",
+    "status": "Wishlist",
+    "skills": ["Computer Vision", "Deep Learning", "Python", "TensorFlow", "PyTorch"]
   }
 ]

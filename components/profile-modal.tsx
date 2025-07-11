@@ -2,13 +2,14 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { useState } from "react"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { useAuth } from "@/contexts/auth-context"
-import { useToast } from "@/hooks/use-toast"
+import { toast } from "@/hooks/use-toast"
 
 interface ProfileModalProps {
   isOpen: boolean
@@ -19,43 +20,47 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
   const { user, updateUser } = useAuth()
   const [name, setName] = useState(user?.name || "")
   const [email, setEmail] = useState(user?.email || "")
-  const [role, setRole] = useState(user?.role || "")
+  const [bio, setBio] = useState(user?.bio || "")
   const [avatar, setAvatar] = useState(user?.avatar || "")
-  const { toast } = useToast()
+  const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
-    if (user) {
-      setName(user.name)
-      setEmail(user.email)
-      setRole(user.role)
-      setAvatar(user.avatar || "")
-    }
-  }, [user])
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (user) {
-      updateUser({ ...user, name, email, role, avatar })
+    setLoading(true)
+    try {
+      if (user) {
+        await updateUser({ ...user, name, email, bio, avatar })
+        toast({
+          title: "Profile Updated!",
+          description: "Your profile information has been saved.",
+        })
+        onClose()
+      }
+    } catch (error) {
+      console.error("Failed to update profile:", error)
       toast({
-        title: "Profile Updated",
-        description: "Your profile information has been saved.",
+        title: "Error",
+        description: "Failed to update profile. Please try again.",
+        variant: "destructive",
       })
-      onClose()
+    } finally {
+      setLoading(false)
     }
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Profile Settings</DialogTitle>
+          <DialogTitle>Edit Profile</DialogTitle>
+          <DialogDescription>Make changes to your profile here. Click save when you're done.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="name" className="text-right">
               Name
             </Label>
-            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="col-span-3" required />
+            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="col-span-3" />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="email" className="text-right">
@@ -67,30 +72,25 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="col-span-3"
-              required
             />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="role" className="text-right">
-              Role
+            <Label htmlFor="bio" className="text-right">
+              Bio
             </Label>
-            <Input id="role" value={role} onChange={(e) => setRole(e.target.value)} className="col-span-3" />
+            <Textarea id="bio" value={bio} onChange={(e) => setBio(e.target.value)} className="col-span-3" />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="avatar" className="text-right">
               Avatar URL
             </Label>
-            <Input
-              id="avatar"
-              value={avatar}
-              onChange={(e) => setAvatar(e.target.value)}
-              className="col-span-3"
-              placeholder="/placeholder.svg"
-            />
+            <Input id="avatar" value={avatar} onChange={(e) => setAvatar(e.target.value)} className="col-span-3" />
           </div>
-          <DialogFooter>
-            <Button type="submit">Save Changes</Button>
-          </DialogFooter>
+          <div className="flex justify-end">
+            <Button type="submit" disabled={loading}>
+              {loading ? "Saving..." : "Save changes"}
+            </Button>
+          </div>
         </form>
       </DialogContent>
     </Dialog>

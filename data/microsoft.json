@@ -1,72 +1,117 @@
 [
   {
     "id": "microsoft-1",
-    "title": "Principal Software Engineer",
+    "title": "Software Engineer, Azure",
     "company": "Microsoft",
     "location": "Redmond, WA",
-    "type": "Full-time",
-    "salary": {
-      "min": 180000,
-      "max": 250000,
-      "currency": "USD"
-    },
-    "description": "Lead the design and implementation of complex software systems for Azure services. Mentor junior engineers.",
+    "description": "Develop and maintain services and features for Microsoft Azure cloud platform.",
     "requirements": [
-      "Bachelor's degree in Computer Science or related field.",
-      "8+ years of experience in software engineering.",
-      "Expertise in C#, Java, or C++.",
-      "Experience with cloud platforms (Azure preferred)."
+      "Bachelor's degree in Computer Science or related field",
+      "3+ years of experience in software development",
+      "Proficiency in C#, Java, or Python"
     ],
-    "benefits": [
-      "Medical, dental, vision insurance",
-      "401(k) with matching",
-      "Stock awards",
-      "Paid time off",
-      "Fitness programs"
+    "responsibilities": [
+      "Design, code, and test scalable cloud services",
+      "Collaborate with product and design teams",
+      "Participate in code reviews and technical discussions"
     ],
-    "postedDate": "2024-06-20",
-    "applicationDeadline": "2024-08-01",
-    "industry": "Technology",
-    "experienceLevel": "Senior",
-    "remote": false,
-    "companyLogo": "/placeholder.svg?height=40&width=40",
-    "link": "https://careers.microsoft.com/v2/global/en/job/1234567",
-    "scrapedAt": "2024-07-10T10:00:00Z",
-    "sourceUrl": "https://careers.microsoft.com/"
+    "salary": 145000,
+    "jobType": "Full-time",
+    "experienceLevel": "Mid-senior",
+    "datePosted": "2024-04-27",
+    "status": "Wishlist",
+    "skills": ["Azure", "Cloud Computing", "C#", "Distributed Systems"]
   },
   {
     "id": "microsoft-2",
-    "title": "Technical Program Manager",
+    "title": "Program Manager, Microsoft 365",
     "company": "Microsoft",
-    "location": "Remote",
-    "type": "Full-time",
-    "salary": {
-      "min": 140000,
-      "max": 200000,
-      "currency": "USD"
-    },
-    "description": "Drive technical programs and projects across multiple engineering teams. Ensure timely delivery and quality.",
+    "location": "Redmond, WA",
+    "description": "Drive the planning and execution of features for Microsoft 365 applications.",
     "requirements": [
-      "Bachelor's degree in Computer Science or related field.",
-      "5+ years of experience in technical program management.",
-      "Strong understanding of software development lifecycle.",
-      "Excellent communication and collaboration skills."
+      "Bachelor's degree or equivalent practical experience",
+      "5+ years of experience in program management",
+      "Experience with SaaS products and agile methodologies"
     ],
-    "benefits": [
-      "Medical, dental, vision insurance",
-      "401(k) with matching",
-      "Stock awards",
-      "Paid time off",
-      "Fitness programs"
+    "responsibilities": [
+      "Define product requirements and specifications",
+      "Manage project timelines and deliverables",
+      "Work closely with engineering and design teams"
     ],
-    "postedDate": "2024-07-01",
-    "applicationDeadline": "2024-08-18",
-    "industry": "Technology",
-    "experienceLevel": "Senior",
-    "remote": true,
-    "companyLogo": "/placeholder.svg?height=40&width=40",
-    "link": "https://careers.microsoft.com/v2/global/en/job/8901234",
-    "scrapedAt": "2024-07-10T10:00:00Z",
-    "sourceUrl": "https://careers.microsoft.com/"
+    "salary": 160000,
+    "jobType": "Full-time",
+    "experienceLevel": "Director",
+    "datePosted": "2024-04-23",
+    "status": "Wishlist",
+    "skills": ["Program Management", "SaaS", "Agile", "Microsoft 365"]
+  },
+  {
+    "id": "microsoft-3",
+    "title": "Data Scientist, Bing",
+    "company": "Microsoft",
+    "location": "Bellevue, WA",
+    "description": "Utilize data to improve search relevance and user experience for Bing.",
+    "requirements": [
+      "Master's or PhD in a quantitative field",
+      "3+ years of experience in data science or analytics",
+      "Proficiency in Python, R, or Scala"
+    ],
+    "responsibilities": [
+      "Develop and implement machine learning models",
+      "Analyze large-scale datasets",
+      "Provide data-driven recommendations to product teams"
+    ],
+    "salary": 155000,
+    "jobType": "Full-time",
+    "experienceLevel": "Mid-senior",
+    "datePosted": "2024-04-20",
+    "status": "Wishlist",
+    "skills": ["Data Science", "Machine Learning", "Python", "Big Data"]
+  },
+  {
+    "id": "microsoft-4",
+    "title": "Cloud Solution Architect, Azure",
+    "company": "Microsoft",
+    "location": "Chicago, IL",
+    "description": "Partner with customers to design and implement cloud solutions on Microsoft Azure.",
+    "requirements": [
+      "Bachelor's degree in Computer Science or equivalent",
+      "7+ years of experience in customer-facing technical roles",
+      "Deep understanding of Azure services and architecture"
+    ],
+    "responsibilities": [
+      "Lead technical discussions with customers",
+      "Develop solution architectures",
+      "Provide technical guidance and support"
+    ],
+    "salary": 170000,
+    "jobType": "Full-time",
+    "experienceLevel": "Executive",
+    "datePosted": "2024-04-17",
+    "status": "Wishlist",
+    "skills": ["Cloud Architecture", "Azure", "Solution Design", "Customer Engagement"]
+  },
+  {
+    "id": "microsoft-5",
+    "title": "Software Engineer, Xbox",
+    "company": "Microsoft",
+    "location": "Redmond, WA",
+    "description": "Contribute to the development of the Xbox platform and gaming experiences.",
+    "requirements": [
+      "Bachelor's degree in Computer Science or related field",
+      "3+ years of experience in C++ development",
+      "Experience with game development or high-performance computing"
+    ],
+    "responsibilities": [
+      "Develop and optimize game features and systems",
+      "Work on performance and scalability challenges",
+      "Collaborate with game studios and internal teams"
+    ],
+    "salary": 150000,
+    "jobType": "Full-time",
+    "experienceLevel": "Mid-senior",
+    "datePosted": "2024-04-14",
+    "status": "Wishlist",
+    "skills": ["Game Development", "C++", "Xbox", "Performance Optimization"]
   }
 ]

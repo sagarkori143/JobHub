@@ -1,21 +1,58 @@
 import { NextResponse } from "next/server"
-import { loadAllMergedJobs } from "@/services/job-integration-service"
-import { mockJobs } from "@/data/mock-jobs"
+import { jobDataService } from "@/services/job-data-service"
+import type { Job } from "@/types/job"
 
 export async function GET() {
   try {
-    let jobs = await loadAllMergedJobs()
-
-    // Fallback to mock data if the merged posts.json is empty
-    if (!jobs || jobs.length === 0) {
-      console.warn("posts.json is empty or not found. Falling back to mock data.")
-      jobs = mockJobs
-    }
-
+    const jobs = await jobDataService.getJobs()
     return NextResponse.json(jobs)
   } catch (error) {
     console.error("Error fetching jobs:", error)
-    // In case of any error, also fallback to mock data
-    return NextResponse.json(mockJobs, { status: 500 })
+    return NextResponse.json({ message: "Failed to fetch jobs" }, { status: 500 })
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const newJob: Omit<Job, "id"> = await request.json()
+    const addedJob = await jobDataService.addJob(newJob)
+    return NextResponse.json(addedJob, { status: 201 })
+  } catch (error) {
+    console.error("Error adding job:", error)
+    return NextResponse.json({ message: "Failed to add job" }, { status: 500 })
+  }
+}
+
+export async function PUT(request: Request) {
+  try {
+    const { id, ...updatedFields }: Job = await request.json()
+    if (!id) {
+      return NextResponse.json({ message: "Job ID is required for update" }, { status: 400 })
+    }
+    const updatedJob = await jobDataService.updateJob(id, updatedFields)
+    if (!updatedJob) {
+      return NextResponse.json({ message: "Job not found" }, { status: 404 })
+    }
+    return NextResponse.json(updatedJob)
+  } catch (error) {
+    console.error("Error updating job:", error)
+    return NextResponse.json({ message: "Failed to update job" }, { status: 500 })
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const { id } = await request.json()
+    if (!id) {
+      return NextResponse.json({ message: "Job ID is required for deletion" }, { status: 400 })
+    }
+    const deleted = await jobDataService.deleteJob(id)
+    if (!deleted) {
+      return NextResponse.json({ message: "Job not found" }, { status: 404 })
+    }
+    return NextResponse.json({ message: "Job deleted successfully" })
+  } catch (error) {
+    console.error("Error deleting job:", error)
+    return NextResponse.json({ message: "Failed to delete job" }, { status: 500 })
   }
 }

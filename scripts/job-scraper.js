@@ -1,5 +1,7 @@
 import puppeteer from "puppeteer"
 import { saveJobs, updateScrapingMetadata } from "../services/job-integration-service.js"
+const fs = require("fs")
+const path = require("path")
 
 const companyConfigs = [
   {
@@ -83,6 +85,8 @@ const companyConfigs = [
     paginationSelector: ".pagination-next-button",
   },
 ]
+
+const mockCompanies = ["google", "amazon", "microsoft", "cisco", "apple", "meta", "netflix", "uber"]
 
 async function scrapeCompany(config) {
   console.log(`Starting scrape for ${config.name} at ${config.url}`)
@@ -184,6 +188,25 @@ async function scrapeCompany(config) {
   }
 }
 
+async function scrapeJobs() {
+  console.log("Starting job scraping simulation...")
+  const allScrapedJobs = []
+
+  for (const company of mockCompanies) {
+    try {
+      const filePath = path.join(__dirname, `../data/${company}.json`)
+      const companyJobs = JSON.parse(fs.readFileSync(filePath, "utf8"))
+      console.log(`Simulated scraping ${companyJobs.length} jobs from ${company}.`)
+      allScrapedJobs.push(...companyJobs)
+    } catch (error) {
+      console.error(`Error simulating scraping for ${company}:`, error.message)
+    }
+  }
+
+  console.log(`Finished scraping simulation. Total jobs scraped: ${allScrapedJobs.length}`)
+  return allScrapedJobs
+}
+
 export async function runScrapers() {
   console.log("Running all job scrapers...")
   for (const config of companyConfigs) {
@@ -192,7 +215,15 @@ export async function runScrapers() {
   console.log("All scrapers finished.")
 }
 
-// For direct execution
-if (process.argv[2] === "run") {
-  runScrapers()
+// This allows the script to be run directly or imported
+if (require.main === module) {
+  scrapeJobs()
+    .then((jobs) => {
+      // Optionally save to a file or process further
+      // console.log('Scraped Jobs:', JSON.stringify(jobs, null, 2));
+    })
+    .catch((error) => {
+      console.error("Scraping failed:", error)
+      process.exit(1)
+    })
 }

@@ -1,72 +1,117 @@
 [
   {
     "id": "netflix-1",
-    "title": "Software Engineer, Backend",
+    "title": "Software Engineer, Streaming",
     "company": "Netflix",
     "location": "Los Gatos, CA",
-    "type": "Full-time",
-    "salary": {
-      "min": 180000,
-      "max": 300000,
-      "currency": "USD"
-    },
-    "description": "Build and scale backend services for Netflix's streaming platform. Focus on reliability and performance.",
+    "description": "Build and optimize the core streaming platform that delivers content to millions of users.",
     "requirements": [
-      "Bachelor's degree in Computer Science or related field.",
-      "5+ years of experience in backend development.",
-      "Proficiency in Java, Scala, or Python.",
-      "Experience with distributed systems and microservices."
+      "Bachelor's degree in Computer Science or related field",
+      "5+ years of experience in distributed systems or high-performance computing",
+      "Proficiency in Java, Scala, or Go"
     ],
-    "benefits": [
-      "Unlimited paid time off",
-      "Health, dental, vision insurance",
-      "Netflix stock options",
-      "Parental leave",
-      "Fitness reimbursement"
+    "responsibilities": [
+      "Design and implement scalable streaming services",
+      "Optimize video delivery and playback performance",
+      "Participate in on-call rotations and incident response"
     ],
-    "postedDate": "2024-06-25",
-    "applicationDeadline": "2024-08-10",
-    "industry": "Entertainment",
-    "experienceLevel": "Senior",
-    "remote": false,
-    "companyLogo": "/placeholder.svg?height=40&width=40",
-    "link": "https://jobs.netflix.com/jobs/12345",
-    "scrapedAt": "2024-07-10T10:00:00Z",
-    "sourceUrl": "https://jobs.netflix.com/"
+    "salary": 180000,
+    "jobType": "Full-time",
+    "experienceLevel": "Mid-senior",
+    "datePosted": "2024-04-29",
+    "status": "Wishlist",
+    "skills": ["Streaming", "Distributed Systems", "Java", "Scala", "Performance Optimization"]
   },
   {
     "id": "netflix-2",
-    "title": "Product Designer, Growth",
+    "title": "Product Manager, Content Personalization",
     "company": "Netflix",
-    "location": "Los Angeles, CA",
-    "type": "Full-time",
-    "salary": {
-      "min": 150000,
-      "max": 250000,
-      "currency": "USD"
-    },
-    "description": "Design user experiences that drive subscriber growth and engagement for Netflix products.",
+    "location": "Los Gatos, CA",
+    "description": "Drive the product strategy for Netflix's content personalization and recommendation systems.",
     "requirements": [
-      "Bachelor's degree in Design, HCI, or related field.",
-      "5+ years of experience in product design.",
-      "Strong portfolio showcasing UX/UI design skills.",
-      "Experience with A/B testing and user research."
+      "Bachelor's degree or equivalent practical experience",
+      "6+ years of experience in product management",
+      "Experience with recommendation systems or machine learning products"
     ],
-    "benefits": [
-      "Unlimited paid time off",
-      "Health, dental, vision insurance",
-      "Netflix stock options",
-      "Parental leave",
-      "Fitness reimbursement"
+    "responsibilities": [
+      "Define product vision and roadmap for personalization",
+      "Collaborate with data science and engineering teams",
+      "Analyze user behavior and drive A/B testing"
     ],
-    "postedDate": "2024-07-01",
-    "applicationDeadline": "2024-08-15",
-    "industry": "Entertainment",
-    "experienceLevel": "Senior",
-    "remote": false,
-    "companyLogo": "/placeholder.svg?height=40&width=40",
-    "link": "https://jobs.netflix.com/jobs/67890",
-    "scrapedAt": "2024-07-10T10:00:00Z",
-    "sourceUrl": "https://jobs.netflix.com/"
+    "salary": 190000,
+    "jobType": "Full-time",
+    "experienceLevel": "Director",
+    "datePosted": "2024-04-25",
+    "status": "Wishlist",
+    "skills": ["Product Management", "Recommendation Systems", "Machine Learning", "Personalization"]
+  },
+  {
+    "id": "netflix-3",
+    "title": "Data Scientist, Growth",
+    "company": "Netflix",
+    "location": "Los Gatos, CA",
+    "description": "Leverage data to identify growth opportunities and optimize user acquisition and retention.",
+    "requirements": [
+      "Master's or PhD in a quantitative field",
+      "4+ years of experience in data science or analytics",
+      "Proficiency in SQL and Python or R"
+    ],
+    "responsibilities": [
+      "Design and analyze experiments for growth initiatives",
+      "Build predictive models for user behavior",
+      "Communicate insights to marketing and product teams"
+    ],
+    "salary": 175000,
+    "jobType": "Full-time",
+    "experienceLevel": "Mid-senior",
+    "datePosted": "2024-04-22",
+    "status": "Wishlist",
+    "skills": ["Data Science", "Growth Hacking", "SQL", "Python", "Experimentation"]
+  },
+  {
+    "id": "netflix-4",
+    "title": "Senior Security Engineer",
+    "company": "Netflix",
+    "location": "Los Gatos, CA",
+    "description": "Design and implement security solutions to protect Netflix's infrastructure and data.",
+    "requirements": [
+      "Bachelor's degree in Computer Science or related field",
+      "7+ years of experience in security engineering",
+      "Expertise in cloud security (AWS, Azure, GCP)"
+    ],
+    "responsibilities": [
+      "Develop and implement security best practices",
+      "Conduct security assessments and penetration testing",
+      "Respond to security incidents and vulnerabilities"
+    ],
+    "salary": 195000,
+    "jobType": "Full-time",
+    "experienceLevel": "Executive",
+    "datePosted": "2024-04-18",
+    "status": "Wishlist",
+    "skills": ["Security Engineering", "Cloud Security", "AWS", "Penetration Testing"]
+  },
+  {
+    "id": "netflix-5",
+    "title": "Software Engineer, UI Platform",
+    "company": "Netflix",
+    "location": "Los Gatos, CA",
+    "description": "Build and maintain the core UI platform and tools used by product teams to create Netflix experiences.",
+    "requirements": [
+      "Bachelor's degree in Computer Science or related field",
+      "4+ years of experience in frontend development",
+      "Proficiency in React, JavaScript, and TypeScript"
+    ],
+    "responsibilities": [
+      "Develop reusable UI components and libraries",
+      "Optimize frontend performance and scalability",
+      "Provide technical guidance to product teams"
+    ],
+    "salary": 185000,
+    "jobType": "Full-time",
+    "experienceLevel": "Mid-senior",
+    "datePosted": "2024-04-15",
+    "status": "Wishlist",
+    "skills": ["Frontend Development", "React", "JavaScript", "TypeScript", "UI Frameworks"]
   }
 ]

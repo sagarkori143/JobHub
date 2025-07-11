@@ -1,159 +1,61 @@
-import type { JobListing } from "@/types/job-search"
-import fs from "fs/promises"
-import path from "path"
+import type { Job } from "@/types/job"
+import { mockJobs } from "@/data/mock-jobs"
 
-const DATA_DIR = path.join(process.cwd(), "data")
-const POSTS_FILE = path.join(DATA_DIR, "posts.json")
-const METADATA_FILE = path.join(DATA_DIR, "scraping-metadata.json")
+// This service would handle integrations with external job boards (e.g., LinkedIn, Indeed APIs)
+// For now, it uses mock data and simulates API calls.
 
-interface ScrapingMetadata {
-  lastScraped: string | null
-  companies: {
-    [companyName: string]: {
-      lastScraped: string | null
-      lastSuccessfulScrape: string | null
-      status: "success" | "failed" | "pending"
-      message?: string
+export const jobIntegrationService = {
+  /**
+   * Simulates fetching jobs from an external source.
+   * In a real application, this would involve API calls to job boards.
+   * @returns A promise that resolves with an array of Job objects.
+   */
+  async fetchJobsFromExternalSources(): Promise<Job[]> {
+    console.log("Simulating fetching jobs from external sources...")
+    // Simulate network delay
+    await new Promise((resolve) => setTimeout(resolve, 2000))
+
+    // Return a subset of mock jobs to simulate new data
+    const newJobs = mockJobs.filter((job, index) => index % 2 === 0) // Example: every other job
+    return newJobs.map((job) => ({
+      ...job,
+      id: `external-${job.id}-${Date.now()}`, // Ensure unique IDs for "new" jobs
+      datePosted: new Date().toISOString().split("T")[0], // Set current date
+      status: "Wishlist", // New jobs are typically in wishlist
+    }))
+  },
+
+  /**
+   * Simulates applying to a job on an external platform.
+   * @param jobId The ID of the job to apply to.
+   * @param applicationData Data required for the application (e.g., resume, cover letter).
+   * @returns A promise that resolves with a success status.
+   */
+  async applyToJob(jobId: string, applicationData: any): Promise<{ success: boolean; message: string }> {
+    console.log(`Simulating applying to job ${jobId} with data:`, applicationData)
+    await new Promise((resolve) => setTimeout(resolve, 1500)) // Simulate network delay
+
+    // In a real scenario, this would interact with the job board's application API
+    if (Math.random() > 0.1) {
+      // 90% success rate
+      return { success: true, message: `Successfully applied to job ${jobId}.` }
+    } else {
+      return { success: false, message: `Failed to apply to job ${jobId}. Please try again.` }
     }
-  }
-}
+  },
 
-export async function saveJobs(companyName: string, jobs: JobListing[]): Promise<void> {
-  try {
-    await fs.mkdir(DATA_DIR, { recursive: true })
-    const filePath = path.join(DATA_DIR, `${companyName.toLowerCase()}.json`)
-    await fs.writeFile(filePath, JSON.stringify(jobs, null, 2))
-    console.log(`Saved ${jobs.length} jobs for ${companyName} to ${filePath}`)
-    await updateScrapingMetadata(companyName, "success", `Successfully scraped ${jobs.length} jobs.`)
-  } catch (error) {
-    console.error(`Failed to save jobs for ${companyName}:`, error)
-    await updateScrapingMetadata(
-      companyName,
-      "failed",
-      `Error saving jobs: ${error instanceof Error ? error.message : String(error)}`,
-    )
-    throw error
-  }
-}
+  /**
+   * Simulates checking the status of an application on an external platform.
+   * @param jobId The ID of the job to check status for.
+   * @returns A promise that resolves with the updated status.
+   */
+  async checkApplicationStatus(jobId: string): Promise<{ status: Job["status"]; message: string }> {
+    console.log(`Simulating checking status for job ${jobId}...`)
+    await new Promise((resolve) => setTimeout(resolve, 1000)) // Simulate network delay
 
-export async function loadJobs(companyName: string): Promise<JobListing[]> {
-  try {
-    const filePath = path.join(DATA_DIR, `${companyName.toLowerCase()}.json`)
-    const data = await fs.readFile(filePath, "utf-8")
-    return JSON.parse(data) as JobListing[]
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      console.warn(`No job data found for ${companyName}.`)
-      return []
-    }
-    console.error(`Failed to load jobs for ${companyName}:`, error)
-    throw error
-  }
-}
+    const statuses: Job["status"][] = ["Applied", "Interviewing", "Offers", "Rejected"]
+    const randomStatus = statuses[Math.floor(Math.random() * statuses.length)]
 
-export async function mergeAllCompanyJobs(): Promise<JobListing[]> {
-  try {
-    await fs.mkdir(DATA_DIR, { recursive: true })
-    const files = await fs.readdir(DATA_DIR)
-    const companyFiles = files.filter(
-      (file) => file.endsWith(".json") && file !== "posts.json" && file !== "scraping-metadata.json",
-    )
-
-    let allJobs: JobListing[] = []
-    for (const file of companyFiles) {
-      const filePath = path.join(DATA_DIR, file)
-      try {
-        const data = await fs.readFile(filePath, "utf-8")
-        const companyJobs: JobListing[] = JSON.parse(data)
-        allJobs = allJobs.concat(companyJobs)
-      } catch (error) {
-        console.error(`Error reading or parsing ${file}:`, error)
-      }
-    }
-
-    // Filter out expired jobs for the main posts.json
-    const activeJobs = allJobs.filter((job) => !job.expired)
-
-    await fs.writeFile(POSTS_FILE, JSON.stringify(activeJobs, null, 2))
-    console.log(`Merged ${activeJobs.length} active jobs into ${POSTS_FILE}`)
-    return activeJobs
-  } catch (error) {
-    console.error("Failed to merge all company jobs:", error)
-    throw error
-  }
-}
-
-export async function loadAllMergedJobs(): Promise<JobListing[]> {
-  try {
-    const data = await fs.readFile(POSTS_FILE, "utf-8")
-    return JSON.parse(data) as JobListing[]
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      console.warn(`Merged posts.json not found. Returning empty array.`)
-      return []
-    }
-    console.error(`Failed to load merged jobs from ${POSTS_FILE}:`, error)
-    throw error
-  }
-}
-
-export async function getScrapingMetadata(): Promise<ScrapingMetadata> {
-  try {
-    const data = await fs.readFile(METADATA_FILE, "utf-8")
-    return JSON.parse(data) as ScrapingMetadata
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      return { lastScraped: null, companies: {} }
-    }
-    console.error("Failed to load scraping metadata:", error)
-    throw error
-  }
-}
-
-export async function updateScrapingMetadata(
-  companyName: string,
-  status: "success" | "failed" | "pending",
-  message?: string,
-): Promise<void> {
-  try {
-    const metadata = await getScrapingMetadata()
-    const now = new Date().toISOString()
-
-    metadata.lastScraped = now
-    metadata.companies[companyName] = {
-      lastScraped: now,
-      lastSuccessfulScrape: status === "success" ? now : metadata.companies[companyName]?.lastSuccessfulScrape || null,
-      status,
-      message,
-    }
-
-    await fs.writeFile(METADATA_FILE, JSON.stringify(metadata, null, 2))
-  } catch (error) {
-    console.error("Failed to update scraping metadata:", error)
-    throw error
-  }
-}
-
-export async function initializeScrapingMetadata(companyNames: string[]): Promise<void> {
-  try {
-    const metadata = await getScrapingMetadata()
-    let changed = false
-    companyNames.forEach((company) => {
-      if (!metadata.companies[company]) {
-        metadata.companies[company] = {
-          lastScraped: null,
-          lastSuccessfulScrape: null,
-          status: "pending",
-        }
-        changed = true
-      }
-    })
-    if (changed) {
-      await fs.writeFile(METADATA_FILE, JSON.stringify(metadata, null, 2))
-      console.log("Initialized scraping metadata for new companies.")
-    }
-  } catch (error) {
-    console.error("Failed to initialize scraping metadata:", error)
-    throw error
-  }
+    return { status: randomStatus, message: `Status for ${jobId}: ${randomStatus}` }
+  },
 }

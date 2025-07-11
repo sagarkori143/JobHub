@@ -558,5 +558,40 @@
     "link": "https://www.uber.com/careers/list/67890",
     "scrapedAt": "2024-07-10T10:00:00Z",
     "sourceUrl": "https://www.uber.com/careers/"
+  },
+  {
+    "id": "post-1",
+    "title": "The Future of AI in Job Applications",
+    "author": "AI Insights",
+    "date": "2024-04-20",
+    "content": "Artificial intelligence is rapidly transforming the job application landscape, from resume screening to interview simulations. Understanding these changes is crucial for job seekers and recruiters alike. AI-powered tools can help optimize your resume, identify best-fit roles, and even provide feedback on your interview performance. However, it's important to remember that AI is a tool, and human oversight remains essential for ethical and effective hiring practices. The future promises even more sophisticated AI integrations, making the job search more efficient but also more competitive."
+  },
+  {
+    "id": "post-2",
+    "title": "Mastering the Remote Job Search",
+    "author": "RemoteWork Guru",
+    "date": "2024-04-18",
+    "content": "Remote work is here to stay, and so is the demand for remote talent. Mastering the remote job search requires a different approach. Focus on highlighting your self-discipline, communication skills, and experience with remote collaboration tools. Networking online, optimizing your LinkedIn profile, and practicing virtual interview etiquette are key. Remember to research companies' remote work culture to ensure a good fit. The flexibility of remote work offers incredible opportunities, but it also demands a proactive and adaptable job seeker."
+  },
+  {
+    "id": "post-3",
+    "title": "Negotiating Your First Job Offer",
+    "author": "Career Coach",
+    "date": "2024-04-15",
+    "content": "Receiving a job offer is exciting, but don't jump the gun on accepting. Negotiation is a critical step, especially for your first professional role. Research industry salary benchmarks, understand the full compensation package (salary, benefits, bonuses, equity), and practice your negotiation script. Be confident, polite, and prepared to articulate your value. Remember, the worst they can say is no, and a successful negotiation can significantly impact your long-term career earnings. Always get the final offer in writing."
+  },
+  {
+    "id": "post-4",
+    "title": "The Importance of Networking in Your Job Search",
+    "author": "Network Pro",
+    "date": "2024-04-12",
+    "content": "Networking isn't just about finding jobs; it's about building relationships that can last a lifetime. In today's competitive job market, a strong network can open doors that traditional applications can't. Attend industry events, connect with professionals on LinkedIn, conduct informational interviews, and leverage your alumni network. Remember to offer value to others, not just ask for favors. A well-nurtured network can provide insights, mentorship, and direct referrals, significantly boosting your job search success."
+  },
+  {
+    "id": "post-5",
+    "title": "Crafting a Standout Resume in 2024",
+    "author": "Resume Expert",
+    "date": "2024-04-10",
+    "content": "Your resume is your first impression. In 2024, it needs to be more than just a list of past jobs. Focus on quantifiable achievements, tailor it to each job description using keywords, and keep it concise and easy to read. Consider using a modern, clean design. ATS (Applicant Tracking System) optimization is crucial, so ensure your resume can be easily parsed. Proofread meticulously, and get a second pair of eyes on it. A strong resume is your ticket to getting noticed by recruiters."
   }
 ]

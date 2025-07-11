@@ -1,72 +1,117 @@
 [
   {
     "id": "meta-1",
-    "title": "Software Engineer, Product",
+    "title": "Software Engineer, Instagram",
     "company": "Meta",
     "location": "Menlo Park, CA",
-    "type": "Full-time",
-    "salary": {
-      "min": 160000,
-      "max": 240000,
-      "currency": "USD"
-    },
-    "description": "Build and scale products that reach billions of people. Work on Facebook, Instagram, WhatsApp, or Reality Labs.",
+    "description": "Build and scale features for the Instagram platform.",
     "requirements": [
-      "Bachelor's degree in Computer Science or related field.",
-      "4+ years of experience in software development.",
-      "Proficiency in C++, Java, Python, or Hack.",
-      "Experience with large-scale distributed systems."
+      "Bachelor's degree in Computer Science or related field",
+      "3+ years of experience in software development",
+      "Proficiency in Python, Java, or C++"
     ],
-    "benefits": [
-      "Medical, dental, vision insurance",
-      "401(k) with matching",
-      "Restricted Stock Units (RSUs)",
-      "Paid time off",
-      "On-site perks"
+    "responsibilities": [
+      "Design, develop, and deploy new features for Instagram",
+      "Optimize application performance and reliability",
+      "Participate in code reviews and system design discussions"
     ],
-    "postedDate": "2024-07-01",
-    "applicationDeadline": "2024-08-16",
-    "industry": "Technology",
-    "experienceLevel": "Mid",
-    "remote": false,
-    "companyLogo": "/placeholder.svg?height=40&width=40",
-    "link": "https://www.metacareers.com/jobs/12345",
-    "scrapedAt": "2024-07-10T10:00:00Z",
-    "sourceUrl": "https://www.metacareers.com/"
+    "salary": 150000,
+    "jobType": "Full-time",
+    "experienceLevel": "Mid-senior",
+    "datePosted": "2024-04-30",
+    "status": "Wishlist",
+    "skills": ["Instagram", "Distributed Systems", "Python", "Java"]
   },
   {
     "id": "meta-2",
+    "title": "Product Manager, Reality Labs",
+    "company": "Meta",
+    "location": "Menlo Park, CA",
+    "description": "Lead product development for AR/VR experiences and hardware within Reality Labs.",
+    "requirements": [
+      "Bachelor's degree or equivalent practical experience",
+      "5+ years of experience in product management",
+      "Experience with AR/VR technologies or gaming"
+    ],
+    "responsibilities": [
+      "Define product strategy and roadmap for AR/VR products",
+      "Collaborate with engineering, research, and design teams",
+      "Drive product launches and user adoption"
+    ],
+    "salary": 175000,
+    "jobType": "Full-time",
+    "experienceLevel": "Director",
+    "datePosted": "2024-04-26",
+    "status": "Wishlist",
+    "skills": ["Product Management", "AR/VR", "Reality Labs", "Gaming"]
+  },
+  {
+    "id": "meta-3",
+    "title": "Data Scientist, Facebook Ads",
+    "company": "Meta",
+    "location": "Menlo Park, CA",
+    "description": "Apply data science techniques to optimize Facebook's advertising platform.",
+    "requirements": [
+      "Master's or PhD in a quantitative field",
+      "3+ years of experience in data science or analytics",
+      "Proficiency in SQL and Python or R"
+    ],
+    "responsibilities": [
+      "Analyze large datasets to identify trends and insights",
+      "Build predictive models for ad performance",
+      "Communicate findings to business and engineering teams"
+    ],
+    "salary": 160000,
+    "jobType": "Full-time",
+    "experienceLevel": "Mid-senior",
+    "datePosted": "2024-04-23",
+    "status": "Wishlist",
+    "skills": ["Data Science", "Facebook Ads", "SQL", "Python", "Machine Learning"]
+  },
+  {
+    "id": "meta-4",
     "title": "Research Scientist, AI",
     "company": "Meta",
     "location": "New York, NY",
-    "type": "Full-time",
-    "salary": {
-      "min": 170000,
-      "max": 250000,
-      "currency": "USD"
-    },
-    "description": "Conduct cutting-edge research in AI, machine learning, and computer vision. Publish papers and contribute to open source.",
+    "description": "Conduct cutting-edge research in artificial intelligence and contribute to open-source projects.",
     "requirements": [
-      "Ph.D. in Computer Science, AI, or related field.",
-      "2+ years of experience in AI research.",
-      "Strong publication record.",
-      "Proficiency in Python and deep learning frameworks."
+      "PhD in AI, Machine Learning, or related field",
+      "Strong publication record in top-tier conferences",
+      "Proficiency in Python and deep learning frameworks (e.g., PyTorch)"
     ],
-    "benefits": [
-      "Medical, dental, vision insurance",
-      "401(k) with matching",
-      "Restricted Stock Units (RSUs)",
-      "Paid time off",
-      "On-site perks"
+    "responsibilities": [
+      "Propose and conduct novel AI research",
+      "Publish research papers and present at conferences",
+      "Collaborate with academic and industry partners"
     ],
-    "postedDate": "2024-06-26",
-    "applicationDeadline": "2024-08-11",
-    "industry": "Technology",
-    "experienceLevel": "Senior",
-    "remote": false,
-    "companyLogo": "/placeholder.svg?height=40&width=40",
-    "link": "https://www.metacareers.com/jobs/67890",
-    "scrapedAt": "2024-07-10T10:00:00Z",
-    "sourceUrl": "https://www.metacareers.com/"
+    "salary": 190000,
+    "jobType": "Full-time",
+    "experienceLevel": "Executive",
+    "datePosted": "2024-04-20",
+    "status": "Wishlist",
+    "skills": ["AI Research", "Machine Learning", "Deep Learning", "PyTorch", "Natural Language Processing"]
+  },
+  {
+    "id": "meta-5",
+    "title": "Software Engineer, WhatsApp",
+    "company": "Meta",
+    "location": "Menlo Park, CA",
+    "description": "Develop and scale features for the WhatsApp messaging platform.",
+    "requirements": [
+      "Bachelor's degree in Computer Science or related field",
+      "3+ years of experience in software development",
+      "Experience with large-scale distributed systems"
+    ],
+    "responsibilities": [
+      "Design and implement new features for WhatsApp",
+      "Ensure high availability and reliability of services",
+      "Work with cross-functional teams to deliver product improvements"
+    ],
+    "salary": 155000,
+    "jobType": "Full-time",
+    "experienceLevel": "Mid-senior",
+    "datePosted": "2024-04-17",
+    "status": "Wishlist",
+    "skills": ["WhatsApp", "Distributed Systems", "Erlang", "Messaging Platforms"]
   }
 ]

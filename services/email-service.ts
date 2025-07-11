@@ -1,5 +1,6 @@
 import type { JobListing } from "@/types/job-search"
 import type { EmailRecipient } from "@/types/email"
+import { v4 as uuidv4 } from "uuid"
 
 // Mock user subscriptions based on job preferences
 // In a real app, this would come from a database
@@ -118,41 +119,156 @@ const allMockJobs: JobListing[] = [
   },
 ]
 
-class EmailService {
-  private static instance: EmailService
-  private queuedEmails: EmailRecipient[] = []
-  private sendingEmails: EmailRecipient[] = []
-  private sentEmails: EmailRecipient[] = []
-  private failedEmails: EmailRecipient[] = []
-  private sendingInterval: NodeJS.Timeout | null = null
-  private simulationInterval: NodeJS.Timeout | null = null
+// In-memory store for email recipients and their statuses
+let emailQueue: EmailRecipient[] = []
+let sendingEmails: EmailRecipient[] = []
+let sentEmails: EmailRecipient[] = []
+let failedEmails: EmailRecipient[] = []
 
-  static getInstance(): EmailService {
-    if (!EmailService.instance) {
-      EmailService.instance = new EmailService()
-    }
-    return EmailService.instance
-  }
+// Mock user subscriptions
+const mockSubscribers = [
+  { id: "user-1", email: "user1@example.com" },
+  { id: "user-2", email: "user2@example.com" },
+  { id: "user-3", email: "user3@example.com" },
+  { id: "user-4", email: "user4@example.com" },
+  { id: "user-5", email: "user5@example.com" },
+  { id: "user-6", email: "user6@example.com" },
+  { id: "user-7", email: "user7@example.com" },
+  { id: "user-8", email: "user8@example.com" },
+  { id: "user-9", email: "user9@example.com" },
+  { id: "user-10", email: "user10@example.com" },
+]
 
-  // Starts a continuous simulation of new job alerts being detected and queued
-  startContinuousAlertsSimulation(intervalMs = 2000) {
-    if (this.simulationInterval) {
-      clearInterval(this.simulationInterval)
-    }
-    console.log("Starting continuous email alert simulation...")
-    this.simulationInterval = setInterval(() => {
-      const randomJob = allMockJobs[Math.floor(Math.random() * allMockJobs.length)]
-      this.sendNewJobAlerts([randomJob])
-    }, intervalMs)
-  }
+// Simulate a continuous email sending process
+let simulationInterval: NodeJS.Timeout | null = null
+let emailCounter = 0
 
-  stopContinuousAlertsSimulation() {
-    if (this.simulationInterval) {
-      clearInterval(this.simulationInterval)
-      this.simulationInterval = null
-      console.log("Stopped continuous email alert simulation.")
+const processQueue = () => {
+  if (emailQueue.length > 0) {
+    // Move some emails from queue to sending
+    const numToProcess = Math.min(emailQueue.length, 3) // Process up to 3 at a time
+    for (let i = 0; i < numToProcess; i++) {
+      const email = emailQueue.shift()
+      if (email) {
+        email.status = "sending"
+        email.timestamp = new Date().toISOString()
+        sendingEmails.push(email)
+        simulateSend(email)
+      }
     }
+  } else {
+    // If queue is empty, add more mock emails
+    addMockEmailsToQueue(5) // Add 5 new emails when queue is empty
   }
+}
+
+const simulateSend = (recipient: EmailRecipient) => {
+  // Simulate async email sending
+  setTimeout(
+    () => {
+      const success = Math.random() > 0.1 // 90% success rate
+      recipient.timestamp = new Date().toISOString()
+
+      sendingEmails = sendingEmails.filter((e) => e.id !== recipient.id) // Remove from sending
+
+      if (success) {
+        recipient.status = "sent"
+        recipient.message = "Email sent successfully."
+        sentEmails.push(recipient)
+      } else {
+        recipient.status = "failed"
+        recipient.message = "Failed to send email: network error."
+        failedEmails.push(recipient)
+      }
+    },
+    Math.random() * 2000 + 500,
+  ) // Simulate 0.5 to 2.5 seconds sending time
+}
+
+const addMockEmailsToQueue = (count: number) => {
+  for (let i = 0; i < count; i++) {
+    const subscriber = mockSubscribers[emailCounter % mockSubscribers.length]
+    const newEmail: EmailRecipient = {
+      id: uuidv4(),
+      email: subscriber.email,
+      status: "queued",
+      timestamp: new Date().toISOString(),
+      message: "Ready to send",
+    }
+    emailQueue.push(newEmail)
+    emailCounter++
+  }
+}
+
+export const emailService = {
+  /**
+   * Starts the continuous email simulation.
+   * If already running, it does nothing.
+   */
+  startSimulation() {
+    if (!simulationInterval) {
+      console.log("Starting email simulation...")
+      // Initialize with some emails if empty
+      if (
+        emailQueue.length === 0 &&
+        sendingEmails.length === 0 &&
+        sentEmails.length === 0 &&
+        failedEmails.length === 0
+      ) {
+        addMockEmailsToQueue(10) // Add initial batch
+      }
+      simulationInterval = setInterval(processQueue, 1000) // Process queue every second
+    }
+  },
+
+  /**
+   * Stops the continuous email simulation.
+   */
+  stopSimulation() {
+    if (simulationInterval) {
+      console.log("Stopping email simulation...")
+      clearInterval(simulationInterval)
+      simulationInterval = null
+    }
+  },
+
+  /**
+   * Gets the current state of all email queues.
+   * Returns deep copies to prevent external modification.
+   */
+  getEmailStatus(): {
+    queued: EmailRecipient[]
+    sending: EmailRecipient[]
+    sent: EmailRecipient[]
+    failed: EmailRecipient[]
+  } {
+    return {
+      queued: JSON.parse(JSON.stringify(emailQueue)),
+      sending: JSON.parse(JSON.stringify(sendingEmails)),
+      sent: JSON.parse(JSON.stringify(sentEmails)),
+      failed: JSON.parse(JSON.stringify(failedEmails)),
+    }
+  },
+
+  /**
+   * Resets all email queues.
+   */
+  resetEmails() {
+    emailQueue = []
+    sendingEmails = []
+    sentEmails = []
+    failedEmails = []
+    emailCounter = 0
+    this.stopSimulation() // Stop simulation when resetting
+    console.log("Email queues reset.")
+  },
+
+  // Mock new jobs to trigger alerts (expanded for more variety)
+  allMockJobs,
+
+  // Mock user subscriptions based on job preferences
+  // In a real app, this would come from a database
+  mockSubscriptions,
 
   // Simulates detecting new jobs and queuing emails
   sendNewJobAlerts(newJobs: JobListing[]): boolean {
@@ -164,7 +280,7 @@ class EmailService {
 
     newJobs.forEach((job) => {
       // Iterate through mockSubscriptions by email to find matching preferences
-      Object.entries(mockSubscriptions).forEach(([email, preferences]) => {
+      Object.entries(this.mockSubscriptions).forEach(([email, preferences]) => {
         const jobKeywords = [
           job.title,
           job.description,
@@ -197,85 +313,10 @@ class EmailService {
 
     const newRecipients = Object.values(recipientsToSend)
     if (newRecipients.length > 0) {
-      this.queuedEmails.push(...newRecipients)
-      this.startSendingProcess()
+      this.emailQueue.push(...newRecipients)
       return true
     } else {
       return false
     }
-  }
-
-  private startSendingProcess() {
-    if (this.sendingInterval) {
-      // If already sending, don't start a new interval
-      return
-    }
-
-    this.sendingInterval = setInterval(() => {
-      if (this.queuedEmails.length > 0) {
-        // Move from queued to sending
-        const email = this.queuedEmails.shift()!
-        email.status = "sending"
-        email.timestamp = new Date().toISOString()
-        this.sendingEmails.push(email)
-
-        // Simulate sending delay
-        setTimeout(
-          () => {
-            this.completeSending(email)
-          },
-          Math.random() * 1500 + 500, // 0.5 to 2 seconds
-        )
-      } else if (this.sendingEmails.length === 0) {
-        // All emails processed from the current queue
-        clearInterval(this.sendingInterval!)
-        this.sendingInterval = null
-      }
-    }, 300) // Process a new email every 300ms if available
-  }
-
-  private completeSending(email: EmailRecipient) {
-    this.sendingEmails = this.sendingEmails.filter((e) => e.id !== email.id)
-
-    // Simulate success or failure
-    if (Math.random() > 0.1) {
-      // 90% success rate
-      email.status = "sent"
-      email.message = `Notification sent to ${email.email.split("@")[0]} for ${email.jobTitle} at ${email.company}.`
-      email.timestamp = new Date().toISOString()
-      this.sentEmails.push(email)
-    } else {
-      // 10% failure rate
-      email.status = "failed"
-      email.message = `Failed to send notification to ${email.email.split("@")[0]} for ${email.jobTitle} at ${email.company}.`
-      email.timestamp = new Date().toISOString()
-      this.failedEmails.push(email)
-    }
-  }
-
-  getQueueStatus() {
-    return {
-      queued: [...this.queuedEmails],
-      sending: [...this.sendingEmails],
-      sent: [...this.sentEmails],
-      failed: [...this.failedEmails],
-    }
-  }
-
-  clearAllEmails() {
-    this.queuedEmails = []
-    this.sendingEmails = []
-    this.sentEmails = []
-    this.failedEmails = []
-    if (this.sendingInterval) {
-      clearInterval(this.sendingInterval)
-      this.sendingInterval = null
-    }
-    if (this.simulationInterval) {
-      clearInterval(this.simulationInterval)
-      this.simulationInterval = null
-    }
-  }
+  },
 }
-
-export const emailService = EmailService.getInstance()

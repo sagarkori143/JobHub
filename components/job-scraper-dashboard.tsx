@@ -1,185 +1,126 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import { RefreshCw, CheckCircle, XCircle, Clock } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
-
-interface ScrapingMetadata {
-  lastScraped: string | null
-  companies: {
-    [companyName: string]: {
-      lastScraped: string | null
-      lastSuccessfulScrape: string | null
-      status: "success" | "failed" | "pending"
-      message?: string
-    }
-  }
-}
-
-// Mock API calls for demonstration
-const mockFetchScrapingMetadata = async (): Promise<ScrapingMetadata> => {
-  await new Promise((resolve) => setTimeout(resolve, 500)) // Simulate network delay
-  const storedMetadata = localStorage.getItem("scrapingMetadata")
-  if (storedMetadata) {
-    return JSON.parse(storedMetadata)
-  }
-  return {
-    lastScraped: null,
-    companies: {
-      Google: { lastScraped: null, lastSuccessfulScrape: null, status: "pending" },
-      Amazon: { lastScraped: null, lastSuccessfulScrape: null, status: "pending" },
-      Microsoft: { lastScraped: null, lastSuccessfulScrape: null, status: "pending" },
-      Cisco: { lastScraped: null, lastSuccessfulScrape: null, status: "pending" },
-      Apple: { lastScraped: null, lastSuccessfulScrape: null, status: "pending" },
-      Meta: { lastScraped: null, lastSuccessfulScrape: null, status: "pending" },
-      Netflix: { lastScraped: null, lastSuccessfulScrape: null, status: "pending" },
-      Uber: { lastScraped: null, lastSuccessfulScrape: null, status: "pending" },
-    },
-  }
-}
-
-const mockRunScraper = async (companyName: string): Promise<void> => {
-  const metadata = await mockFetchScrapingMetadata()
-  metadata.companies[companyName] = {
-    ...metadata.companies[companyName],
-    status: "pending",
-    message: "Scraping started...",
-    lastScraped: new Date().toISOString(),
-  }
-  localStorage.setItem("scrapingMetadata", JSON.stringify(metadata))
-
-  // Simulate scraping process
-  await new Promise((resolve) => setTimeout(resolve, 3000 + Math.random() * 2000)) // 3-5 seconds
-
-  const success = Math.random() > 0.1 // 90% success rate
-  metadata.companies[companyName].status = success ? "success" : "failed"
-  metadata.companies[companyName].message = success ? "Scraped successfully!" : "Failed to scrape jobs."
-  if (success) {
-    metadata.companies[companyName].lastSuccessfulScrape = new Date().toISOString()
-  }
-  metadata.lastScraped = new Date().toISOString()
-  localStorage.setItem("scrapingMetadata", JSON.stringify(metadata))
-}
+import { toast } from "@/hooks/use-toast"
+import { jobIntegrationService } from "@/services/job-integration-service"
+import { jobDataService } from "@/services/job-data-service"
+import { Loader2, CheckCircle2, XCircle } from "lucide-react"
 
 export function JobScraperDashboard() {
-  const [metadata, setMetadata] = useState<ScrapingMetadata | null>(null)
-  const [loadingCompany, setLoadingCompany] = useState<string | null>(null)
-  const { toast } = useToast()
+  const [scraping, setScraping] = useState(false)
+  const [progress, setProgress] = useState(0)
+  const [statusMessage, setStatusMessage] = useState("")
+  const [scrapedCount, setScrapedCount] = useState(0)
+  const [addedCount, setAddedCount] = useState(0)
+  const [error, setError] = useState<string | null>(null)
 
-  const fetchMetadata = async () => {
-    const data = await mockFetchScrapingMetadata()
-    setMetadata(data)
-  }
+  const handleScrapeJobs = async () => {
+    setScraping(true)
+    setProgress(0)
+    setStatusMessage("Starting job scraping...")
+    setScrapedCount(0)
+    setAddedCount(0)
+    setError(null)
 
-  useEffect(() => {
-    fetchMetadata()
-    const interval = setInterval(fetchMetadata, 5000) // Refresh every 5 seconds
-    return () => clearInterval(interval)
-  }, [])
-
-  const handleRunScraper = async (companyName: string) => {
-    setLoadingCompany(companyName)
-    toast({
-      title: `Scraping ${companyName}`,
-      description: "Please wait while we fetch the latest job postings.",
-    })
     try {
-      await mockRunScraper(companyName)
+      // Simulate scraping process
+      setStatusMessage("Fetching jobs from external sources...")
+      setProgress(20)
+      const newJobs = await jobIntegrationService.fetchJobsFromExternalSources()
+      setScrapedCount(newJobs.length)
+      setProgress(50)
+      setStatusMessage(`Found ${newJobs.length} new jobs. Adding to database...`)
+
+      let jobsAdded = 0
+      for (const job of newJobs) {
+        try {
+          await jobDataService.addJob(job)
+          jobsAdded++
+          setProgress(50 + (jobsAdded / newJobs.length) * 50)
+        } catch (addError) {
+          console.error(`Failed to add job ${job.title}:`, addError)
+          // Continue even if one job fails to add
+        }
+      }
+      setAddedCount(jobsAdded)
+      setProgress(100)
+      setStatusMessage(`Scraping complete! Added ${jobsAdded} new jobs.`)
       toast({
-        title: `Scraping ${companyName} Complete`,
-        description: "Job postings updated successfully!",
+        title: "Scraping Successful!",
+        description: `Found ${newJobs.length} jobs, added ${jobsAdded} new entries.`,
       })
-    } catch (error) {
+    } catch (err) {
+      console.error("Job scraping failed:", err)
+      setError("Failed to scrape jobs. Please check console for details.")
+      setStatusMessage("Scraping failed.")
       toast({
-        title: `Scraping ${companyName} Failed`,
-        description: `There was an error scraping jobs for ${companyName}.`,
+        title: "Scraping Failed",
+        description: "An error occurred during job scraping.",
         variant: "destructive",
       })
     } finally {
-      setLoadingCompany(null)
-      fetchMetadata() // Refresh metadata after attempt
+      setScraping(false)
     }
   }
 
-  if (!metadata) {
-    return <div className="text-center py-10">Loading scraper dashboard...</div>
-  }
-
-  const totalCompanies = Object.keys(metadata.companies).length
-  const successfulScrapes = Object.values(metadata.companies).filter((c) => c.status === "success").length
-  const progress = totalCompanies > 0 ? (successfulScrapes / totalCompanies) * 100 : 0
-
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">Job Scraper Dashboard</h1>
-      <p className="text-gray-600 mb-6">Monitor and manually trigger job scraping for various companies.</p>
-
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Overall Scraping Status</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium">Progress</span>
-            <span className="text-sm font-medium">
-              {successfulScrapes}/{totalCompanies} successful
-            </span>
-          </div>
-          <Progress value={progress} className="w-full" />
-          {metadata.lastScraped && (
-            <p className="text-sm text-gray-500 mt-2">
-              Last overall scrape: {new Date(metadata.lastScraped).toLocaleString()}
-            </p>
+    <Card className="w-full max-w-2xl mx-auto">
+      <CardHeader>
+        <CardTitle>Job Scraper</CardTitle>
+        <CardDescription>Automate fetching new job listings from various sources.</CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-4">
+        <Button onClick={handleScrapeJobs} disabled={scraping}>
+          {scraping ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Scraping...
+            </>
+          ) : (
+            "Manually Scrape Jobs"
           )}
-        </CardContent>
-      </Card>
+        </Button>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {Object.entries(metadata.companies).map(([companyName, companyData]) => (
-          <Card key={companyName}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-lg font-semibold">{companyName}</CardTitle>
-              {companyData.status === "success" && <CheckCircle className="h-5 w-5 text-green-500" />}
-              {companyData.status === "failed" && <XCircle className="h-5 w-5 text-red-500" />}
-              {companyData.status === "pending" && <Clock className="h-5 w-5 text-yellow-500 animate-spin" />}
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-gray-600 mb-2">Status: {companyData.status}</p>
-              {companyData.lastScraped && (
-                <p className="text-xs text-gray-500">
-                  Last attempt: {new Date(companyData.lastScraped).toLocaleString()}
-                </p>
-              )}
-              {companyData.lastSuccessfulScrape && (
-                <p className="text-xs text-gray-500">
-                  Last success: {new Date(companyData.lastSuccessfulScrape).toLocaleString()}
-                </p>
-              )}
-              {companyData.message && <p className="text-xs text-gray-700 mt-2 italic">{companyData.message}</p>}
-              <Button
-                onClick={() => handleRunScraper(companyName)}
-                className="mt-4 w-full"
-                disabled={loadingCompany === companyName}
-              >
-                {loadingCompany === companyName ? (
-                  <>
-                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                    Scraping...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    Run Scraper
-                  </>
-                )}
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </div>
+        {scraping || statusMessage ? (
+          <div className="space-y-2">
+            <p className="text-sm font-medium">{statusMessage}</p>
+            <Progress value={progress} className="w-full" />
+            {error && (
+              <div className="flex items-center text-red-500 text-sm">
+                <XCircle className="h-4 w-4 mr-2" /> {error}
+              </div>
+            )}
+            {!error && !scraping && progress === 100 && (
+              <div className="flex items-center text-green-600 text-sm">
+                <CheckCircle2 className="h-4 w-4 mr-2" /> All operations completed.
+              </div>
+            )}
+            {(scrapedCount > 0 || addedCount > 0) && (
+              <div className="text-sm text-muted-foreground">
+                <span>Jobs found: {scrapedCount}</span>
+                <span className="ml-4">Jobs added: {addedCount}</span>
+              </div>
+            )}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">Click the button to start a manual job scrape.</p>
+        )}
+
+        <div className="mt-4 p-4 border rounded-md bg-muted/50">
+          <h3 className="font-semibold text-md mb-2">Automated Scraping</h3>
+          <p className="text-sm text-muted-foreground">
+            Automated job scraping runs periodically via GitHub Actions. You can view the workflow status in your GitHub
+            repository.
+          </p>
+          <Button variant="link" asChild className="px-0 mt-2">
+            <a href="https://github.com/your-repo/actions" target="_blank" rel="noopener noreferrer">
+              View GitHub Actions
+            </a>
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   )
 }

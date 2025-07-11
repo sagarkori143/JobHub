@@ -4,69 +4,114 @@
     "title": "Software Engineer, iOS",
     "company": "Apple",
     "location": "Cupertino, CA",
-    "type": "Full-time",
-    "salary": {
-      "min": 140000,
-      "max": 210000,
-      "currency": "USD"
-    },
-    "description": "Develop and maintain high-quality iOS applications for Apple's ecosystem. Collaborate with design and product teams.",
+    "description": "Develop and maintain applications for Apple's iOS platform.",
     "requirements": [
-      "Bachelor's degree in Computer Science or equivalent.",
-      "3+ years of experience in iOS development.",
-      "Proficiency in Swift and Objective-C.",
-      "Experience with Xcode and Apple's development tools."
+      "Bachelor's degree in Computer Science or related field",
+      "3+ years of experience in iOS development",
+      "Proficiency in Swift and Objective-C"
     ],
-    "benefits": [
-      "Medical, dental, vision insurance",
-      "401(k) with matching",
-      "Employee stock purchase plan",
-      "Paid time off",
-      "Fitness centers"
+    "responsibilities": [
+      "Design and implement new features for iOS apps",
+      "Optimize app performance and responsiveness",
+      "Collaborate with design and product teams"
     ],
-    "postedDate": "2024-07-02",
-    "applicationDeadline": "2024-08-17",
-    "industry": "Technology",
-    "experienceLevel": "Mid",
-    "remote": false,
-    "companyLogo": "/placeholder.svg?height=40&width=40",
-    "link": "https://jobs.apple.com/en-us/details/123456789",
-    "scrapedAt": "2024-07-10T10:00:00Z",
-    "sourceUrl": "https://jobs.apple.com/"
+    "salary": 160000,
+    "jobType": "Full-time",
+    "experienceLevel": "Mid-senior",
+    "datePosted": "2024-04-29",
+    "status": "Wishlist",
+    "skills": ["iOS Development", "Swift", "Objective-C", "Mobile Development"]
   },
   {
     "id": "apple-2",
-    "title": "Machine Learning Engineer",
+    "title": "Product Manager, Apple Watch",
     "company": "Apple",
-    "location": "Seattle, WA",
-    "type": "Full-time",
-    "salary": {
-      "min": 150000,
-      "max": 220000,
-      "currency": "USD"
-    },
-    "description": "Research, design, and implement machine learning models for various Apple products and services.",
+    "location": "Cupertino, CA",
+    "description": "Lead the product strategy and roadmap for Apple Watch features and experiences.",
     "requirements": [
-      "Master's or Ph.D. in Computer Science, AI, or related field.",
-      "3+ years of experience in machine learning.",
-      "Proficiency in Python and ML frameworks (TensorFlow, PyTorch).",
-      "Experience with large-scale data processing."
+      "Bachelor's degree or equivalent practical experience",
+      "5+ years of experience in product management",
+      "Experience with wearable technology or health products"
     ],
-    "benefits": [
-      "Medical, dental, vision insurance",
-      "401(k) with matching",
-      "Employee stock purchase plan",
-      "Paid time off",
-      "Fitness centers"
+    "responsibilities": [
+      "Define product vision and strategy for Apple Watch",
+      "Work with engineering and design to deliver new features",
+      "Analyze market trends and customer feedback"
     ],
-    "postedDate": "2024-06-27",
-    "applicationDeadline": "2024-08-12",
-    "industry": "Technology",
-    "experienceLevel": "Senior",
-    "remote": false,
-    "companyLogo": "/placeholder.svg?height=40&width=40",
-    "link": "https://jobs.apple.com/en-us/details/987654321",
-    "scrapedAt": "2024-07-10T10:00:00Z",
-    "sourceUrl": "https://jobs.apple.com/"
+    "salary": 180000,
+    "jobType": "Full-time",
+    "experienceLevel": "Director",
+    "datePosted": "2024-04-25",
+    "status": "Wishlist",
+    "skills": ["Product Management", "Wearable Technology", "Health Tech", "Strategy"]
+  },
+  {
+    "id": "apple-3",
+    "title": "Machine Learning Engineer, Siri",
+    "company": "Apple",
+    "location": "Cupertino, CA",
+    "description": "Develop and deploy machine learning models to improve Siri's intelligence and capabilities.",
+    "requirements": [
+      "Master's or PhD in CS, AI, or related field",
+      "3+ years of experience in machine learning engineering",
+      "Proficiency in Python and deep learning frameworks"
+    ],
+    "responsibilities": [
+      "Design and implement ML models for natural language understanding",
+      "Optimize model performance and efficiency",
+      "Collaborate with research and product teams"
+    ],
+    "salary": 170000,
+    "jobType": "Full-time",
+    "experienceLevel": "Mid-senior",
+    "datePosted": "2024-04-22",
+    "status": "Wishlist",
+    "skills": ["Machine Learning", "Natural Language Processing", "Python", "Deep Learning"]
+  },
+  {
+    "id": "apple-4",
+    "title": "Hardware Engineer, iPhone",
+    "company": "Apple",
+    "location": "Cupertino, CA",
+    "description": "Design and develop hardware components for future iPhone models.",
+    "requirements": [
+      "Bachelor's or Master's degree in Electrical Engineering",
+      "5+ years of experience in hardware design",
+      "Experience with consumer electronics manufacturing"
+    ],
+    "responsibilities": [
+      "Design and validate hardware components",
+      "Work with suppliers and manufacturing partners",
+      "Troubleshoot hardware issues"
+    ],
+    "salary": 165000,
+    "jobType": "Full-time",
+    "experienceLevel": "Mid-senior",
+    "datePosted": "2024-04-19",
+    "status": "Wishlist",
+    "skills": ["Hardware Design", "Electrical Engineering", "Consumer Electronics", "iPhone"]
+  },
+  {
+    "id": "apple-5",
+    "title": "Software Engineer, macOS",
+    "company": "Apple",
+    "location": "Cupertino, CA",
+    "description": "Contribute to the development of the macOS operating system and applications.",
+    "requirements": [
+      "Bachelor's degree in Computer Science or related field",
+      "3+ years of experience in macOS or desktop application development",
+      "Proficiency in C++, Objective-C, or Swift"
+    ],
+    "responsibilities": [
+      "Design and implement new features for macOS",
+      "Optimize system performance and stability",
+      "Collaborate with cross-functional teams"
+    ],
+    "salary": 155000,
+    "jobType": "Full-time",
+    "experienceLevel": "Mid-senior",
+    "datePosted": "2024-04-16",
+    "status": "Wishlist",
+    "skills": ["macOS Development", "C++", "Objective-C", "Swift", "Desktop Applications"]
   }
 ]

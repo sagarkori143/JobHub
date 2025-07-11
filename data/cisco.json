@@ -1,72 +1,117 @@
 [
   {
     "id": "cisco-1",
-    "title": "Network Engineer",
+    "title": "Software Engineer, Networking",
     "company": "Cisco",
     "location": "San Jose, CA",
-    "type": "Full-time",
-    "salary": {
-      "min": 100000,
-      "max": 150000,
-      "currency": "USD"
-    },
-    "description": "Design, implement, and troubleshoot complex network infrastructures for enterprise clients.",
+    "description": "Develop software for Cisco's next-generation networking products.",
     "requirements": [
-      "Bachelor's degree in Computer Science or Electrical Engineering.",
-      "3+ years of experience in network engineering.",
-      "CCNA or CCNP certification.",
-      "Strong knowledge of routing and switching protocols."
+      "Bachelor's or Master's degree in CS or EE",
+      "3+ years of experience in software development",
+      "Proficiency in C/C++ and experience with network protocols"
     ],
-    "benefits": [
-      "Health, dental, vision insurance",
-      "401(k) with matching",
-      "Employee stock purchase plan",
-      "Paid time off",
-      "Tuition reimbursement"
+    "responsibilities": [
+      "Design and implement software features for network devices",
+      "Debug and troubleshoot complex networking issues",
+      "Collaborate with hardware and QA teams"
     ],
-    "postedDate": "2024-07-03",
-    "applicationDeadline": "2024-08-19",
-    "industry": "Networking",
-    "experienceLevel": "Mid",
-    "remote": false,
-    "companyLogo": "/placeholder.svg?height=40&width=40",
-    "link": "https://jobs.cisco.com/jobs/details/12345",
-    "scrapedAt": "2024-07-10T10:00:00Z",
-    "sourceUrl": "https://jobs.cisco.com/"
+    "salary": 130000,
+    "jobType": "Full-time",
+    "experienceLevel": "Mid-senior",
+    "datePosted": "2024-04-28",
+    "status": "Wishlist",
+    "skills": ["Networking", "C++", "Network Protocols", "Embedded Systems"]
   },
   {
     "id": "cisco-2",
-    "title": "Cybersecurity Analyst",
+    "title": "Cybersecurity Engineer",
+    "company": "Cisco",
+    "location": "Raleigh, NC",
+    "description": "Design, implement, and maintain cybersecurity solutions for Cisco's products and infrastructure.",
+    "requirements": [
+      "Bachelor's degree in Cybersecurity or related field",
+      "4+ years of experience in cybersecurity",
+      "Knowledge of security frameworks (e.g., NIST, ISO 27001)"
+    ],
+    "responsibilities": [
+      "Conduct security assessments and penetration testing",
+      "Develop and implement security policies",
+      "Respond to security incidents"
+    ],
+    "salary": 140000,
+    "jobType": "Full-time",
+    "experienceLevel": "Mid-senior",
+    "datePosted": "2024-04-24",
+    "status": "Wishlist",
+    "skills": ["Cybersecurity", "Network Security", "Penetration Testing", "Incident Response"]
+  },
+  {
+    "id": "cisco-3",
+    "title": "Cloud Solutions Architect",
     "company": "Cisco",
     "location": "Remote",
-    "type": "Full-time",
-    "salary": {
-      "min": 110000,
-      "max": 160000,
-      "currency": "USD"
-    },
-    "description": "Monitor, detect, and respond to cybersecurity threats. Implement security measures and best practices.",
+    "description": "Provide technical leadership and guidance to customers adopting Cisco's cloud solutions.",
     "requirements": [
-      "Bachelor's degree in Cybersecurity or related field.",
-      "3+ years of experience in cybersecurity.",
-      "Certifications like CompTIA Security+, CEH, or CISSP.",
-      "Knowledge of security frameworks (NIST, ISO 27001)."
+      "Bachelor's degree in a technical field",
+      "7+ years of experience in cloud architecture or consulting",
+      "Experience with hybrid cloud environments"
     ],
-    "benefits": [
-      "Health, dental, vision insurance",
-      "401(k) with matching",
-      "Employee stock purchase plan",
-      "Paid time off",
-      "Tuition reimbursement"
+    "responsibilities": [
+      "Design and propose cloud solutions to customers",
+      "Conduct technical presentations and demonstrations",
+      "Collaborate with sales and product teams"
     ],
-    "postedDate": "2024-06-29",
-    "applicationDeadline": "2024-08-14",
-    "industry": "Cybersecurity",
-    "experienceLevel": "Mid",
-    "remote": true,
-    "companyLogo": "/placeholder.svg?height=40&width=40",
-    "link": "https://jobs.cisco.com/jobs/details/67890",
-    "scrapedAt": "2024-07-10T10:00:00Z",
-    "sourceUrl": "https://jobs.cisco.com/"
+    "salary": 160000,
+    "jobType": "Full-time",
+    "experienceLevel": "Director",
+    "datePosted": "2024-04-21",
+    "status": "Wishlist",
+    "skills": ["Cloud Architecture", "Hybrid Cloud", "Cisco ACI", "Presales"]
+  },
+  {
+    "id": "cisco-4",
+    "title": "Technical Marketing Engineer",
+    "company": "Cisco",
+    "location": "San Jose, CA",
+    "description": "Bridge the gap between engineering and marketing by creating technical content and demonstrations.",
+    "requirements": [
+      "Bachelor's degree in CS or EE",
+      "3+ years of experience in technical marketing or product management",
+      "Strong presentation and writing skills"
+    ],
+    "responsibilities": [
+      "Develop technical whitepapers and presentations",
+      "Create product demonstrations and labs",
+      "Support product launches and events"
+    ],
+    "salary": 125000,
+    "jobType": "Full-time",
+    "experienceLevel": "Mid-senior",
+    "datePosted": "2024-04-19",
+    "status": "Wishlist",
+    "skills": ["Technical Marketing", "Product Management", "Content Creation", "Networking"]
+  },
+  {
+    "id": "cisco-5",
+    "title": "Software Engineer, Collaboration",
+    "company": "Cisco",
+    "location": "San Jose, CA",
+    "description": "Develop software for Cisco's collaboration products (e.g., Webex).",
+    "requirements": [
+      "Bachelor's degree in Computer Science or related field",
+      "3+ years of experience in software development",
+      "Experience with real-time communication technologies"
+    ],
+    "responsibilities": [
+      "Design and implement features for collaboration platforms",
+      "Optimize audio/video quality and performance",
+      "Work with cross-functional teams to deliver new features"
+    ],
+    "salary": 135000,
+    "jobType": "Full-time",
+    "experienceLevel": "Mid-senior",
+    "datePosted": "2024-04-16",
+    "status": "Wishlist",
+    "skills": ["Collaboration Software", "Real-time Communication", "WebRTC", "JavaScript"]
   }
 ]
