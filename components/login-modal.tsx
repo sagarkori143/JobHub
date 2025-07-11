@@ -49,21 +49,9 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
         setEmail("")
         setPassword("")
       } else {
-        let toastDescription = "Invalid email or password."
-        if (result.errorType === "wrong_password") {
-          toastDescription =
-            result.message || "Incorrect password. An OTP has been sent to your email for password reset."
-        } else if (result.errorType === "email_not_found") {
-          toastDescription = result.message || "No account found with this email. Please sign up."
-        } else if (result.errorType === "rate_limit") {
-          toastDescription = result.message || "Too many attempts. Please try again later."
-        } else {
-          toastDescription = result.message || "Something went wrong. Please try again."
-        }
-
         toast({
           title: "Sign in failed",
-          description: toastDescription,
+          description: result.message || "Invalid email or password.",
           variant: "destructive",
         })
       }

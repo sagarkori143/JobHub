@@ -28,7 +28,7 @@ interface JobPreferences {
 interface LoginResult {
   success: boolean
   message?: string
-  errorType?: "wrong_password" | "email_not_found" | "other_error" | "rate_limit"
+  errorType?: "wrong_password" | "email_not_found" | "other_error" | "rate_limit" | "invalid_credentials"
 }
 
 interface AuthContextType {
@@ -207,81 +207,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string): Promise<LoginResult> => {
     setLoading(true)
-
-    // 1. Try to sign in with password
     const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
 
+    setLoading(false)
+
     if (signInData?.user) {
-      setLoading(false)
       return { success: true, message: "You have successfully signed in." }
     }
 
-    // 2. Handle sign-in errors
-    if (signInError) {
-      if (signInError instanceof AuthApiError && signInError.status === 400) {
-        // Supabase returns 'Invalid login credentials' for both wrong password and non-existent email.
-        // To distinguish, we'll try to send a password reset OTP.
-        // If it fails with 'User not found', then the email doesn't exist.
-        // If it succeeds (sends OTP) or hits rate limit, then the email exists, and the password was wrong.
-        const { error: resetOtpError } = await supabase.auth.signInWithOtp({
-          email,
-          options: {
-            channel: "email",
-            shouldCreateUser: false, // Crucial: do not create user if not found
-          },
-        })
-
-        if (resetOtpError) {
-          if (
-            resetOtpError instanceof AuthApiError &&
-            resetOtpError.status === 400 &&
-            resetOtpError.message?.toLowerCase().includes("user not found")
-          ) {
-            setLoading(false)
-            return {
-              success: false,
-              message: "No account found with this email. Please sign up.",
-              errorType: "email_not_found",
-            }
-          } else if (
-            resetOtpError instanceof AuthApiError &&
-            resetOtpError.status === 429 &&
-            resetOtpError.message?.toLowerCase().includes("for security purposes, you can only request this after")
-          ) {
-            // Rate limit hit for OTP request, implies email exists but password was wrong
-            setLoading(false)
-            return {
-              success: false,
-              message: "Incorrect password. Please try again later due to too many attempts.",
-              errorType: "rate_limit",
-            }
-          } else {
-            // Other errors during OTP send attempt (e.g., invalid email format)
-            console.error("OTP send attempt error during login flow:", resetOtpError.message)
-            setLoading(false)
-            return { success: false, message: "An error occurred. Please try again.", errorType: "other_error" }
-          }
-        } else {
-          // If signInWithOtp succeeds (sends an OTP), it means the email exists, but the password was wrong.
-          // This also means an OTP was sent to the user's email.
-          setLoading(false)
-          return {
-            success: false,
-            message: "Incorrect password. An OTP has been sent to your email for password reset.",
-            errorType: "wrong_password",
-          }
-        }
-      } else {
-        // Other general sign-in errors
-        console.error("Login error:", signInError.message)
-        setLoading(false)
-        return { success: false, message: "An unexpected error occurred during login.", errorType: "other_error" }
-      }
+    // Always show a generic error for failed login
+    return {
+      success: false,
+      message: "Invalid email or password.",
+      errorType: "invalid_credentials",
     }
-
-    // Should not reach here, but as a fallback
-    setLoading(false)
-    return { success: false, message: "An unknown error occurred.", errorType: "other_error" }
   }
 
   const signup = async (
