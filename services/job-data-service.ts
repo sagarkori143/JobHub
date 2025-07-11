@@ -1,79 +1,111 @@
-import type { Job } from "@/types/job"
-import { v4 as uuidv4 } from "uuid"
+import type { JobListing } from "@/types/job-search"
 import { mockJobs } from "@/data/mock-jobs"
 
-// This is a mock in-memory data store for jobs.
-// In a real application, this would interact with a database (e.g., PostgreSQL, MongoDB).
-let jobs: Job[] = [...mockJobs] // Initialize with mock data
-
-export const jobDataService = {
-  /**
-   * Retrieves all jobs from the data store.
-   * @returns A promise that resolves with an array of Job objects.
-   */
-  async getJobs(): Promise<Job[]> {
-    // Simulate network delay
-    await new Promise((resolve) => setTimeout(resolve, 300))
-    return JSON.parse(JSON.stringify(jobs)) // Return a deep copy to prevent direct modification
-  },
-
-  /**
-   * Retrieves a single job by its ID.
-   * @param id The ID of the job to retrieve.
-   * @returns A promise that resolves with the Job object or null if not found.
-   */
-  async getJobById(id: string): Promise<Job | null> {
-    await new Promise((resolve) => setTimeout(resolve, 200))
-    const job = jobs.find((j) => j.id === id)
-    return job ? JSON.parse(JSON.stringify(job)) : null
-  },
-
-  /**
-   * Adds a new job to the data store.
-   * @param newJob The job object to add (without an ID).
-   * @returns A promise that resolves with the newly added Job object (including its generated ID).
-   */
-  async addJob(newJob: Omit<Job, "id">): Promise<Job> {
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    const jobWithId: Job = { ...newJob, id: uuidv4() }
-    jobs.push(jobWithId)
-    return JSON.parse(JSON.stringify(jobWithId))
-  },
-
-  /**
-   * Updates an existing job in the data store.
-   * @param id The ID of the job to update.
-   * @param updatedFields An object containing the fields to update.
-   * @returns A promise that resolves with the updated Job object or null if the job was not found.
-   */
-  async updateJob(id: string, updatedFields: Partial<Job>): Promise<Job | null> {
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    const index = jobs.findIndex((j) => j.id === id)
-    if (index > -1) {
-      jobs[index] = { ...jobs[index], ...updatedFields }
-      return JSON.parse(JSON.stringify(jobs[index]))
+export interface JobMetadata {
+  lastUpdated: string
+  totalJobs: number
+  companies: Record<
+    string,
+    {
+      total: number
+      active: number
+      expired: number
     }
-    return null
-  },
-
-  /**
-   * Deletes a job from the data store by its ID.
-   * @param id The ID of the job to delete.
-   * @returns A promise that resolves with true if the job was deleted, false otherwise.
-   */
-  async deleteJob(id: string): Promise<boolean> {
-    await new Promise((resolve) => setTimeout(resolve, 300))
-    const initialLength = jobs.length
-    jobs = jobs.filter((j) => j.id !== id)
-    return jobs.length < initialLength
-  },
-
-  /**
-   * Resets the job data to its initial mock state.
-   * Useful for testing or development.
-   */
-  async resetJobs(): Promise<void> {
-    await new Promise((resolve) => setTimeout(resolve, 100))
-    jobs = [...mockJobs]
-  },
+  >
+  scrapingSession?: {
+    timestamp: string
+    companiesProcessed: number
+    totalActiveJobs: number
+  }
 }
+
+class JobDataService {
+  private static instance: JobDataService
+  private jobs: JobListing[] = []
+  private metadata: JobMetadata | null = null
+  private lastFetch = 0
+  private readonly CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
+
+  static getInstance(): JobDataService {
+    if (!JobDataService.instance) {
+      JobDataService.instance = new JobDataService()
+    }
+    return JobDataService.instance
+  }
+
+  async loadJobs(forceRefresh = false): Promise<JobListing[]> {
+    const now = Date.now()
+
+    // Return cached data if still fresh
+    if (!forceRefresh && this.jobs.length > 0 && now - this.lastFetch < this.CACHE_DURATION) {
+      return this.jobs
+    }
+
+    try {
+      // In a real application, this would fetch from your API or file system
+      // For now, we'll simulate loading from the posts.json file
+      const response = await fetch("/api/jobs")
+
+      if (response.ok) {
+        const data = await response.json()
+        this.jobs = data.jobs || []
+        this.metadata = data.metadata || null
+        this.lastFetch = now
+
+        console.log(`📊 Loaded ${this.jobs.length} jobs from scraped data`)
+        // If scraped data is empty, use fallback
+        if (this.jobs.length === 0) {
+          console.log("⚠️ Scraped data is empty, falling back to mock jobs.")
+          return this.getFallbackJobs()
+        }
+        return this.jobs
+      } else {
+        console.warn("Failed to fetch jobs from API, using fallback data")
+        return this.getFallbackJobs()
+      }
+    } catch (error) {
+      console.error("Error loading jobs:", error)
+      return this.getFallbackJobs()
+    }
+  }
+
+  private getFallbackJobs(): JobListing[] {
+    console.log("Using mock data as fallback.")
+    return mockJobs
+  }
+
+  async getCompanyJobs(companyName: string): Promise<JobListing[]> {
+    const allJobs = await this.loadJobs()
+    return allJobs.filter((job) => job.company.toLowerCase() === companyName.toLowerCase())
+  }
+
+  async getActiveJobs(): Promise<JobListing[]> {
+    const allJobs = await this.loadJobs()
+    return allJobs.filter((job) => (job as any).isActive !== false)
+  }
+
+  async getExpiredJobs(): Promise<JobListing[]> {
+    // This would typically load from individual company files
+    // For now, return empty array
+    return []
+  }
+
+  getMetadata(): JobMetadata | null {
+    return this.metadata
+  }
+
+  async refreshJobs(): Promise<JobListing[]> {
+    return this.loadJobs(true)
+  }
+
+  getStats() {
+    return {
+      totalJobs: this.jobs.length,
+      lastUpdated: this.metadata?.lastUpdated || null,
+      companies: this.metadata?.companies || {},
+      cacheAge: Date.now() - this.lastFetch,
+    }
+  }
+}
+
+export const jobDataService = JobDataService.getInstance()

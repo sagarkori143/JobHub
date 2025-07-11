@@ -1,58 +1,42 @@
 import { NextResponse } from "next/server"
-import { jobDataService } from "@/services/job-data-service"
-import type { Job } from "@/types/job"
+import fs from "fs/promises"
+import path from "path"
 
 export async function GET() {
   try {
-    const jobs = await jobDataService.getJobs()
-    return NextResponse.json(jobs)
-  } catch (error) {
-    console.error("Error fetching jobs:", error)
-    return NextResponse.json({ message: "Failed to fetch jobs" }, { status: 500 })
-  }
-}
+    const dataDir = path.join(process.cwd(), "data")
 
-export async function POST(request: Request) {
-  try {
-    const newJob: Omit<Job, "id"> = await request.json()
-    const addedJob = await jobDataService.addJob(newJob)
-    return NextResponse.json(addedJob, { status: 201 })
-  } catch (error) {
-    console.error("Error adding job:", error)
-    return NextResponse.json({ message: "Failed to add job" }, { status: 500 })
-  }
-}
+    // Read posts.json
+    const postsFile = path.join(dataDir, "posts.json")
+    const jobsData = await fs.readFile(postsFile, "utf8")
+    const jobs = JSON.parse(jobsData)
 
-export async function PUT(request: Request) {
-  try {
-    const { id, ...updatedFields }: Job = await request.json()
-    if (!id) {
-      return NextResponse.json({ message: "Job ID is required for update" }, { status: 400 })
+    // Read metadata
+    let metadata = null
+    try {
+      const metadataFile = path.join(dataDir, "scraping-metadata.json")
+      const metadataData = await fs.readFile(metadataFile, "utf8")
+      metadata = JSON.parse(metadataData)
+    } catch (error) {
+      console.log("No metadata file found")
     }
-    const updatedJob = await jobDataService.updateJob(id, updatedFields)
-    if (!updatedJob) {
-      return NextResponse.json({ message: "Job not found" }, { status: 404 })
-    }
-    return NextResponse.json(updatedJob)
-  } catch (error) {
-    console.error("Error updating job:", error)
-    return NextResponse.json({ message: "Failed to update job" }, { status: 500 })
-  }
-}
 
-export async function DELETE(request: Request) {
-  try {
-    const { id } = await request.json()
-    if (!id) {
-      return NextResponse.json({ message: "Job ID is required for deletion" }, { status: 400 })
-    }
-    const deleted = await jobDataService.deleteJob(id)
-    if (!deleted) {
-      return NextResponse.json({ message: "Job not found" }, { status: 404 })
-    }
-    return NextResponse.json({ message: "Job deleted successfully" })
+    return NextResponse.json({
+      jobs,
+      metadata,
+      count: jobs.length,
+      lastFetch: new Date().toISOString(),
+    })
   } catch (error) {
-    console.error("Error deleting job:", error)
-    return NextResponse.json({ message: "Failed to delete job" }, { status: 500 })
+    console.error("Error reading job data:", error)
+
+    // Return empty data if files don't exist yet
+    return NextResponse.json({
+      jobs: [],
+      metadata: null,
+      count: 0,
+      error: "Job data not available. Run the scraper first.",
+      lastFetch: new Date().toISOString(),
+    })
   }
 }

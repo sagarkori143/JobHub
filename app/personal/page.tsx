@@ -1,445 +1,356 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { JobCard } from "@/components/job-card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { CalendarIcon, PlusCircle, Trash2, Edit, Save, XCircle } from "lucide-react"
-import { format } from "date-fns"
-import { Calendar } from "@/components/ui/calendar"
-import { toast } from "@/hooks/use-toast"
+import { PlusCircle, LogIn, User } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogDescription,
+} from "@/components/ui/dialog"
+import { JobForm } from "@/components/job-form"
+import { LoginModal } from "@/components/login-modal"
+import type { Job } from "@/types/job"
+import { useAuth } from "@/contexts/auth-context"
 
-interface PersonalGoal {
-  id: string
-  title: string
-  description: string
-  dueDate: string
-  status: "pending" | "in-progress" | "completed"
-}
+const initialJobs: Job[] = [
+  {
+    id: "1",
+    company: "Tech Corp",
+    position: "Software Engineer",
+    dateApplied: "2023-05-01",
+    status: "Applied",
+    industry: "Technology",
+    estimatedSalary: 80000,
+  },
+  {
+    id: "2",
+    company: "Data Inc",
+    position: "Data Analyst",
+    dateApplied: "2023-05-03",
+    status: "Applied",
+    industry: "Technology",
+    estimatedSalary: 70000,
+  },
+  {
+    id: "3",
+    company: "Design Solutions",
+    position: "UX Designer",
+    dateApplied: "2023-05-05",
+    status: "Applied",
+    industry: "Technology",
+    estimatedSalary: 75000,
+  },
+  {
+    id: "4",
+    company: "City High School",
+    position: "Teacher",
+    dateApplied: "2023-04-15",
+    status: "Interviewing",
+    industry: "Education",
+    estimatedSalary: 55000,
+  },
+  {
+    id: "5",
+    company: "Investment Bank",
+    position: "Financial Analyst",
+    dateApplied: "2023-04-20",
+    status: "Interviewing",
+    industry: "Finance",
+    estimatedSalary: 85000,
+  },
+  {
+    id: "6",
+    company: "Retail Chain",
+    position: "Store Manager",
+    dateApplied: "2023-03-10",
+    status: "Offer",
+    industry: "Retail",
+    estimatedSalary: 60000,
+  },
+  {
+    id: "7",
+    company: "City Hospital",
+    position: "Nurse",
+    dateApplied: "2023-03-15",
+    status: "Offer",
+    industry: "Healthcare",
+    estimatedSalary: 70000,
+  },
+  {
+    id: "8",
+    company: "University",
+    position: "Professor",
+    dateApplied: "2023-02-01",
+    status: "Rejected",
+    industry: "Education",
+    estimatedSalary: 90000,
+  },
+  {
+    id: "9",
+    company: "Fashion Outlet",
+    position: "Sales Associate",
+    dateApplied: "2023-02-15",
+    status: "Rejected",
+    industry: "Retail",
+    estimatedSalary: 35000,
+  },
+]
 
-interface Contact {
-  id: string
-  name: string
-  company: string
-  email: string
-  phone?: string
-  notes?: string
-}
+export default function PersonalDashboard() {
+  const [jobs, setJobs] = useState(initialJobs)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [jobToDelete, setJobToDelete] = useState<Job | null>(null)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
 
-export default function PersonalDashboardPage() {
-  const [goals, setGoals] = useState<PersonalGoal[]>([])
-  const [newGoal, setNewGoal] = useState<Partial<PersonalGoal>>({
-    title: "",
-    description: "",
-    dueDate: format(new Date(), "yyyy-MM-dd"),
-    status: "pending",
-  })
-  const [editingGoalId, setEditingGoalId] = useState<string | null>(null)
+  const { user, isAuthenticated } = useAuth()
 
-  const [contacts, setContacts] = useState<Contact[]>([])
-  const [newContact, setNewContact] = useState<Partial<Contact>>({
-    name: "",
-    company: "",
-    email: "",
-  })
-  const [editingContactId, setEditingContactId] = useState<string | null>(null)
+  // Show sign-in prompt if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <>
+        <div className="min-h-screen bg-gradient-to-br from-purple-50/30 via-white to-pink-50/30 flex items-center justify-center p-4">
+          {" "}
+          {/* Added responsive padding */}
+          <div className="text-center space-y-6 max-w-md mx-auto p-4 sm:p-8">
+            {" "}
+            {/* Added responsive padding */}
+            <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto">
+              <User className="w-12 h-12 text-blue-600" />
+            </div>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
+                Personal Dashboard
+              </h1>
+              <p className="text-gray-600 text-base sm:text-lg">
+                Sign in to access your job applications and track your progress
+              </p>
+            </div>
+            <div className="space-y-4">
+              <Button
+                onClick={() => setIsLoginModalOpen(true)}
+                className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg"
+                size="lg"
+              >
+                <LogIn className="mr-2 h-5 w-5" />
+                Sign In to Continue
+              </Button>
 
-  useEffect(() => {
-    // Load data from localStorage on mount
-    const storedGoals = localStorage.getItem("personalGoals")
-    if (storedGoals) setGoals(JSON.parse(storedGoals))
+              <div className="text-sm text-gray-500">Demo credentials: sagar@gmail.com / sagarkori</div>
+            </div>
+            <Card className="bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200">
+              <CardContent className="p-6">
+                <h3 className="font-semibold text-blue-800 mb-2">What you'll get access to:</h3>
+                <ul className="text-sm text-blue-700 space-y-1 text-left">
+                  <li>• Track your job applications</li>
+                  <li>• Manage application status</li>
+                  <li>• Set job preferences & alerts</li>
+                  <li>• Resume ATS scoring</li>
+                  <li>• Application analytics</li>
+                </ul>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
 
-    const storedContacts = localStorage.getItem("personalContacts")
-    if (storedContacts) setContacts(JSON.parse(storedContacts))
-  }, [])
+        <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
+      </>
+    )
+  }
 
-  useEffect(() => {
-    // Save data to localStorage whenever it changes
-    localStorage.setItem("personalGoals", JSON.stringify(goals))
-  }, [goals])
+  const appliedJobs = jobs.filter((job) => job.status === "Applied")
+  const interviewingJobs = jobs.filter((job) => job.status === "Interviewing")
+  const offerJobs = jobs.filter((job) => job.status === "Offer")
+  const rejectedJobs = jobs.filter((job) => job.status === "Rejected")
 
-  useEffect(() => {
-    localStorage.setItem("personalContacts", JSON.stringify(contacts))
-  }, [contacts])
+  const handleAddJob = (newJob: Omit<Job, "id">) => {
+    const jobWithId = { ...newJob, id: (jobs.length + 1).toString() }
+    setJobs([...jobs, jobWithId])
+    setIsDialogOpen(false)
+  }
 
-  // Goal Management
-  const handleAddGoal = () => {
-    if (newGoal.title && newGoal.description && newGoal.dueDate) {
-      const goalToAdd: PersonalGoal = {
-        id: Date.now().toString(),
-        ...newGoal,
-        status: newGoal.status || "pending",
-      } as PersonalGoal
-      setGoals((prev) => [...prev, goalToAdd])
-      setNewGoal({
-        title: "",
-        description: "",
-        dueDate: format(new Date(), "yyyy-MM-dd"),
-        status: "pending",
-      })
-      toast({ title: "Goal Added!", description: `"${goalToAdd.title}" has been added.` })
-    } else {
-      toast({ title: "Missing Info", description: "Please fill all goal fields.", variant: "destructive" })
+  const handleUpdateJob = (updatedJob: Job) => {
+    setJobs(jobs.map((job) => (job.id === updatedJob.id ? updatedJob : job)))
+  }
+
+  const handleDeleteJob = (jobToDelete: Job) => {
+    setJobToDelete(jobToDelete)
+    setIsDeleteDialogOpen(true)
+  }
+
+  const confirmDeleteJob = () => {
+    if (jobToDelete) {
+      setJobs(jobs.filter((job) => job.id !== jobToDelete.id))
+      setJobToDelete(null)
+      setIsDeleteDialogOpen(false)
     }
   }
 
-  const handleEditGoal = (goal: PersonalGoal) => {
-    setNewGoal(goal)
-    setEditingGoalId(goal.id)
-  }
+  const handleMoveStatus = (job: Job, direction: "forward" | "backward") => {
+    const statusOrder = ["Applied", "Interviewing", "Offer", "Rejected"]
+    const currentIndex = statusOrder.indexOf(job.status)
+    const newIndex = direction === "forward" ? currentIndex + 1 : currentIndex - 1
 
-  const handleSaveGoal = () => {
-    if (editingGoalId && newGoal.title && newGoal.description && newGoal.dueDate) {
-      setGoals((prev) => prev.map((goal) => (goal.id === editingGoalId ? (newGoal as PersonalGoal) : goal)))
-      setNewGoal({
-        title: "",
-        description: "",
-        dueDate: format(new Date(), "yyyy-MM-dd"),
-        status: "pending",
-      })
-      setEditingGoalId(null)
-      toast({ title: "Goal Updated!", description: `Goal has been updated.` })
-    } else {
-      toast({ title: "Missing Info", description: "Please fill all goal fields.", variant: "destructive" })
+    if (newIndex >= 0 && newIndex < statusOrder.length) {
+      const updatedJob = { ...job, status: statusOrder[newIndex] as Job["status"] }
+      setJobs(jobs.map((j) => (j.id === job.id ? updatedJob : j)))
     }
   }
-
-  const handleDeleteGoal = (id: string) => {
-    setGoals((prev) => prev.filter((goal) => goal.id !== id))
-    toast({ title: "Goal Deleted!", description: "Goal has been removed.", variant: "destructive" })
-  }
-
-  // Contact Management
-  const handleAddContact = () => {
-    if (newContact.name && newContact.company && newContact.email) {
-      const contactToAdd: Contact = {
-        id: Date.now().toString(),
-        ...newContact,
-      } as Contact
-      setContacts((prev) => [...prev, contactToAdd])
-      setNewContact({ name: "", company: "", email: "", phone: "", notes: "" })
-      toast({ title: "Contact Added!", description: `"${contactToAdd.name}" has been added.` })
-    } else {
-      toast({ title: "Missing Info", description: "Please fill required contact fields.", variant: "destructive" })
-    }
-  }
-
-  const handleEditContact = (contact: Contact) => {
-    setNewContact(contact)
-    setEditingContactId(contact.id)
-  }
-
-  const handleSaveContact = () => {
-    if (editingContactId && newContact.name && newContact.company && newContact.email) {
-      setContacts((prev) =>
-        prev.map((contact) => (contact.id === editingContactId ? (newContact as Contact) : contact)),
-      )
-      setNewContact({ name: "", company: "", email: "", phone: "", notes: "" })
-      setEditingContactId(null)
-      toast({ title: "Contact Updated!", description: `Contact has been updated.` })
-    } else {
-      toast({ title: "Missing Info", description: "Please fill required contact fields.", variant: "destructive" })
-    }
-  }
-
-  const handleDeleteContact = (id: string) => {
-    setContacts((prev) => prev.filter((contact) => contact.id !== id))
-    toast({ title: "Contact Deleted!", description: "Contact has been removed.", variant: "destructive" })
-  }
-
-  const pendingGoals = useMemo(() => goals.filter((goal) => goal.status === "pending"), [goals])
-  const inProgressGoals = useMemo(() => goals.filter((goal) => goal.status === "in-progress"), [goals])
-  const completedGoals = useMemo(() => goals.filter((goal) => goal.status === "completed"), [goals])
 
   return (
-    <div className="p-6 grid gap-6">
-      <h1 className="text-3xl font-bold mb-4">Personal Dashboard</h1>
-
-      {/* Goals Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>My Goals</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div>
-              <h3 className="text-lg font-semibold mb-2">Pending ({pendingGoals.length})</h3>
-              <div className="space-y-2">
-                {pendingGoals.length > 0 ? (
-                  pendingGoals.map((goal) => (
-                    <div key={goal.id} className="border p-3 rounded-md bg-gray-50">
-                      <p className="font-medium">{goal.title}</p>
-                      <p className="text-sm text-muted-foreground line-clamp-2">{goal.description}</p>
-                      <p className="text-xs text-muted-foreground">Due: {goal.dueDate}</p>
-                      <div className="flex gap-2 mt-2">
-                        <Button variant="outline" size="sm" onClick={() => handleEditGoal(goal)}>
-                          <Edit className="h-3 w-3 mr-1" /> Edit
-                        </Button>
-                        <Button variant="destructive" size="sm" onClick={() => handleDeleteGoal(goal.id)}>
-                          <Trash2 className="h-3 w-3 mr-1" /> Delete
-                        </Button>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-muted-foreground">No pending goals.</p>
-                )}
-              </div>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold mb-2">In Progress ({inProgressGoals.length})</h3>
-              <div className="space-y-2">
-                {inProgressGoals.length > 0 ? (
-                  inProgressGoals.map((goal) => (
-                    <div key={goal.id} className="border p-3 rounded-md bg-blue-50">
-                      <p className="font-medium">{goal.title}</p>
-                      <p className="text-sm text-muted-foreground line-clamp-2">{goal.description}</p>
-                      <p className="text-xs text-muted-foreground">Due: {goal.dueDate}</p>
-                      <div className="flex gap-2 mt-2">
-                        <Button variant="outline" size="sm" onClick={() => handleEditGoal(goal)}>
-                          <Edit className="h-3 w-3 mr-1" /> Edit
-                        </Button>
-                        <Button variant="destructive" size="sm" onClick={() => handleDeleteGoal(goal.id)}>
-                          <Trash2 className="h-3 w-3 mr-1" /> Delete
-                        </Button>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-muted-foreground">No goals in progress.</p>
-                )}
-              </div>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold mb-2">Completed ({completedGoals.length})</h3>
-              <div className="space-y-2">
-                {completedGoals.length > 0 ? (
-                  completedGoals.map((goal) => (
-                    <div key={goal.id} className="border p-3 rounded-md bg-green-50">
-                      <p className="font-medium">{goal.title}</p>
-                      <p className="text-sm text-muted-foreground line-clamp-2">{goal.description}</p>
-                      <p className="text-xs text-muted-foreground">Completed: {goal.dueDate}</p>
-                      <div className="flex gap-2 mt-2">
-                        <Button variant="outline" size="sm" onClick={() => handleEditGoal(goal)}>
-                          <Edit className="h-3 w-3 mr-1" /> Edit
-                        </Button>
-                        <Button variant="destructive" size="sm" onClick={() => handleDeleteGoal(goal.id)}>
-                          <Trash2 className="h-3 w-3 mr-1" /> Delete
-                        </Button>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-muted-foreground">No completed goals.</p>
-                )}
-              </div>
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-purple-50/30 via-white to-pink-50/30 p-4 md:p-8">
+      {" "}
+      {/* Adjusted responsive padding */}
+      <div className="space-y-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              Hello, {user?.name || "Guest"}! 👋
+            </h1>
+            <p className="text-gray-600 text-base md:text-lg mt-2">Welcome back to your job application dashboard</p>
           </div>
-
-          <h3 className="text-lg font-semibold mb-4">{editingGoalId ? "Edit Goal" : "Add New Goal"}</h3>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <div className="space-y-2">
-              <Label htmlFor="goal-title">Title</Label>
-              <Input
-                id="goal-title"
-                value={newGoal.title || ""}
-                onChange={(e) => setNewGoal((prev) => ({ ...prev, title: e.target.value }))}
-                placeholder="e.g., Learn Next.js"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="goal-description">Description</Label>
-              <Textarea
-                id="goal-description"
-                value={newGoal.description || ""}
-                onChange={(e) => setNewGoal((prev) => ({ ...prev, description: e.target.value }))}
-                placeholder="Detailed description of your goal"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="goal-dueDate">Due Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant={"outline"} className="w-full justify-start text-left font-normal">
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {newGoal.dueDate ? format(new Date(newGoal.dueDate), "PPP") : <span>Pick a date</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={newGoal.dueDate ? new Date(newGoal.dueDate) : undefined}
-                    onSelect={(date) =>
-                      setNewGoal((prev) => ({ ...prev, dueDate: date ? format(date, "yyyy-MM-dd") : "" }))
-                    }
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="goal-status">Status</Label>
-              <Select
-                value={newGoal.status}
-                onValueChange={(value) => setNewGoal((prev) => ({ ...prev, status: value as PersonalGoal["status"] }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="in-progress">In Progress</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="flex justify-end gap-2 mt-4">
-            {editingGoalId ? (
-              <>
-                <Button onClick={handleSaveGoal}>
-                  <Save className="h-4 w-4 mr-2" /> Save Changes
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setEditingGoalId(null)
-                    setNewGoal({
-                      title: "",
-                      description: "",
-                      dueDate: format(new Date(), "yyyy-MM-dd"),
-                      status: "pending",
-                    })
-                  }}
-                >
-                  <XCircle className="h-4 w-4 mr-2" /> Cancel Edit
-                </Button>
-              </>
-            ) : (
-              <Button onClick={handleAddGoal}>
-                <PlusCircle className="h-4 w-4 mr-2" /> Add Goal
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="mt-4 sm:mt-0 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg">
+                <PlusCircle className="mr-2 h-4 w-4" /> New Job Application
               </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              {" "}
+              {/* Adjusted for responsiveness */}
+              <DialogHeader>
+                <DialogTitle>Add New Job Application</DialogTitle>
+              </DialogHeader>
+              <JobForm onSubmit={handleAddJob} />
+            </DialogContent>
+          </Dialog>
+        </div>
 
-      {/* Contacts Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>My Contacts</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 mb-6">
-            {contacts.length > 0 ? (
-              contacts.map((contact) => (
-                <div key={contact.id} className="border p-4 rounded-md flex justify-between items-center">
-                  <div>
-                    <p className="font-medium">
-                      {contact.name} ({contact.company})
-                    </p>
-                    <p className="text-sm text-muted-foreground">{contact.email}</p>
-                    {contact.phone && <p className="text-sm text-muted-foreground">Phone: {contact.phone}</p>}
-                    {contact.notes && (
-                      <p className="text-sm text-muted-foreground line-clamp-1">Notes: {contact.notes}</p>
-                    )}
-                  </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => handleEditContact(contact)}>
-                      <Edit className="h-3 w-3 mr-1" /> Edit
-                    </Button>
-                    <Button variant="destructive" size="sm" onClick={() => handleDeleteContact(contact.id)}>
-                      <Trash2 className="h-3 w-3 mr-1" /> Delete
-                    </Button>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="text-sm text-muted-foreground">No contacts added yet.</p>
-            )}
-          </div>
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+          {" "}
+          {/* Made responsive */}
+          <Card className="bg-gradient-to-br from-blue-100 to-blue-200 border-blue-300 shadow-lg">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-blue-800">Total Applications</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-blue-900">{jobs.length}</div>
+            </CardContent>
+          </Card>
+          <Card className="bg-gradient-to-br from-yellow-100 to-yellow-200 border-yellow-300 shadow-lg">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-yellow-800">Interviews Scheduled</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-yellow-900">{interviewingJobs.length}</div>
+            </CardContent>
+          </Card>
+          <Card className="bg-gradient-to-br from-green-100 to-green-200 border-green-300 shadow-lg">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-green-800">Offers Received</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-green-900">{offerJobs.length}</div>
+            </CardContent>
+          </Card>
+          <Card className="bg-gradient-to-br from-red-100 to-red-200 border-red-300 shadow-lg">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-red-800">Rejection Rate</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-red-900">
+                {jobs.length > 0 ? Math.round((rejectedJobs.length / jobs.length) * 100) : 0}%
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-          <h3 className="text-lg font-semibold mb-4">{editingContactId ? "Edit Contact" : "Add New Contact"}</h3>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <div className="space-y-2">
-              <Label htmlFor="contact-name">Name</Label>
-              <Input
-                id="contact-name"
-                value={newContact.name || ""}
-                onChange={(e) => setNewContact((prev) => ({ ...prev, name: e.target.value }))}
-                placeholder="Contact Name"
-                required
+        <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4 auto-rows-auto">
+          {" "}
+          {/* Made responsive */}
+          <div className={`space-y-4 ${appliedJobs.length > 5 ? "md:col-span-2 lg:col-span-2" : ""}`}>
+            <h2 className="text-xl font-semibold mb-4 text-blue-600">Applied Jobs ({appliedJobs.length})</h2>
+            {appliedJobs.map((job) => (
+              <JobCard
+                key={job.id}
+                job={job}
+                className="bg-blue-50 border-blue-200"
+                onUpdate={handleUpdateJob}
+                onDelete={handleDeleteJob}
+                onMoveStatus={handleMoveStatus}
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="contact-company">Company</Label>
-              <Input
-                id="contact-company"
-                value={newContact.company || ""}
-                onChange={(e) => setNewContact((prev) => ({ ...prev, company: e.target.value }))}
-                placeholder="Company Name"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="contact-email">Email</Label>
-              <Input
-                id="contact-email"
-                type="email"
-                value={newContact.email || ""}
-                onChange={(e) => setNewContact((prev) => ({ ...prev, email: e.target.value }))}
-                placeholder="contact@example.com"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="contact-phone">Phone (Optional)</Label>
-              <Input
-                id="contact-phone"
-                type="tel"
-                value={newContact.phone || ""}
-                onChange={(e) => setNewGoal((prev) => ({ ...prev, phone: e.target.value }))}
-                placeholder="123-456-7890"
-              />
-            </div>
-            <div className="space-y-2 lg:col-span-2">
-              <Label htmlFor="contact-notes">Notes (Optional)</Label>
-              <Textarea
-                id="contact-notes"
-                value={newContact.notes || ""}
-                onChange={(e) => setNewContact((prev) => ({ ...prev, notes: e.target.value }))}
-                placeholder="Any relevant notes about this contact"
-              />
-            </div>
+            ))}
           </div>
-          <div className="flex justify-end gap-2 mt-4">
-            {editingContactId ? (
-              <>
-                <Button onClick={handleSaveContact}>
-                  <Save className="h-4 w-4 mr-2" /> Save Changes
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setEditingContactId(null)
-                    setNewContact({ name: "", company: "", email: "", phone: "", notes: "" })
-                  }}
-                >
-                  <XCircle className="h-4 w-4 mr-2" /> Cancel Edit
-                </Button>
-              </>
-            ) : (
-              <Button onClick={handleAddContact}>
-                <PlusCircle className="h-4 w-4 mr-2" /> Add Contact
+          <div className={`space-y-4 ${interviewingJobs.length > 5 ? "md:col-span-2 lg:col-span-2" : ""}`}>
+            <h2 className="text-xl font-semibold mb-4 text-yellow-600">Interviewing ({interviewingJobs.length})</h2>
+            {interviewingJobs.map((job) => (
+              <JobCard
+                key={job.id}
+                job={job}
+                className="bg-yellow-50 border-yellow-200"
+                onUpdate={handleUpdateJob}
+                onDelete={handleDeleteJob}
+                onMoveStatus={handleMoveStatus}
+              />
+            ))}
+          </div>
+          <div className={`space-y-4 ${offerJobs.length > 5 ? "md:col-span-2 lg:col-span-2" : ""}`}>
+            <h2 className="text-xl font-semibold mb-4 text-green-600">Offers ({offerJobs.length})</h2>
+            {offerJobs.map((job) => (
+              <JobCard
+                key={job.id}
+                job={job}
+                className="bg-green-50 border-green-200"
+                onUpdate={handleUpdateJob}
+                onDelete={handleDeleteJob}
+                onMoveStatus={handleMoveStatus}
+              />
+            ))}
+          </div>
+          <div className={`space-y-4 ${rejectedJobs.length > 5 ? "md:col-span-2 lg:col-span-2" : ""}`}>
+            <h2 className="text-xl font-semibold mb-4 text-red-600">Rejected ({rejectedJobs.length})</h2>
+            {rejectedJobs.map((job) => (
+              <JobCard
+                key={job.id}
+                job={job}
+                className="bg-red-50 border-red-200"
+                onUpdate={handleUpdateJob}
+                onDelete={handleDeleteJob}
+                onMoveStatus={handleMoveStatus}
+              />
+            ))}
+          </div>
+        </div>
+
+        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            {" "}
+            {/* Adjusted for responsiveness */}
+            <DialogHeader>
+              <DialogTitle>Confirm Deletion</DialogTitle>
+            </DialogHeader>
+            <DialogDescription>
+              Are you sure you want to delete the job application for {jobToDelete?.position} at {jobToDelete?.company}?
+              This action is final and cannot be undone.
+            </DialogDescription>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+                Cancel
               </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+              <Button variant="destructive" onClick={confirmDeleteJob}>
+                Delete
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   )
 }

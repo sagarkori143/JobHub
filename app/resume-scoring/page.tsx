@@ -1,153 +1,244 @@
 "use client"
 
+import type React from "react"
+
 import { useState } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Textarea } from "@/components/ui/textarea"
+import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { Progress } from "@/components/ui/progress"
-import { toast } from "@/hooks/use-toast"
-import { Sparkles } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Upload, FileText, CheckCircle, AlertCircle, XCircle } from "lucide-react"
+
+interface ATSResult {
+  score: number
+  strengths: string[]
+  improvements: string[]
+  keywords: {
+    found: string[]
+    missing: string[]
+  }
+}
 
 export default function ResumeScoringPage() {
+  const [resumeFile, setResumeFile] = useState<File | null>(null)
   const [jobDescription, setJobDescription] = useState("")
-  const [resumeContent, setResumeContent] = useState("")
-  const [score, setScore] = useState<number | null>(null)
-  const [feedback, setFeedback] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [result, setResult] = useState<ATSResult | null>(null)
 
-  const handleScoreResume = async () => {
-    if (!jobDescription || !resumeContent) {
-      toast({
-        title: "Missing Information",
-        description: "Please provide both job description and resume content.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    setLoading(true)
-    setScore(null)
-    setFeedback(null)
-
-    try {
-      // Simulate API call to an AI model for resume scoring
-      // In a real application, you would send this data to a backend API
-      // that interacts with an LLM (e.g., OpenAI, Groq, etc.)
-      await new Promise((resolve) => setTimeout(resolve, 2000)) // Simulate network delay
-
-      // Mock scoring logic
-      const jdWords = new Set(jobDescription.toLowerCase().match(/\b\w+\b/g))
-      const resumeWords = new Set(resumeContent.toLowerCase().match(/\b\w+\b/g))
-
-      let matchedWords = 0
-      jdWords.forEach((word) => {
-        if (resumeWords.has(word)) {
-          matchedWords++
-        }
-      })
-
-      const calculatedScore = Math.min(100, Math.floor((matchedWords / jdWords.size) * 100))
-      setScore(calculatedScore)
-
-      // Mock feedback generation
-      let generatedFeedback = ""
-      if (calculatedScore >= 80) {
-        generatedFeedback =
-          "Excellent match! Your resume aligns very well with the job description. Focus on highlighting specific achievements."
-      } else if (calculatedScore >= 60) {
-        generatedFeedback =
-          "Good match. Consider adding more keywords from the job description, especially in the skills and experience sections."
-      } else {
-        generatedFeedback =
-          "There's room for improvement. Tailor your resume more closely to the job description by incorporating relevant keywords and experiences."
-      }
-      setFeedback(generatedFeedback)
-
-      toast({
-        title: "Resume Scored!",
-        description: `Your resume scored ${calculatedScore}%.`,
-      })
-    } catch (error) {
-      console.error("Error scoring resume:", error)
-      toast({
-        title: "Error",
-        description: "Failed to score resume. Please try again.",
-        variant: "destructive",
-      })
-    } finally {
-      setLoading(false)
+  const handleResumeUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file && file.type === "application/pdf") {
+      setResumeFile(file)
+      setResult(null)
     }
   }
 
-  return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">AI Resume Scorer</h1>
-      <Card>
-        <CardHeader>
-          <CardTitle>Get Your Resume Scored</CardTitle>
-          <CardDescription>
-            Paste your resume and a job description to get an AI-powered compatibility score and feedback.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-6">
-          <div>
-            <Label htmlFor="job-description" className="mb-2 block">
-              Job Description
-            </Label>
-            <Textarea
-              id="job-description"
-              placeholder="Paste the full job description here..."
-              value={jobDescription}
-              onChange={(e) => setJobDescription(e.target.value)}
-              rows={8}
-              className="min-h-[150px]"
-            />
-          </div>
-          <div>
-            <Label htmlFor="resume-content" className="mb-2 block">
-              Your Resume Content
-            </Label>
-            <Textarea
-              id="resume-content"
-              placeholder="Paste your resume content here (plain text works best)..."
-              value={resumeContent}
-              onChange={(e) => setResumeContent(e.target.value)}
-              rows={10}
-              className="min-h-[200px]"
-            />
-          </div>
-          <Button onClick={handleScoreResume} disabled={loading}>
-            {loading ? (
-              <>
-                <Sparkles className="mr-2 h-4 w-4 animate-pulse" /> Scoring...
-              </>
-            ) : (
-              <>
-                <Sparkles className="mr-2 h-4 w-4" /> Score My Resume
-              </>
-            )}
-          </Button>
+  const analyzeResume = async () => {
+    if (!resumeFile || !jobDescription.trim()) return
 
-          {score !== null && (
-            <div className="mt-6 space-y-4">
-              <h2 className="text-2xl font-semibold">Your Score:</h2>
-              <div className="flex items-center gap-4">
-                <Progress value={score} className="w-full" />
-                <span className="text-lg font-bold">{score}%</span>
-              </div>
-              {feedback && (
-                <Card className="bg-muted/50">
-                  <CardContent className="p-4">
-                    <h3 className="text-lg font-semibold mb-2">Feedback:</h3>
-                    <p className="text-sm text-muted-foreground">{feedback}</p>
-                  </CardContent>
-                </Card>
+    setIsAnalyzing(true)
+
+    // Simulate API call for resume analysis
+    setTimeout(() => {
+      const mockResult: ATSResult = {
+        score: Math.floor(Math.random() * 40) + 60, // 60-100
+        strengths: [
+          "Strong technical skills section",
+          "Relevant work experience highlighted",
+          "Clear formatting and structure",
+          "Quantified achievements included",
+        ],
+        improvements: [
+          "Add more industry-specific keywords",
+          "Include soft skills relevant to the role",
+          "Optimize section headers for ATS parsing",
+          "Add relevant certifications or training",
+        ],
+        keywords: {
+          found: ["JavaScript", "React", "Node.js", "Python", "SQL", "Git"],
+          missing: ["TypeScript", "AWS", "Docker", "Kubernetes", "Agile", "Scrum"],
+        },
+      }
+      setResult(mockResult)
+      setIsAnalyzing(false)
+    }, 3000)
+  }
+
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return "text-green-600"
+    if (score >= 60) return "text-yellow-600"
+    return "text-red-600"
+  }
+
+  const getScoreIcon = (score: number) => {
+    if (score >= 80) return <CheckCircle className="w-6 h-6 text-green-600" />
+    if (score >= 60) return <AlertCircle className="w-6 h-6 text-yellow-600" />
+    return <XCircle className="w-6 h-6 text-red-600" />
+  }
+
+  return (
+    <div className="space-y-8 p-4 md:p-0">
+      {" "}
+      {/* Added responsive padding */}
+      <div>
+        <h1 className="text-2xl md:text-3xl font-bold mb-2">Resume ATS Scoring</h1>
+        <p className="text-gray-600 text-base md:text-lg">
+          Upload your resume and job description to get an ATS compatibility score and optimization suggestions.
+        </p>
+      </div>
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+        {" "}
+        {/* Made responsive */}
+        {/* Upload Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Upload Resume & Job Description</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div>
+              <Label htmlFor="resume">Resume (PDF)</Label>
+              <Input id="resume" type="file" accept=".pdf" onChange={handleResumeUpload} className="mt-1" />
+              {resumeFile && (
+                <div className="flex items-center space-x-2 mt-2">
+                  <FileText className="w-4 h-4" />
+                  <span className="text-sm">{resumeFile.name}</span>
+                </div>
               )}
             </div>
-          )}
-        </CardContent>
-      </Card>
+
+            <div>
+              <Label htmlFor="jobDescription">Job Description</Label>
+              <Textarea
+                id="jobDescription"
+                placeholder="Paste the job description here..."
+                value={jobDescription}
+                onChange={(e) => setJobDescription(e.target.value)}
+                rows={8}
+                className="mt-1"
+              />
+            </div>
+
+            <Button
+              onClick={analyzeResume}
+              disabled={!resumeFile || !jobDescription.trim() || isAnalyzing}
+              className="w-full"
+            >
+              {isAnalyzing ? (
+                <>
+                  <Upload className="w-4 h-4 mr-2 animate-spin" />
+                  Analyzing Resume...
+                </>
+              ) : (
+                <>
+                  <Upload className="w-4 h-4 mr-2" />
+                  Analyze Resume
+                </>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+        {/* Results Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle>ATS Analysis Results</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {!result && !isAnalyzing && (
+              <div className="text-center py-8 text-gray-500">
+                Upload your resume and job description to see results
+              </div>
+            )}
+
+            {isAnalyzing && (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p className="text-gray-600">Analyzing your resume...</p>
+              </div>
+            )}
+
+            {result && (
+              <div className="space-y-6">
+                {/* Score */}
+                <div className="text-center">
+                  <div className="flex items-center justify-center space-x-2 mb-2">
+                    {getScoreIcon(result.score)}
+                    <span className={`text-3xl font-bold ${getScoreColor(result.score)}`}>{result.score}%</span>
+                  </div>
+                  <Progress value={result.score} className="w-full" />
+                  <p className="text-sm text-gray-600 mt-2">ATS Compatibility Score</p>
+                </div>
+
+                {/* Keywords */}
+                <div>
+                  <h3 className="font-semibold mb-3">Keyword Analysis</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-sm font-medium text-green-600 mb-2">Found Keywords</p>
+                      <div className="flex flex-wrap gap-1">
+                        {result.keywords.found.map((keyword) => (
+                          <Badge key={keyword} variant="secondary" className="bg-green-100 text-green-800">
+                            {keyword}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-red-600 mb-2">Missing Keywords</p>
+                      <div className="flex flex-wrap gap-1">
+                        {result.keywords.missing.map((keyword) => (
+                          <Badge key={keyword} variant="secondary" className="bg-red-100 text-red-800">
+                            {keyword}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+      {/* Detailed Results */}
+      {result && (
+        <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+          {" "}
+          {/* Made responsive */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-green-600">Strengths</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2">
+                {result.strengths.map((strength, index) => (
+                  <li key={index} className="flex items-start space-x-2">
+                    <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">{strength}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-orange-600">Areas for Improvement</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2">
+                {result.improvements.map((improvement, index) => (
+                  <li key={index} className="flex items-start space-x-2">
+                    <AlertCircle className="w-4 h-4 text-orange-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">{improvement}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   )
 }

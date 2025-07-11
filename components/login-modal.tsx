@@ -3,11 +3,12 @@
 import type React from "react"
 
 import { useState } from "react"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useAuth } from "@/contexts/auth-context"
+import { useToast } from "@/hooks/use-toast"
 
 interface LoginModalProps {
   isOpen: boolean
@@ -17,61 +18,79 @@ interface LoginModalProps {
 export function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [loading, setLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const { login } = useAuth()
+  const { toast } = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
+    setIsLoading(true)
+
     try {
-      await login(email, password)
-      onClose()
+      const success = await login(email, password)
+      if (success) {
+        toast({
+          title: "Welcome back, Sagar!",
+          description: "You have successfully signed in.",
+        })
+        onClose()
+        setEmail("")
+        setPassword("")
+      } else {
+        toast({
+          title: "Sign in failed",
+          description: "Invalid email or password. Try: sagar@gmail.com / sagarkori",
+          variant: "destructive",
+        })
+      }
     } catch (error) {
-      // Error handled by useAuth's toast
+      toast({
+        title: "Error",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      })
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="max-w-[95vw] sm:max-w-md">
+        {" "}
+        {/* Made responsive */}
         <DialogHeader>
-          <DialogTitle>Login</DialogTitle>
-          <DialogDescription>Enter your credentials to access the Job Portal.</DialogDescription>
+          <DialogTitle className="text-center text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Welcome to JobHub
+          </DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="email" className="text-right">
-              Email
-            </Label>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="col-span-3"
+              placeholder="sagar@gmail.com"
               required
             />
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="password" className="text-right">
-              Password
-            </Label>
+          <div>
+            <Label htmlFor="password">Password</Label>
             <Input
               id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="col-span-3"
+              placeholder="Enter your password"
               required
             />
           </div>
-          <div className="flex justify-end">
-            <Button type="submit" disabled={loading}>
-              {loading ? "Logging in..." : "Login"}
-            </Button>
-          </div>
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? "Signing in..." : "Sign In"}
+          </Button>
+          <div className="text-center text-sm text-gray-600">Demo credentials: sagar@gmail.com / sagarkori</div>
         </form>
       </DialogContent>
     </Dialog>

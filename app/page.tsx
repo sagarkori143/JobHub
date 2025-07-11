@@ -7,21 +7,10 @@ import { JobDetailsModal } from "@/components/job-details-modal"
 import { Pagination } from "@/components/pagination"
 import { useToast } from "@/hooks/use-toast"
 import { jobDataService } from "@/services/job-data-service"
-import { getJobs } from "@/services/job-data-service"
 import type { JobListing, JobFilters as JobFiltersType } from "@/types/job-search"
 import type { Job } from "@/types/job"
-import { RefreshCw, Database, AlertCircle, Plus } from "lucide-react"
+import { RefreshCw, Database, AlertCircle } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { JobForm } from "@/components/job-form"
 
 const initialFilters: JobFiltersType = {
   search: "",
@@ -35,22 +24,15 @@ const initialFilters: JobFiltersType = {
 
 const JOBS_PER_PAGE = 6
 
-export default async function JobSearchPage() {
-  const jobs = await getJobs()
+export default function JobSearchPage() {
   const [filters, setFilters] = useState<JobFiltersType>(initialFilters)
   const [selectedJob, setSelectedJob] = useState<JobListing | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
-  const [allJobs, setAllJobs] = useState<JobListing[]>(jobs)
-  const [isLoading, setIsLoading] = useState(false)
+  const [allJobs, setAllJobs] = useState<JobListing[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [lastUpdated, setLastUpdated] = useState<string | null>(null)
   const { toast } = useToast()
-  const [isJobFormOpen, setIsJobFormOpen] = useState(false)
-
-  const handleJobAdded = (newJob: Job) => {
-    // In a real application, you might want to refresh the job list or add the job to the state
-    console.log("New job added:", newJob)
-  }
 
   // Load jobs on component mount
   useEffect(() => {
@@ -192,22 +174,6 @@ export default async function JobSearchPage() {
                   {currentPage > 1 && ` • Page ${currentPage} of ${totalPages}`}
                 </p>
               </div>
-              <Dialog open={isJobFormOpen} onOpenChange={setIsJobFormOpen}>
-                <DialogTrigger asChild>
-                  <Button>
-                    <Plus className="mr-2 h-4 w-4" /> Add New Job
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>Add New Job Application</DialogTitle>
-                    <DialogDescription>
-                      Fill in the details for a new job application you want to track.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <JobForm onJobAdded={handleJobAdded} onClose={() => setIsJobFormOpen(false)} />
-                </DialogContent>
-              </Dialog>
             </div>
 
             {/* Data Status Card */}

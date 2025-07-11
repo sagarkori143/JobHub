@@ -1,69 +1,79 @@
 "use client"
 
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { useState } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Pencil, Trash2, ChevronLeft, ChevronRight } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { JobEditForm } from "@/components/job-edit-form"
+import { Badge } from "@/components/ui/badge"
 import type { Job } from "@/types/job"
-import { formatDistanceToNow } from "date-fns"
 
 interface JobCardProps {
   job: Job
-  onViewDetails: (job: Job) => void
-  onEdit: (job: Job) => void
-  onDelete: (id: string) => void
+  className?: string
+  onUpdate: (job: Job) => void
+  onDelete: (job: Job) => void
+  onMoveStatus: (job: Job, direction: "forward" | "backward") => void
 }
 
-export function JobCard({ job, onViewDetails, onEdit, onDelete }: JobCardProps) {
-  const timeAgo = formatDistanceToNow(new Date(job.datePosted), { addSuffix: true })
+const statusOrder = ["Applied", "Interviewing", "Offer", "Rejected"]
 
-  const getStatusVariant = (status: Job["status"]) => {
-    switch (status) {
-      case "Applied":
-        return "applied"
-      case "Interviewing":
-        return "interviewing"
-      case "Offers":
-        return "offers"
-      case "Rejected":
-        return "rejected"
-      case "Wishlist":
-        return "wishlist"
-      default:
-        return "default"
-    }
+export function JobCard({ job, className, onUpdate, onDelete, onMoveStatus }: JobCardProps) {
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const currentStatusIndex = statusOrder.indexOf(job.status)
+
+  const handleEditSubmit = (updatedJob: Job) => {
+    onUpdate(updatedJob)
+    setIsEditDialogOpen(false)
   }
 
   return (
-    <Card className="flex flex-col h-full">
-      <CardHeader>
-        <div className="flex justify-between items-start">
-          <CardTitle className="text-xl">{job.title}</CardTitle>
-          <Badge variant={getStatusVariant(job.status)}>{job.status}</Badge>
-        </div>
-        <CardDescription className="text-sm text-muted-foreground">
-          {job.company} - {job.location}
-        </CardDescription>
-        <p className="text-xs text-muted-foreground">{timeAgo}</p>
+    <Card className={className}>
+      <CardHeader className="pb-2">
+        <CardTitle className="flex justify-between items-start text-lg">
+          <div>
+            <span>{job.position}</span>
+            <Badge className="mt-1 block">{job.industry}</Badge>
+          </div>
+          <div className="space-x-2">
+            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" variant="outline">
+                  <Pencil className="h-4 w-4" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Edit Job Application</DialogTitle>
+                </DialogHeader>
+                <JobEditForm job={job} onSubmit={handleEditSubmit} />
+              </DialogContent>
+            </Dialog>
+            <Button size="sm" variant="outline" onClick={() => onDelete(job)}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardTitle>
       </CardHeader>
-      <CardContent className="flex-grow">
-        <p className="text-sm line-clamp-3">{job.description}</p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <Badge variant="outline">{job.jobType}</Badge>
-          <Badge variant="outline">{job.experienceLevel}</Badge>
-          <Badge variant="outline">${job.salary.toLocaleString()}</Badge>
+      <CardContent>
+        <p className="text-sm font-medium">{job.company}</p>
+        <p className="text-sm">Applied: {job.dateApplied}</p>
+        <p className="text-sm">Estimated Salary: ${job.estimatedSalary || "N/A"}</p>
+        <div className="flex justify-between items-center mt-2">
+          {currentStatusIndex > 0 && (
+            <Button size="sm" variant="outline" onClick={() => onMoveStatus(job, "backward")}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+          )}
+          <p className="text-sm font-medium">{job.status}</p>
+          {currentStatusIndex < statusOrder.length - 1 && (
+            <Button size="sm" variant="outline" onClick={() => onMoveStatus(job, "forward")}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </CardContent>
-      <CardFooter className="flex justify-end gap-2">
-        <Button variant="outline" onClick={() => onViewDetails(job)}>
-          View Details
-        </Button>
-        <Button variant="secondary" onClick={() => onEdit(job)}>
-          Edit
-        </Button>
-        <Button variant="destructive" onClick={() => onDelete(job.id)}>
-          Delete
-        </Button>
-      </CardFooter>
     </Card>
   )
 }

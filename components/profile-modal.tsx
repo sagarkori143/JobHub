@@ -3,13 +3,14 @@
 import type React from "react"
 
 import { useState } from "react"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useAuth } from "@/contexts/auth-context"
-import { toast } from "@/hooks/use-toast"
+import { useToast } from "@/hooks/use-toast"
+import { User, Mail, Briefcase, Calendar } from "lucide-react"
 
 interface ProfileModalProps {
   isOpen: boolean
@@ -17,78 +18,85 @@ interface ProfileModalProps {
 }
 
 export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
-  const { user, updateUser } = useAuth()
+  const { user, updateProfile } = useAuth()
+  const { toast } = useToast()
   const [name, setName] = useState(user?.name || "")
   const [email, setEmail] = useState(user?.email || "")
-  const [bio, setBio] = useState(user?.bio || "")
-  const [avatar, setAvatar] = useState(user?.avatar || "")
-  const [loading, setLoading] = useState(false)
+  const [role, setRole] = useState(user?.role || "")
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
-    try {
-      if (user) {
-        await updateUser({ ...user, name, email, bio, avatar })
-        toast({
-          title: "Profile Updated!",
-          description: "Your profile information has been saved.",
-        })
-        onClose()
-      }
-    } catch (error) {
-      console.error("Failed to update profile:", error)
-      toast({
-        title: "Error",
-        description: "Failed to update profile. Please try again.",
-        variant: "destructive",
-      })
-    } finally {
-      setLoading(false)
-    }
+    updateProfile({ name, email, role })
+    toast({
+      title: "Profile updated",
+      description: "Your profile has been successfully updated.",
+    })
+    onClose()
   }
+
+  if (!user) return null
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="max-w-[95vw] sm:max-w-md">
+        {" "}
+        {/* Made responsive */}
         <DialogHeader>
-          <DialogTitle>Edit Profile</DialogTitle>
-          <DialogDescription>Make changes to your profile here. Click save when you're done.</DialogDescription>
+          <DialogTitle className="text-center text-xl font-bold">Profile Settings</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="name" className="text-right">
-              Name
-            </Label>
-            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="col-span-3" />
+        <div className="flex flex-col items-center space-y-4">
+          <Avatar className="w-20 h-20 ring-4 ring-blue-200">
+            <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
+            <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-600 text-white text-xl">
+              {user.name
+                .split(" ")
+                .map((n) => n[0])
+                .join("")}
+            </AvatarFallback>
+          </Avatar>
+
+          <div className="text-center">
+            <p className="text-sm text-gray-500 flex items-center justify-center gap-1">
+              <Calendar className="w-4 h-4" />
+              Joined {new Date(user.joinedDate).toLocaleDateString()}
+            </p>
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="email" className="text-right">
+        </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="name" className="flex items-center gap-2">
+              <User className="w-4 h-4" />
+              Full Name
+            </Label>
+            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
+          </div>
+          <div>
+            <Label htmlFor="email" className="flex items-center gap-2">
+              <Mail className="w-4 h-4" />
               Email
             </Label>
+            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          </div>
+          <div>
+            <Label htmlFor="role" className="flex items-center gap-2">
+              <Briefcase className="w-4 h-4" />
+              Current Role
+            </Label>
             <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="col-span-3"
+              id="role"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              placeholder="e.g., Software Engineer"
             />
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="bio" className="text-right">
-              Bio
-            </Label>
-            <Textarea id="bio" value={bio} onChange={(e) => setBio(e.target.value)} className="col-span-3" />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="avatar" className="text-right">
-              Avatar URL
-            </Label>
-            <Input id="avatar" value={avatar} onChange={(e) => setAvatar(e.target.value)} className="col-span-3" />
-          </div>
-          <div className="flex justify-end">
-            <Button type="submit" disabled={loading}>
-              {loading ? "Saving..." : "Save changes"}
+          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+            {" "}
+            {/* Made responsive */}
+            <Button type="submit" className="flex-1">
+              Save Changes
+            </Button>
+            <Button type="button" variant="outline" onClick={onClose} className="flex-1 bg-transparent">
+              Cancel
             </Button>
           </div>
         </form>

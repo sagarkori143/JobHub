@@ -1,7 +1,11 @@
+export type EmailStatus = "queued" | "sending" | "sent" | "failed"
+
 export interface EmailRecipient {
-  id: string
+  id: string // Unique ID for the email instance
   email: string
-  status: "queued" | "sending" | "sent" | "failed"
-  timestamp: string // ISO string
-  message?: string // For success or error messages
+  jobTitle: string
+  company: string
+  status: EmailStatus
+  timestamp: string // When it entered its current status
+  message?: string // For success/failure messages
 }

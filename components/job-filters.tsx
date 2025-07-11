@@ -1,156 +1,184 @@
 "use client"
 
-import type React from "react"
-
-import { useState, useEffect } from "react"
-import type { JobSearchCriteria } from "@/types/job-search"
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Slider } from "@/components/ui/slider"
+import type { JobFilters } from "@/types/job-search"
 
 interface JobFiltersProps {
-  onFilterChange: (filters: JobSearchCriteria) => void
-  currentFilters: JobSearchCriteria
+  filters: JobFilters
+  onFiltersChange: (filters: JobFilters) => void
 }
 
-export function JobFilters({ onFilterChange, currentFilters }: JobFiltersProps) {
-  const [filters, setFilters] = useState<JobSearchCriteria>(currentFilters)
+const jobTypesArray = ["Full-time", "Part-time", "Contract", "Internship"]
+const experienceLevelsArray = ["Entry", "Mid", "Senior", "Executive"]
+const industriesArray = ["Technology", "Healthcare", "Finance", "Education", "Marketing", "Design"]
 
-  useEffect(() => {
-    setFilters(currentFilters)
-  }, [currentFilters])
+// Rename component to match the import in app/page.tsx
+export function JobFilters({ filters, onFiltersChange }: JobFiltersProps) {
+  const [localFilters, setLocalFilters] = useState(filters)
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target
-    setFilters((prev) => ({ ...prev, [id]: value }))
+  const handleFilterChange = (key: keyof JobFilters, value: any) => {
+    const newFilters = { ...localFilters, [key]: value }
+    setLocalFilters(newFilters)
+    onFiltersChange(newFilters)
   }
 
-  const handleSelectChange = (id: keyof JobSearchCriteria, value: string) => {
-    setFilters((prev) => ({ ...prev, [id]: value }))
+  const handleArrayFilterChange = (key: keyof JobFilters, value: string, checked: boolean) => {
+    const currentArray = localFilters[key] as string[]
+    const newArray = checked ? [...currentArray, value] : currentArray.filter((item) => item !== value)
+
+    handleFilterChange(key, newArray)
   }
 
-  const handleCheckboxChange = (id: keyof JobSearchCriteria, value: string, checked: boolean) => {
-    setFilters((prev) => {
-      const currentArray = (prev[id] || []) as string[]
-      if (checked) {
-        return { ...prev, [id]: [...currentArray, value] }
-      } else {
-        return { ...prev, [id]: currentArray.filter((item) => item !== value) }
-      }
-    })
-  }
-
-  const handleApplyFilters = () => {
-    onFilterChange(filters)
-  }
-
-  const handleClearFilters = () => {
-    const clearedFilters: JobSearchCriteria = {
-      keywords: "",
+  const clearFilters = () => {
+    const clearedFilters: JobFilters = {
+      search: "",
       location: "",
       jobType: [],
       experienceLevel: [],
-      salaryMin: undefined,
-      salaryMax: undefined,
-      company: "",
+      industry: [],
+      remote: null,
+      salaryRange: { min: 0, max: 200000 },
     }
-    setFilters(clearedFilters)
-    onFilterChange(clearedFilters)
+    setLocalFilters(clearedFilters)
+    onFiltersChange(clearedFilters)
   }
 
   return (
-    <div className="grid gap-4">
-      <div>
-        <Label htmlFor="keywords" className="mb-1 block">
-          Keywords
-        </Label>
-        <Input
-          id="keywords"
-          value={filters.keywords || ""}
-          onChange={handleChange}
-          placeholder="e.g., React, Node.js"
-        />
-      </div>
-      <div>
-        <Label htmlFor="location" className="mb-1 block">
-          Location
-        </Label>
-        <Input
-          id="location"
-          value={filters.location || ""}
-          onChange={handleChange}
-          placeholder="e.g., New York, Remote"
-        />
-      </div>
-      <div>
-        <Label className="mb-1 block">Job Type</Label>
-        <div className="grid grid-cols-2 gap-2">
-          {["Full-time", "Part-time", "Contract", "Temporary", "Internship"].map((type) => (
-            <div key={type} className="flex items-center space-x-2">
-              <Checkbox
-                id={`jobType-${type}`}
-                checked={filters.jobType?.includes(type as any) || false}
-                onCheckedChange={(checked) => handleCheckboxChange("jobType", type, checked as boolean)}
-              />
-              <Label htmlFor={`jobType-${type}`}>{type}</Label>
-            </div>
-          ))}
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle className="flex justify-between items-center">
+          Filters
+          <Button variant="outline" size="sm" onClick={clearFilters}>
+            Clear All
+          </Button>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div>
+          <Label htmlFor="search">Search Jobs</Label>
+          <Input
+            id="search"
+            placeholder="Job title, company, or keywords"
+            value={localFilters.search}
+            onChange={(e) => handleFilterChange("search", e.target.value)}
+          />
         </div>
-      </div>
-      <div>
-        <Label className="mb-1 block">Experience Level</Label>
-        <div className="grid grid-cols-2 gap-2">
-          {["Entry-level", "Associate", "Mid-senior", "Director", "Executive"].map((level) => (
-            <div key={level} className="flex items-center space-x-2">
-              <Checkbox
-                id={`experienceLevel-${level}`}
-                checked={filters.experienceLevel?.includes(level as any) || false}
-                onCheckedChange={(checked) => handleCheckboxChange("experienceLevel", level, checked as boolean)}
-              />
-              <Label htmlFor={`experienceLevel-${level}`}>{level}</Label>
-            </div>
-          ))}
+
+        <div>
+          <Label htmlFor="location">Location</Label>
+          <Input
+            id="location"
+            placeholder="City, state, or remote"
+            value={localFilters.location}
+            onChange={(e) => handleFilterChange("location", e.target.value)}
+          />
         </div>
-      </div>
-      <div>
-        <Label htmlFor="salaryMin" className="mb-1 block">
-          Minimum Salary
-        </Label>
-        <Input
-          id="salaryMin"
-          type="number"
-          value={filters.salaryMin || ""}
-          onChange={handleChange}
-          placeholder="e.g., 50000"
-        />
-      </div>
-      <div>
-        <Label htmlFor="salaryMax" className="mb-1 block">
-          Maximum Salary
-        </Label>
-        <Input
-          id="salaryMax"
-          type="number"
-          value={filters.salaryMax || ""}
-          onChange={handleChange}
-          placeholder="e.g., 100000"
-        />
-      </div>
-      <div>
-        <Label htmlFor="company" className="mb-1 block">
-          Company
-        </Label>
-        <Input id="company" value={filters.company || ""} onChange={handleChange} placeholder="e.g., Google" />
-      </div>
-      <div className="flex gap-2 mt-4">
-        <Button onClick={handleApplyFilters} className="flex-1">
-          Apply Filters
-        </Button>
-        <Button variant="outline" onClick={handleClearFilters} className="flex-1 bg-transparent">
-          Clear Filters
-        </Button>
-      </div>
-    </div>
+
+        <div>
+          <Label>Job Type</Label>
+          <div className="space-y-2 mt-2">
+            {jobTypesArray.map((type) => (
+              <div key={type} className="flex items-center space-x-2">
+                <Checkbox
+                  id={type}
+                  checked={localFilters.jobType.includes(type)}
+                  onCheckedChange={(checked) => handleArrayFilterChange("jobType", type, checked as boolean)}
+                />
+                <Label htmlFor={type}>{type}</Label>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <Label>Experience Level</Label>
+          <div className="space-y-2 mt-2">
+            {experienceLevelsArray.map((level) => (
+              <div key={level} className="flex items-center space-x-2">
+                <Checkbox
+                  id={level}
+                  checked={localFilters.experienceLevel.includes(level)}
+                  onCheckedChange={(checked) => handleArrayFilterChange("experienceLevel", level, checked as boolean)}
+                />
+                <Label htmlFor={level}>{level}</Label>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <Label>Industry</Label>
+          <div className="space-y-2 mt-2">
+            {industriesArray.map((industry) => (
+              <div key={industry} className="flex items-center space-x-2">
+                <Checkbox
+                  id={industry}
+                  checked={localFilters.industry.includes(industry)}
+                  onCheckedChange={(checked) => handleArrayFilterChange("industry", industry, checked as boolean)}
+                />
+                <Label htmlFor={industry}>{industry}</Label>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <Label>Remote Work</Label>
+          <Select
+            value={localFilters.remote === null ? "any" : localFilters.remote.toString()}
+            onValueChange={(value) => handleFilterChange("remote", value === "any" ? null : value === "true")}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="any">Any</SelectItem>
+              <SelectItem value="true">Remote Only</SelectItem>
+              <SelectItem value="false">On-site Only</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <Label>
+            Salary Range: ${localFilters.salaryRange.min.toLocaleString()} - $
+            {localFilters.salaryRange.max.toLocaleString()}
+          </Label>
+          <div className="mt-2 space-y-4">
+            <div>
+              <Label className="text-sm">Minimum</Label>
+              <Slider
+                value={[localFilters.salaryRange.min]}
+                onValueChange={([value]) =>
+                  handleFilterChange("salaryRange", { ...localFilters.salaryRange, min: value })
+                }
+                max={200000}
+                step={5000}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label className="text-sm">Maximum</Label>
+              <Slider
+                value={[localFilters.salaryRange.max]}
+                onValueChange={([value]) =>
+                  handleFilterChange("salaryRange", { ...localFilters.salaryRange, max: value })
+                }
+                max={200000}
+                step={5000}
+                className="mt-1"
+              />
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   )
 }

@@ -1,179 +1,208 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { Badge } from "@/components/ui/badge"
 import { emailService } from "@/services/email-service"
-import type { EmailRecipient } from "@/types/email"
-import { RefreshCcw, Play, Pause, RotateCcw } from "lucide-react"
+import type { EmailRecipient, EmailStatus } from "@/types/email"
+import { RefreshCw, Mail, CheckCircle, XCircle, List, Send, Info } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 export default function LiveEmailsPage() {
-  const [emailStatus, setEmailStatus] = useState<{
-    queued: EmailRecipient[]
-    sending: EmailRecipient[]
-    sent: EmailRecipient[]
-    failed: EmailRecipient[]
-  }>({
-    queued: [],
-    sending: [],
-    sent: [],
-    failed: [],
-  })
-  const [isSimulationRunning, setIsSimulationRunning] = useState(false)
-  const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const [queued, setQueued] = useState<EmailRecipient[]>([])
+  const [sending, setSending] = useState<EmailRecipient[]>([])
+  const [sent, setSent] = useState<EmailRecipient[]>([])
+  const [failed, setFailed] = useState<EmailRecipient[]>([])
+  const [isSendingActive, setIsSendingActive] = useState(false)
+  const { toast } = useToast()
 
-  const updateStatus = () => {
-    setEmailStatus(emailService.getEmailStatus())
-  }
-
-  const startSimulation = () => {
-    emailService.startSimulation()
-    setIsSimulationRunning(true)
-    if (!intervalRef.current) {
-      intervalRef.current = setInterval(updateStatus, 500) // Update UI every 0.5 seconds
-    }
-  }
-
-  const stopSimulation = () => {
-    emailService.stopSimulation()
-    setIsSimulationRunning(false)
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current)
-      intervalRef.current = null
-    }
-  }
-
-  const resetSimulation = () => {
-    stopSimulation() // Ensure simulation is stopped before resetting
-    emailService.resetEmails()
-    setEmailStatus(emailService.getEmailStatus()) // Clear UI immediately
-  }
-
-  // Start simulation automatically when component mounts
   useEffect(() => {
-    startSimulation()
-    return () => {
-      stopSimulation() // Clean up on unmount
+    const updateStatus = () => {
+      const status = emailService.getQueueStatus()
+      setQueued(status.queued)
+      setSending(status.sending)
+      setSent(status.sent)
+      setFailed(status.failed)
+      setIsSendingActive(status.queued.length > 0 || status.sending.length > 0)
     }
+
+    // Initial load
+    updateStatus()
+
+    // Poll for updates every 200ms
+    const interval = setInterval(updateStatus, 200)
+
+    return () => clearInterval(interval)
   }, [])
 
-  return (
-    <div className="p-6 flex flex-col h-full">
-      <h1 className="text-3xl font-bold mb-6">Live Email Status</h1>
+  const handleClearAll = () => {
+    emailService.clearAllEmails()
+    setQueued([])
+    setSending([])
+    setSent([])
+    setFailed([])
+    setIsSendingActive(false)
+    toast({
+      title: "Email Queues Cleared",
+      description: "All simulated email sending data has been reset.",
+    })
+  }
 
-      <div className="flex gap-4 mb-6">
-        <Button onClick={isSimulationRunning ? stopSimulation : startSimulation}>
-          {isSimulationRunning ? (
-            <>
-              <Pause className="mr-2 h-4 w-4" /> Pause Simulation
-            </>
-          ) : (
-            <>
-              <Play className="mr-2 h-4 w-4" /> Start Simulation
-            </>
-          )}
-        </Button>
-        <Button variant="outline" onClick={resetSimulation}>
-          <RotateCcw className="mr-2 h-4 w-4" /> Reset All
-        </Button>
-        <Button variant="outline" onClick={updateStatus}>
-          <RefreshCcw className="mr-2 h-4 w-4" /> Refresh Status
-        </Button>
+  const getStatusColor = (status: EmailStatus) => {
+    switch (status) {
+      case "queued":
+        return "bg-gray-100 text-gray-800 border-gray-300"
+      case "sending":
+        return "bg-yellow-100 text-yellow-800 border-yellow-300"
+      case "sent":
+        return "bg-green-100 text-green-800 border-green-300"
+      case "failed":
+        return "bg-red-100 text-red-800 border-red-300"
+      default:
+        return "bg-gray-100 text-gray-800"
+    }
+  }
+
+  const getStatusIcon = (status: EmailStatus) => {
+    switch (status) {
+      case "queued":
+        return <List className="w-4 h-4" />
+      case "sending":
+        return <RefreshCw className="w-4 h-4 animate-spin" />
+      case "sent":
+        return <CheckCircle className="w-4 h-4" />
+      case "failed":
+        return <XCircle className="w-4 h-4" />
+      default:
+        return <Mail className="w-4 h-4" />
+    }
+  }
+
+  const EmailItem = ({ email }: { email: EmailRecipient }) => (
+    <div className="flex flex-col p-3 border rounded-lg bg-white shadow-sm">
+      <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center space-x-2">
+          <Mail className="w-4 h-4 text-blue-500" />
+          <p className="font-medium text-gray-800 text-sm">{email.email}</p>
+        </div>
+        <Badge className={getStatusColor(email.status)}>
+          {getStatusIcon(email.status)}
+          <span className="ml-1 capitalize text-xs">{email.status}</span>
+        </Badge>
       </div>
+      <p className="text-xs text-gray-600 truncate">
+        {email.jobTitle} at {email.company}
+      </p>
+      <p className="text-xs text-gray-500 mt-1">
+        {new Date(email.timestamp).toLocaleTimeString()} - {email.message || "Processing..."}
+      </p>
+    </div>
+  )
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 flex-1">
-        <Card className="flex flex-col">
-          <CardHeader>
-            <CardTitle>Queued ({emailStatus.queued.length})</CardTitle>
-          </CardHeader>
-          <CardContent className="flex-1 overflow-hidden">
-            <ScrollArea className="h-full max-h-96 pr-4">
-              {emailStatus.queued.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No emails in queue.</p>
-              ) : (
-                <ul className="space-y-2">
-                  {emailStatus.queued.map((email) => (
-                    <li key={email.id} className="p-2 border rounded-md bg-blue-50 text-sm">
-                      <p className="font-medium truncate">{email.email}</p>
-                      <p className="text-xs text-muted-foreground">{email.message}</p>
-                      <p className="text-xs text-muted-foreground">{new Date(email.timestamp).toLocaleTimeString()}</p>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </ScrollArea>
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50/30 via-white to-purple-50/30 p-4 md:p-8">
+      {" "}
+      {/* Adjusted responsive padding */}
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Live Email Alerts
+            </h1>
+            <p className="text-gray-600 text-base md:text-lg">
+              Monitor the status of job alert emails being sent to subscribers.
+            </p>
+          </div>
+          <Button
+            onClick={handleClearAll}
+            variant="outline"
+            disabled={!isSendingActive && sent.length === 0 && failed.length === 0}
+            className="mt-4 sm:mt-0 bg-transparent"
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Clear All
+          </Button>
+        </div>
+
+        {/* Information Card */}
+        <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+          <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
+            <Info className="w-5 h-5 text-blue-600 flex-shrink-0" />
+            <div>
+              <p className="font-medium text-blue-800">Email alerts are triggered by backend processes.</p>
+              <p className="text-sm text-blue-700">
+                For a real demonstration, you would integrate the `emailService.sendNewJobAlerts()` call into your
+                scraper or a dedicated serverless function.
+              </p>
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="flex flex-col">
-          <CardHeader>
-            <CardTitle>Sending ({emailStatus.sending.length})</CardTitle>
-          </CardHeader>
-          <CardContent className="flex-1 overflow-hidden">
-            <ScrollArea className="h-full max-h-96 pr-4">
-              {emailStatus.sending.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No emails currently sending.</p>
+        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          {" "}
+          {/* Made responsive */}
+          <Card className="bg-gray-50 border-gray-200">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2 text-gray-700">
+                <List className="w-5 h-5" />
+                <span>Queued ({queued.length})</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 max-h-96 overflow-y-auto">
+              {queued.length === 0 ? (
+                <p className="text-sm text-gray-500 text-center py-4">No emails in queue.</p>
               ) : (
-                <ul className="space-y-2">
-                  {emailStatus.sending.map((email) => (
-                    <li key={email.id} className="p-2 border rounded-md bg-yellow-50 text-sm">
-                      <p className="font-medium truncate">{email.email}</p>
-                      <p className="text-xs text-muted-foreground">{email.message}</p>
-                      <p className="text-xs text-muted-foreground">{new Date(email.timestamp).toLocaleTimeString()}</p>
-                    </li>
-                  ))}
-                </ul>
+                queued.map((email) => <EmailItem key={email.id} email={email} />)
               )}
-            </ScrollArea>
-          </CardContent>
-        </Card>
-
-        <Card className="flex flex-col">
-          <CardHeader>
-            <CardTitle>Sent ({emailStatus.sent.length})</CardTitle>
-          </CardHeader>
-          <CardContent className="flex-1 overflow-hidden">
-            <ScrollArea className="h-full max-h-96 pr-4">
-              {emailStatus.sent.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No emails sent yet.</p>
+            </CardContent>
+          </Card>
+          <Card className="bg-yellow-50 border-yellow-200">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2 text-yellow-700">
+                <Send className="w-5 h-5" />
+                <span>Sending ({sending.length})</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 max-h-96 overflow-y-auto">
+              {sending.length === 0 ? (
+                <p className="text-sm text-yellow-600 text-center py-4">No emails currently sending.</p>
               ) : (
-                <ul className="space-y-2">
-                  {emailStatus.sent.map((email) => (
-                    <li key={email.id} className="p-2 border rounded-md bg-green-50 text-sm">
-                      <p className="font-medium truncate">{email.email}</p>
-                      <p className="text-xs text-muted-foreground">{email.message}</p>
-                      <p className="text-xs text-muted-foreground">{new Date(email.timestamp).toLocaleTimeString()}</p>
-                    </li>
-                  ))}
-                </ul>
+                sending.map((email) => <EmailItem key={email.id} email={email} />)
               )}
-            </ScrollArea>
-          </CardContent>
-        </Card>
-
-        <Card className="flex flex-col">
-          <CardHeader>
-            <CardTitle>Failed ({emailStatus.failed.length})</CardTitle>
-          </CardHeader>
-          <CardContent className="flex-1 overflow-hidden">
-            <ScrollArea className="h-full max-h-96 pr-4">
-              {emailStatus.failed.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No failed emails.</p>
+            </CardContent>
+          </Card>
+          <Card className="bg-green-50 border-green-200">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2 text-green-700">
+                <CheckCircle className="w-5 h-5" />
+                <span>Sent ({sent.length})</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 max-h-96 overflow-y-auto">
+              {sent.length === 0 ? (
+                <p className="text-sm text-green-600 text-center py-4">No emails sent yet.</p>
               ) : (
-                <ul className="space-y-2">
-                  {emailStatus.failed.map((email) => (
-                    <li key={email.id} className="p-2 border rounded-md bg-red-50 text-sm">
-                      <p className="font-medium truncate">{email.email}</p>
-                      <p className="text-xs text-muted-foreground">{email.message}</p>
-                      <p className="text-xs text-muted-foreground">{new Date(email.timestamp).toLocaleTimeString()}</p>
-                    </li>
-                  ))}
-                </ul>
+                sent.map((email) => <EmailItem key={email.id} email={email} />)
               )}
-            </ScrollArea>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+          <Card className="bg-red-50 border-red-200">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2 text-red-700">
+                <XCircle className="w-5 h-5" />
+                <span>Failed ({failed.length})</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 max-h-96 overflow-y-auto">
+              {failed.length === 0 ? (
+                <p className="text-sm text-red-600 text-center py-4">No failed emails.</p>
+              ) : (
+                failed.map((email) => <EmailItem key={email.id} email={email} />)
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   )
