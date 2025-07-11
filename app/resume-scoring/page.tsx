@@ -40,8 +40,7 @@ export default function ResumeScoringPage() {
   }
 
   const analyzeResume = async () => {
-    const contentToAnalyze = resumeText || (resumeFile ? "FILE_UPLOADED" : "") // Placeholder for file content
-
+    const contentToAnalyze = resumeText || (resumeFile ? "FILE_UPLOADED" : "")
     if (!contentToAnalyze || !jobDescription.trim()) {
       toast({
         title: "Missing Information",
@@ -55,36 +54,38 @@ export default function ResumeScoringPage() {
     setResult(null)
 
     try {
-      // In a real scenario, if resumeFile is present, you'd parse its content here
-      // For simplicity, we'll just use resumeText or a placeholder for now.
-      // A more robust solution would involve a PDF parser.
-      const finalResumeContent = resumeText || "Resume content from uploaded PDF (parsing not implemented in this demo)"
-
       const response = await fetch("/api/score-resume", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ resumeText: finalResumeContent, jobDescription }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          resumeText: resumeText || "Resume content from uploaded PDF (parsing not implemented in this demo)",
+          jobDescription,
+        }),
       })
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || "Failed to fetch ATS score.")
+      let payload: any
+      const isJson = response.headers.get("content-type")?.toLowerCase().includes("application/json")
+
+      if (isJson) {
+        payload = await response.json()
+      } else {
+        payload = { error: await response.text() }
       }
 
-      const data: ATSResult = await response.json()
-      setResult(data)
+      if (!response.ok) {
+        throw new Error(payload.error || "Server returned an error.")
+      }
 
+      setResult(payload as ATSResult)
       toast({
         title: "Resume Scored!",
-        description: `Your resume scored ${data.score}%.`,
+        description: `Your resume scored ${(payload as ATSResult).score}%.`,
       })
-    } catch (error: any) {
-      console.error("Error scoring resume:", error)
+    } catch (err: any) {
+      console.error("Error scoring resume:", err)
       toast({
         title: "Error",
-        description: error.message || "Failed to score resume. Please try again.",
+        description: err.message || "Failed to score resume. Please try again.",
         variant: "destructive",
       })
     } finally {
