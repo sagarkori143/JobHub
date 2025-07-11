@@ -10,7 +10,6 @@ import { jobDataService } from "@/services/job-data-service"
 import type { JobListing, JobFilters as JobFiltersType } from "@/types/job-search"
 import type { Job } from "@/types/job"
 import { RefreshCw, Database, AlertCircle } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 
 const initialFilters: JobFiltersType = {
@@ -33,7 +32,6 @@ export default function JobSearchPage() {
   const [allJobs, setAllJobs] = useState<JobListing[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [lastUpdated, setLastUpdated] = useState<string | null>(null)
-  const [isRefreshing, setIsRefreshing] = useState(false)
   const { toast } = useToast()
 
   // Load jobs on component mount
@@ -60,30 +58,6 @@ export default function JobSearchPage() {
       })
     } finally {
       setIsLoading(false)
-    }
-  }
-
-  const refreshJobs = async () => {
-    setIsRefreshing(true)
-    try {
-      const jobs = await jobDataService.refreshJobs()
-      setAllJobs(jobs)
-
-      const metadata = jobDataService.getMetadata()
-      setLastUpdated(metadata?.lastUpdated || null)
-
-      toast({
-        title: "Jobs Refreshed",
-        description: `Loaded ${jobs.length} jobs from latest scraping data.`,
-      })
-    } catch (error) {
-      toast({
-        title: "Refresh Failed",
-        description: "Could not refresh job data. Please try again.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsRefreshing(false)
     }
   }
 
@@ -200,15 +174,6 @@ export default function JobSearchPage() {
                   {currentPage > 1 && ` • Page ${currentPage} of ${totalPages}`}
                 </p>
               </div>
-              <Button
-                onClick={refreshJobs}
-                disabled={isRefreshing}
-                variant="outline"
-                className="flex items-center space-x-2 bg-transparent"
-              >
-                <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`} />
-                <span>{isRefreshing ? "Refreshing..." : "Refresh Jobs"}</span>
-              </Button>
             </div>
 
             {/* Data Status Card */}
