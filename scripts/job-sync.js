@@ -436,53 +436,86 @@ class JobSyncManager {
 
   async runFullSync() {
     this.log("🚀 Starting Full Job Synchronization")
-    console.log("=" * 60)
+    console.log("=".repeat(60))
     
     try {
-      const { results, allNewJobs, mergedData, summary } = await this.syncAllCompanies()
-      
+      const { results, allNewJobs, mergedData, summary } = await this.syncAllCompanies();
+
       // Add new jobs to notification queue
-      if (allNewJobs.length > 0) {
-        await this.addToNotificationQueue(allNewJobs)
+      if (allNewJobs && allNewJobs.length > 0) {
+        await this.addToNotificationQueue(allNewJobs);
       }
-      
-      console.log("\n" + "=" * 60)
-      console.log("✅ Job synchronization completed!")
-      console.log(`📊 Summary:`)
-      console.log(`   Companies processed: ${summary.syncSession.companiesProcessed}`)
-      console.log(`   Total new jobs: ${summary.syncSession.totalNewJobs}`)
-      console.log(`   Total active jobs: ${summary.syncSession.totalActiveJobs}`)
-      console.log(`   Total expired jobs: ${summary.syncSession.totalExpiredJobs}`)
-      console.log(`   Total jobs in portal: ${summary.syncSession.totalJobsInPortal}`)
-      console.log(`   Duration: ${summary.syncSession.duration} seconds`)
-      
-      console.log(`\n📋 Company Results:`)
-      results.forEach(result => {
-        if (result.error) {
-          console.log(`   ❌ ${result.company}: ${result.error}`)
-        } else {
-          console.log(`   ✅ ${result.company}: ${result.active} active, ${result.new} new, ${result.expired} expired`)
-        }
-      })
-      
-      if (allNewJobs.length > 0) {
-        console.log(`\n🎉 New job openings found:`)
+
+      console.log("\n" + "=".repeat(60));
+      console.log("✅ Job synchronization completed!");
+
+      if (!summary) {
+        console.log("No data to sync. Exiting gracefully.");
+        return;
+      }
+
+      // Print summary if available
+      if (summary.syncSession) {
+        console.log("📊 Summary:");
+        console.log(`   Companies processed: ${summary.syncSession.companiesProcessed}`);
+        console.log(`   Total new jobs: ${summary.syncSession.totalNewJobs}`);
+        console.log(`   Total active jobs: ${summary.syncSession.totalActiveJobs}`);
+        console.log(`   Total expired jobs: ${summary.syncSession.totalExpiredJobs}`);
+        console.log(`   Total jobs in portal: ${summary.syncSession.totalJobsInPortal}`);
+        console.log(`   Duration: ${summary.syncSession.duration} seconds`);
+      }
+
+      if (results && results.length > 0) {
+        console.log(`\n📋 Company Results:`);
+        results.forEach(result => {
+          if (result.error) {
+            console.log(`   ❌ ${result.company}: ${result.error}`);
+          } else {
+            console.log(`   ✅ ${result.company}: ${result.active} active, ${result.new} new, ${result.expired} expired`);
+          }
+        });
+      }
+
+      if (allNewJobs && allNewJobs.length > 0) {
+        console.log(`\n🎉 New job openings found:`);
         allNewJobs.slice(0, 5).forEach((job, index) => {
-          console.log(`   ${index + 1}. ${job.title} at ${job.company} - ${job.location || 'No location'}`)
-        })
+          console.log(`   ${index + 1}. ${job.title} at ${job.company} - ${job.location || 'No location'}`);
+        });
         if (allNewJobs.length > 5) {
-          console.log(`   ... and ${allNewJobs.length - 5} more`)
+          console.log(`   ... and ${allNewJobs.length - 5} more`);
         }
       }
-      
-      console.log(`\n📄 Portal Display:`)
-      console.log(`   Merged file created: posts.json`)
-      console.log(`   Jobs sorted by newest first`)
-      console.log(`   Total jobs available: ${mergedData?.totalJobs || 0}`)
-      
+
+      if (mergedData) {
+        // Update lastUpdated to the actual update time
+        const updateTime = new Date().toISOString();
+        mergedData.lastUpdated = updateTime;
+        // Save the updated mergedData to posts.json
+        const mergedFilePath = require('path').join(this.dataDir, "posts.json");
+        await require('fs/promises').writeFile(mergedFilePath, JSON.stringify(mergedData, null, 2));
+
+        // Update sync metadata for next update timer
+        const nextUpdate = new Date(new Date(updateTime).getTime() + 2 * 60 * 60 * 1000); // 2 hours later
+        const metadataPath = require('path').join(this.dataDir, "sync-metadata.json");
+        let syncMetadata = {};
+        try {
+          syncMetadata = JSON.parse(await require('fs/promises').readFile(metadataPath, 'utf8'));
+        } catch (e) {}
+        syncMetadata.lastSync = updateTime;
+        syncMetadata.nextSync = nextUpdate.toISOString();
+        await require('fs/promises').writeFile(metadataPath, JSON.stringify(syncMetadata, null, 2));
+
+        console.log(`\n📄 Portal Display:`);
+        console.log(`   Merged file created: posts.json`);
+        console.log(`   Jobs sorted by newest first`);
+        console.log(`   Total jobs available: ${mergedData?.totalJobs || 0}`);
+        console.log(`   Last updated: ${updateTime}`);
+        console.log(`   Next update scheduled for: ${nextUpdate.toISOString()}`);
+      }
+
     } catch (error) {
-      console.error("❌ Synchronization failed:", error)
-      process.exit(1)
+      console.error("❌ Synchronization failed:", error);
+      process.exit(1);
     }
   }
 }
