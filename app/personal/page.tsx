@@ -29,6 +29,7 @@ const toDbColumns = (job: Omit<Job, "id"> | Job) => ({
   industry: job.industry,
   estimated_salary: job.estimatedSalary,
   job_type: job.jobType,
+  company_logo: job.companyLogo,
 })
 
 export default function PersonalDashboard() {
@@ -74,6 +75,7 @@ export default function PersonalDashboard() {
         industry: item.industry,
         estimatedSalary: item.estimated_salary,
         jobType: item.job_type as Job["jobType"],
+        companyLogo: item.company_logo,
       }))
       setJobs(fetchedJobs)
     }
@@ -176,6 +178,7 @@ export default function PersonalDashboard() {
           industry: data[0].industry,
           estimatedSalary: data[0].estimated_salary,
           jobType: data[0].job_type,
+          companyLogo: data[0].company_logo,
         },
         ...prevJobs,
       ])
@@ -200,6 +203,7 @@ export default function PersonalDashboard() {
         industry: updatedJob.industry,
         estimated_salary: updatedJob.estimatedSalary,
         job_type: updatedJob.jobType,
+        company_logo: updatedJob.companyLogo,
       })
       .eq("id", updatedJob.id)
       .eq("user_id", supabaseUser.id)

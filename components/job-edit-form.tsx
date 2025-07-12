@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DialogFooter } from "@/components/ui/dialog"
+import { getCompanyLogo, getCompanyLogoAsync } from "@/lib/company-logos"
 import type { Job } from "@/types/job"
 
 interface JobEditFormProps {
@@ -39,8 +40,12 @@ export function JobEditForm({ job, onUpdate, onClose }: JobEditFormProps) {
     setJobType(job.jobType || "Full-time")
   }, [job])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Get company logo asynchronously
+    const companyLogo = await getCompanyLogoAsync(company)
+    
     onUpdate({
       ...job,
       company,
@@ -50,6 +55,7 @@ export function JobEditForm({ job, onUpdate, onClose }: JobEditFormProps) {
       industry,
       estimatedSalary: estimatedSalary ? Number(estimatedSalary) : undefined,
       jobType,
+      companyLogo,
     })
     onClose()
   }

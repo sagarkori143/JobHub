@@ -17,7 +17,16 @@ interface JobListingCardProps {
 
 export function JobListingCard({ job, onViewDetails, onApply }: JobListingCardProps) {
   const formatSalary = (min: number, max: number, currency: string) => {
-    return `$${(min / 1000).toFixed(0)}k - $${(max / 1000).toFixed(0)}k ${currency}`
+    // If min and max are the same or very close, show a fixed salary
+    if (Math.abs(max - min) <= 1000) {
+      return `$${(min / 1000).toFixed(0)}k ${currency}`
+    }
+    // If salary range is reasonable, show the range
+    if (min > 0 && max > 0 && max > min) {
+      return `$${(min / 1000).toFixed(0)}k - $${(max / 1000).toFixed(0)}k ${currency}`
+    }
+    // If no valid salary data, show "Not Sure"
+    return "Not Sure"
   }
 
   const formatDate = (dateString: string) => {

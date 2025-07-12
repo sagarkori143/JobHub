@@ -1,12 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Pencil, Trash2, ChevronLeft, ChevronRight } from "lucide-react"
+import { Pencil, Trash2, ChevronLeft, ChevronRight, Building } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { JobEditForm } from "@/components/job-edit-form"
 import { Badge } from "@/components/ui/badge"
+import { getCompanyLogo, getCompanyLogoAsync } from "@/lib/company-logos"
 import type { Job } from "@/types/job"
 
 interface JobCardProps {
@@ -21,7 +22,40 @@ const statusOrder = ["Applied", "Interviewing", "Offer", "Rejected"]
 
 export function JobCard({ job, className, onUpdate, onDelete, onMoveStatus }: JobCardProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [companyLogo, setCompanyLogo] = useState<string>("")
+  const [isLoadingLogo, setIsLoadingLogo] = useState(false)
   const currentStatusIndex = statusOrder.indexOf(job.status)
+
+  useEffect(() => {
+    const loadCompanyLogo = async () => {
+      // If job already has a logo, use it
+      if (job.companyLogo) {
+        setCompanyLogo(job.companyLogo)
+        return
+      }
+
+      // Try to get from existing database first
+      const existingLogo = getCompanyLogo(job.company)
+      if (existingLogo && !existingLogo.includes("placeholder")) {
+        setCompanyLogo(existingLogo)
+        return
+      }
+
+      // If not found, search dynamically
+      setIsLoadingLogo(true)
+      try {
+        const logoUrl = await getCompanyLogoAsync(job.company)
+        setCompanyLogo(logoUrl)
+      } catch (error) {
+        console.error("Error loading company logo:", error)
+        setCompanyLogo("/placeholder.svg?height=32&width=32")
+      } finally {
+        setIsLoadingLogo(false)
+      }
+    }
+
+    loadCompanyLogo()
+  }, [job.company, job.companyLogo])
 
   const handleEditSubmit = (updatedJob: Job) => {
     onUpdate(updatedJob)
@@ -30,16 +64,20 @@ export function JobCard({ job, className, onUpdate, onDelete, onMoveStatus }: Jo
 
   return (
     <Card className={className}>
-      <CardHeader className="pb-2">
-        <CardTitle className="flex justify-between items-start text-lg">
-          <div>
-            <span>{job.position}</span>
-            <Badge className="mt-1 block">{job.industry}</Badge>
+      <CardHeader className="pb-3">
+        <div className="flex justify-between items-start gap-3">
+          <div className="flex-1 min-w-0">
+            <CardTitle className="text-lg font-semibold text-gray-900 mb-2">
+              {job.position}
+            </CardTitle>
+            <Badge variant="secondary" className="text-xs">
+              {job.industry}
+            </Badge>
           </div>
-          <div className="space-x-2">
+          <div className="flex items-center gap-1 flex-shrink-0">
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
               <DialogTrigger asChild>
-                <Button size="sm" variant="outline">
+                <Button size="sm" variant="outline" className="h-8 w-8 p-0">
                   <Pencil className="h-4 w-4" />
                 </Button>
               </DialogTrigger>
@@ -47,31 +85,90 @@ export function JobCard({ job, className, onUpdate, onDelete, onMoveStatus }: Jo
                 <DialogHeader>
                   <DialogTitle>Edit Job Application</DialogTitle>
                 </DialogHeader>
-                <JobEditForm job={job} onSubmit={handleEditSubmit} />
+                <JobEditForm 
+                  job={job} 
+                  onUpdate={handleEditSubmit} 
+                  onClose={() => setIsEditDialogOpen(false)} 
+                />
               </DialogContent>
             </Dialog>
-            <Button size="sm" variant="outline" onClick={() => onDelete(job)}>
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={() => onDelete(job)}
+              className="h-8 w-8 p-0"
+            >
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
-        </CardTitle>
+        </div>
       </CardHeader>
-      <CardContent>
-        <p className="text-sm font-medium">{job.company}</p>
-        <p className="text-sm">Applied: {job.dateApplied}</p>
-        <p className="text-sm">Estimated Salary: ${job.estimatedSalary || "N/A"}</p>
-        <div className="flex justify-between items-center mt-2">
-          {currentStatusIndex > 0 && (
-            <Button size="sm" variant="outline" onClick={() => onMoveStatus(job, "backward")}>
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-          )}
-          <p className="text-sm font-medium">{job.status}</p>
-          {currentStatusIndex < statusOrder.length - 1 && (
-            <Button size="sm" variant="outline" onClick={() => onMoveStatus(job, "forward")}>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          )}
+      <CardContent className="space-y-3">
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <div className="flex-shrink-0">
+              {isLoadingLogo ? (
+                <div className="w-8 h-8 rounded-md bg-gray-100 animate-pulse flex items-center justify-center">
+                  <Building className="w-4 h-4 text-gray-400" />
+                </div>
+              ) : (
+                <img 
+                  src={companyLogo} 
+                  alt={`${job.company} logo`}
+                  className="w-8 h-8 rounded-md object-cover border border-gray-200"
+                  onError={(e) => {
+                    // Fallback to placeholder if image fails to load
+                    const target = e.target as HTMLImageElement
+                    target.src = "/placeholder.svg?height=32&width=32"
+                  }}
+                />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900 truncate">{job.company}</p>
+            </div>
+          </div>
+          <p className="text-sm text-gray-600">Applied: {job.dateApplied}</p>
+          <p className="text-sm text-gray-600">
+            Salary: ${job.estimatedSalary || "N/A"}
+          </p>
+          <p className="text-sm text-gray-600">Type: {job.jobType}</p>
+        </div>
+        
+        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+          <div className="flex items-center gap-2">
+            {currentStatusIndex > 0 && (
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={() => onMoveStatus(job, "backward")}
+                className="h-7 w-7 p-0"
+              >
+                <ChevronLeft className="h-3 w-3" />
+              </Button>
+            )}
+            <Badge 
+              variant={
+                job.status === "Applied" ? "default" :
+                job.status === "Interviewing" ? "secondary" :
+                job.status === "Offer" ? "outline" :
+                "destructive"
+              }
+              className="text-xs"
+            >
+              {job.status}
+            </Badge>
+            {currentStatusIndex < statusOrder.length - 1 && (
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={() => onMoveStatus(job, "forward")}
+                className="h-7 w-7 p-0"
+              >
+                <ChevronRight className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>

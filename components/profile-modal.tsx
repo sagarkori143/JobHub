@@ -7,10 +7,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { UserAvatar } from "@/components/user-avatar"
 import { useAuth } from "@/contexts/auth-context"
 import { useToast } from "@/hooks/use-toast"
-import { User, Mail, Briefcase, Calendar } from "lucide-react"
+import { User, Mail, Briefcase, Calendar, Settings } from "lucide-react"
+import Link from "next/link"
 
 interface ProfileModalProps {
   isOpen: boolean
@@ -45,15 +46,7 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
           <DialogTitle className="text-center text-xl font-bold">Profile Settings</DialogTitle>
         </DialogHeader>
         <div className="flex flex-col items-center space-y-4">
-          <Avatar className="w-20 h-20 ring-4 ring-blue-200">
-            <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
-            <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-600 text-white text-xl">
-              {user.name
-                .split(" ")
-                .map((n) => n[0])
-                .join("")}
-            </AvatarFallback>
-          </Avatar>
+          <UserAvatar user={user} size="xl" className="ring-4 ring-blue-200" />
 
           <div className="text-center">
             <p className="text-sm text-gray-500 flex items-center justify-center gap-1">
@@ -98,6 +91,15 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
             <Button type="button" variant="outline" onClick={onClose} className="flex-1 bg-transparent">
               Cancel
             </Button>
+          </div>
+          
+          <div className="text-center pt-2">
+            <Link href="/profile">
+              <Button variant="ghost" className="text-blue-600 hover:text-blue-700">
+                <Settings className="w-4 h-4 mr-2" />
+                Full Profile Settings
+              </Button>
+            </Link>
           </div>
         </form>
       </DialogContent>

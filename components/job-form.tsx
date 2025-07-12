@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { getCompanyLogo, getCompanyLogoAsync } from "@/lib/company-logos"
 import type { Job } from "@/types/job"
 
 interface JobFormProps {
@@ -27,8 +28,12 @@ export function JobForm({ onSubmit, initialData }: JobFormProps) {
   const [estimatedSalary, setEstimatedSalary] = useState(initialData?.estimatedSalary || "")
   const [jobType, setJobType] = useState<Job["jobType"]>(initialData?.jobType || "Full-time")
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Get company logo asynchronously
+    const companyLogo = await getCompanyLogoAsync(company)
+    
     onSubmit({
       company,
       position,
@@ -37,6 +42,7 @@ export function JobForm({ onSubmit, initialData }: JobFormProps) {
       industry,
       estimatedSalary: estimatedSalary ? Number(estimatedSalary) : undefined,
       jobType,
+      companyLogo,
     })
   }
 

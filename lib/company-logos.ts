@@ -44,6 +44,9 @@ export const companyLogos: Record<string, string> = {
   "default": "/placeholder.svg?height=40&width=40",
 };
 
+// Cache for dynamically fetched logos
+const logoCache = new Map<string, string>();
+
 export const getCompanyLogo = (companyName: string): string => {
   // Try to find exact match first
   if (companyLogos[companyName]) {
@@ -61,4 +64,45 @@ export const getCompanyLogo = (companyName: string): string => {
 
   // Return default placeholder if no match found
   return companyLogos.default;
+};
+
+export const getCompanyLogoAsync = async (companyName: string): Promise<string> => {
+  // Check cache first
+  if (logoCache.has(companyName)) {
+    return logoCache.get(companyName)!;
+  }
+
+  // Check existing logos first
+  const existingLogo = getCompanyLogo(companyName);
+  if (existingLogo && !existingLogo.includes("placeholder")) {
+    logoCache.set(companyName, existingLogo);
+    return existingLogo;
+  }
+
+  try {
+    // Search for logo using our API
+    const response = await fetch("/api/company-logo", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ companyName }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const logoUrl = data.logoUrl;
+      
+      // Cache the result
+      logoCache.set(companyName, logoUrl);
+      return logoUrl;
+    }
+  } catch (error) {
+    console.error("Error fetching company logo:", error);
+  }
+
+  // Return placeholder if all else fails
+  const placeholder = companyLogos.default;
+  logoCache.set(companyName, placeholder);
+  return placeholder;
 }; 

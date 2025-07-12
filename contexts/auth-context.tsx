@@ -10,6 +10,7 @@ import type { User as SupabaseUser } from "@supabase/supabase-js"
 interface JobPreferences {
   keywords: string[]
   industries: string[]
+  companies: string[]
   locations: string[]
   jobTypes: string[]
   experienceLevels: string[]
@@ -53,6 +54,8 @@ interface AuthContextType {
   logout: () => Promise<void>
   updateProfile: (updates: Partial<User>) => Promise<void>
   updateJobPreferences: (preferences: JobPreferences) => Promise<void>
+  uploadAvatar: (file: File) => Promise<void>
+  removeAvatar: () => Promise<void>
   loading: boolean
   supabaseUser: SupabaseUser | null
 }
@@ -62,6 +65,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 const defaultJobPreferences: JobPreferences = {
   keywords: ["React", "JavaScript", "Frontend"],
   industries: ["Technology"],
+  companies: [],
   locations: ["Remote", "San Francisco"],
   jobTypes: ["Full-time"],
   experienceLevels: ["Mid", "Senior"],
@@ -425,6 +429,73 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const uploadAvatar = async (file: File) => {
+    if (!user || !supabaseUser) return
+
+    setLoading(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('userId', user.id)
+
+      const response = await fetch('/api/upload/avatar', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to upload avatar')
+      }
+
+      const data = await response.json()
+      
+      // Update local user state with new avatar URL
+      setUser((prev) => (prev ? { ...prev, avatar: data.avatarUrl } : null))
+      
+      // Refresh user profile to get updated data
+      const profile = await fetchUserProfile(user.id)
+      if (profile) {
+        setUser(profile)
+      }
+    } catch (error) {
+      console.error("Error uploading avatar:", error)
+      throw error
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const removeAvatar = async () => {
+    if (!user || !supabaseUser) return
+
+    setLoading(true)
+    try {
+      const response = await fetch(`/api/upload/avatar?userId=${user.id}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to remove avatar')
+      }
+
+      // Update local user state to remove avatar
+      setUser((prev) => (prev ? { ...prev, avatar: null } : null))
+      
+      // Refresh user profile to get updated data
+      const profile = await fetchUserProfile(user.id)
+      if (profile) {
+        setUser(profile)
+      }
+    } catch (error) {
+      console.error("Error removing avatar:", error)
+      throw error
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <AuthContext.Provider
       value={{
@@ -440,6 +511,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         logout,
         updateProfile,
         updateJobPreferences,
+        uploadAvatar,
+        removeAvatar,
         loading,
         supabaseUser,
       }}

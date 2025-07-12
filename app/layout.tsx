@@ -27,15 +27,15 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <AuthProvider>
-          <div className="flex min-h-screen">
-            {/* Desktop Sidebar */}
-            <div className="hidden lg:block">
+          <div className="flex h-screen">
+            {/* Desktop Sidebar - Fixed */}
+            <div className="hidden lg:block lg:flex-shrink-0">
               <Sidebar />
             </div>
 
-            <div className="flex flex-col flex-1">
+            <div className="flex flex-col flex-1 min-w-0">
               {/* Mobile Header */}
-              <header className="flex h-16 items-center gap-4 border-b bg-gradient-to-r from-blue-500 to-purple-600 px-4 lg:hidden">
+              <header className="flex h-16 items-center gap-4 border-b bg-gradient-to-r from-blue-500 to-purple-600 px-4 lg:hidden flex-shrink-0">
                 <Sheet>
                   <SheetTrigger asChild>
                     <Button variant="ghost" size="icon" className="shrink-0 text-white hover:bg-white/20">
@@ -53,7 +53,7 @@ export default function RootLayout({
                 </Link>
               </header>
 
-              {/* Main Content */}
+              {/* Main Content - Scrollable */}
               <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">{children}</main>
             </div>
           </div>

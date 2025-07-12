@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { UserAvatar } from "@/components/user-avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,6 +23,7 @@ import {
   HelpCircle,
   Bell,
   Mail,
+  Bug,
 } from "lucide-react"
 import { useState } from "react" // Keep useState for potential future desktop collapse
 import { useAuth } from "@/contexts/auth-context"
@@ -34,8 +35,10 @@ const navigationItems = [
   { name: "Search Jobs", href: "/", icon: Search, color: "text-blue-600 bg-blue-100" },
   { name: "Main Dashboard", href: "/dashboard", icon: LayoutDashboard, color: "text-green-600 bg-green-100" },
   { name: "Personal Dashboard", href: "/personal", icon: User, color: "text-purple-600 bg-purple-100" },
+  { name: "Notifications", href: "/notifications", icon: Bell, color: "text-orange-600 bg-orange-100" },
   { name: "Live Emails", href: "/live-emails", icon: Mail, color: "text-pink-600 bg-pink-100" },
-  { name: "Resume ATS Scoring", href: "/resume-scoring", icon: FileText, color: "text-orange-600 bg-orange-100" },
+  { name: "Resume ATS Scoring", href: "/resume-scoring", icon: FileText, color: "text-indigo-600 bg-indigo-100" },
+  { name: "Debug Notifications", href: "/debug/notifications", icon: Bug, color: "text-red-600 bg-red-100" },
 ]
 
 type SidebarProps = {}
@@ -58,16 +61,18 @@ export function Sidebar({}: SidebarProps) {
   return (
     <>
       <div
-        className={`flex h-full max-h-screen flex-col gap-2 border-r bg-gradient-to-b from-slate-50 to-white shadow-lg w-64 dark:from-gray-800 dark:to-gray-900`}
+        className={`flex h-screen flex-col border-r bg-gradient-to-b from-slate-50 to-white shadow-lg w-64 dark:from-gray-800 dark:to-gray-900`}
       >
-        <div className="flex h-[60px] items-center border-b px-4 bg-gradient-to-r from-blue-500 to-purple-600">
+        {/* Header - Fixed */}
+        <div className="flex h-[60px] items-center border-b px-4 bg-gradient-to-r from-blue-500 to-purple-600 flex-shrink-0">
           <Link className="flex items-center gap-2 font-semibold text-white" href="/">
             <Briefcase className="h-6 w-6" />
             <span className="text-lg">JobHub</span>
           </Link>
         </div>
 
-        <ScrollArea className="flex-1">
+        {/* Navigation - Scrollable only if needed */}
+        <div className="flex-1 overflow-y-auto">
           <div className="space-y-4 py-4 px-2">
             <div>
               <h2 className="mb-2 px-2 text-lg font-semibold tracking-tight text-gray-700">Navigation</h2>
@@ -90,51 +95,41 @@ export function Sidebar({}: SidebarProps) {
               </div>
             </div>
           </div>
-        </ScrollArea>
+        </div>
 
-        {/* User Section */}
-        <div className="mt-auto p-4 border-t bg-gradient-to-r from-gray-50 to-gray-100">
+        {/* User Section - Fixed at bottom */}
+        <div className="p-4 border-t bg-gradient-to-r from-gray-50 to-gray-100 flex-shrink-0">
           {isAuthenticated && user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className={`w-full justify-start h-12 hover:bg-white/50`}>
                   <div className={`flex items-center gap-3`}>
-                    <Avatar className="ring-2 ring-blue-200">
-                      <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
-                      <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
-                        {user.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="text-left">
-                      <p className="text-sm font-medium text-gray-800">{user.name}</p>
-                      <p className="text-xs text-gray-500">{user.email}</p>
+                    <UserAvatar user={user} size="md" className="ring-2 ring-blue-200 flex-shrink-0" />
+                    <div className="text-left min-w-0 flex-1">
+                      <p className="text-sm font-medium text-gray-800 truncate">{user.name}</p>
+                      <p className="text-xs text-gray-500 truncate">
+                        {user.role && user.role !== "User" ? user.role : "Please select role"}
+                      </p>
                     </div>
                   </div>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <div className="flex items-center space-x-2 p-2">
-                  <Avatar>
-                    <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
-                    <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
-                      {user.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="text-sm font-medium">{user.name}</p>
-                    <p className="text-xs text-gray-500">{user.role}</p>
+                  <UserAvatar user={user} size="sm" className="flex-shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium truncate">{user.name}</p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {user.role && user.role !== "User" ? user.role : "Please select role"}
+                    </p>
                   </div>
                 </div>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setIsProfileModalOpen(true)}>
-                  <User className="mr-2 h-4 w-4" />
-                  Profile Settings
+                <DropdownMenuItem asChild>
+                  <Link href="/profile">
+                    <User className="mr-2 h-4 w-4" />
+                    Profile Settings
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setIsJobPreferencesModalOpen(true)}>
                   <Bell className="mr-2 h-4 w-4" />

@@ -1,5 +1,6 @@
 import type { JobListing } from "@/types/job-search"
 import { mockJobs } from "@/data/mock-jobs"
+import { notificationHashmapService } from "@/services/notification-hashmap-service"
 
 export interface JobMetadata {
   lastUpdated: string
@@ -12,6 +13,7 @@ export interface JobMetadata {
       expired: number
     }
   >
+  hasRealData?: boolean
   scrapingSession?: {
     timestamp: string
     companiesProcessed: number
@@ -20,92 +22,132 @@ export interface JobMetadata {
 }
 
 class JobDataService {
-  private static instance: JobDataService
   private jobs: JobListing[] = []
   private metadata: JobMetadata | null = null
-  private lastFetch = 0
-  private readonly CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
 
-  static getInstance(): JobDataService {
-    if (!JobDataService.instance) {
-      JobDataService.instance = new JobDataService()
+  async loadJobs(): Promise<JobListing[]> {
+    // In a real implementation, this would load from a database or API
+    // For now, we'll use mock data
+    this.jobs = [...mockJobs]
+    
+    // Fetch actual last update time from database
+    try {
+      const response = await fetch('/api/jobs/metadata')
+      if (response.ok) {
+        const data = await response.json()
+        this.metadata = {
+          lastUpdated: data.lastUpdated || new Date().toISOString(),
+          totalJobs: this.jobs.length,
+          companies: this.getCompanyStats(),
+          hasRealData: data.hasData
+        }
+      } else {
+        // Fallback to current time if API fails
+        this.metadata = {
+          lastUpdated: new Date().toISOString(),
+          totalJobs: this.jobs.length,
+          companies: this.getCompanyStats(),
+          hasRealData: false
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching job metadata:', error)
+      // Fallback to current time if API fails
+      this.metadata = {
+        lastUpdated: new Date().toISOString(),
+        totalJobs: this.jobs.length,
+        companies: this.getCompanyStats(),
+        hasRealData: false
+      }
     }
-    return JobDataService.instance
+    
+    return this.jobs
   }
 
-  async loadJobs(forceRefresh = false): Promise<JobListing[]> {
-    const now = Date.now()
+  async getJobs(): Promise<{ jobs: JobListing[]; metadata: JobMetadata | null }> {
+    if (this.jobs.length === 0) {
+      await this.loadJobs()
+    }
+    return { jobs: this.jobs, metadata: this.metadata }
+  }
 
-    // Return cached data if still fresh
-    if (!forceRefresh && this.jobs.length > 0 && now - this.lastFetch < this.CACHE_DURATION) {
-      return this.jobs
+  async refreshJobs(): Promise<void> {
+    // Simulate fetching new jobs
+    const newJobs = mockJobs.slice(0, 5).map((job, index) => ({
+      ...job,
+      id: `new-${Date.now()}-${index}`,
+      postedDate: new Date().toISOString().split('T')[0],
+    }))
+
+    // Add new jobs to the existing list
+    this.jobs = [...newJobs, ...this.jobs]
+
+    // Update metadata
+    this.metadata = {
+      lastUpdated: new Date().toISOString(),
+      totalJobs: this.jobs.length,
+      companies: this.getCompanyStats(),
+      scrapingSession: {
+        timestamp: new Date().toISOString(),
+        companiesProcessed: 5,
+        totalActiveJobs: newJobs.length,
+      },
     }
 
+    // Trigger notifications for new jobs using hash map service
+    await this.triggerNotifications(newJobs)
+  }
+
+  private async triggerNotifications(newJobs: JobListing[]): Promise<void> {
     try {
-      // In a real application, this would fetch from your API or file system
-      // For now, we'll simulate loading from the posts.json file
-      const response = await fetch("/api/jobs")
+      console.log(`📧 Triggering notifications for ${newJobs.length} new jobs using hash map service`)
+      
+      const response = await fetch('/api/notifications/process', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ newJobs }),
+      })
 
       if (response.ok) {
         const data = await response.json()
-        this.jobs = data.jobs || []
-        this.metadata = data.metadata || null
-        this.lastFetch = now
-
-        console.log(`📊 Loaded ${this.jobs.length} jobs from scraped data`)
-        // If scraped data is empty, use fallback
-        if (this.jobs.length === 0) {
-          console.log("⚠️ Scraped data is empty, falling back to mock jobs.")
-          return this.getFallbackJobs()
-        }
-        return this.jobs
+        console.log(`📧 Notifications processed: ${data.message}`)
+        console.log(`📊 Hash map stats:`, data.stats)
       } else {
-        console.warn("Failed to fetch jobs from API, using fallback data")
-        return this.getFallbackJobs()
+        console.error('Failed to trigger notifications')
       }
     } catch (error) {
-      console.error("Error loading jobs:", error)
-      return this.getFallbackJobs()
+      console.error('Error triggering notifications:', error)
     }
-  }
-
-  private getFallbackJobs(): JobListing[] {
-    console.log("Using mock data as fallback.")
-    return mockJobs
-  }
-
-  async getCompanyJobs(companyName: string): Promise<JobListing[]> {
-    const allJobs = await this.loadJobs()
-    return allJobs.filter((job) => job.company.toLowerCase() === companyName.toLowerCase())
-  }
-
-  async getActiveJobs(): Promise<JobListing[]> {
-    const allJobs = await this.loadJobs()
-    return allJobs.filter((job) => (job as any).isActive !== false)
-  }
-
-  async getExpiredJobs(): Promise<JobListing[]> {
-    // This would typically load from individual company files
-    // For now, return empty array
-    return []
   }
 
   getMetadata(): JobMetadata | null {
     return this.metadata
   }
 
-  async refreshJobs(): Promise<JobListing[]> {
-    return this.loadJobs(true)
-  }
+  private getCompanyStats(): Record<string, { total: number; active: number; expired: number }> {
+    const stats: Record<string, { total: number; active: number; expired: number }> = {}
 
-  getStats() {
-    return {
-      totalJobs: this.jobs.length,
-      lastUpdated: this.metadata?.lastUpdated || null,
-      companies: this.metadata?.companies || {},
-      cacheAge: Date.now() - this.lastFetch,
-    }
+    this.jobs.forEach((job) => {
+      if (!stats[job.company]) {
+        stats[job.company] = { total: 0, active: 0, expired: 0 }
+      }
+
+      stats[job.company].total++
+      if (job.isActive) {
+        stats[job.company].active++
+      } else {
+        stats[job.company].expired++
+      }
+    })
+
+    return stats
   }
 }
 
-export const jobDataService = JobDataService.getInstance()
+export const jobDataService = new JobDataService()
+
+
+
+

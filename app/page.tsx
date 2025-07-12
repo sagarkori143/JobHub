@@ -11,17 +11,17 @@ import type { JobListing, JobFilters as JobFiltersType } from "@/types/job-searc
 import type { Job } from "@/types/job"
 import { RefreshCw, Database, AlertCircle } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
+import { UserAvatar } from "@/components/user-avatar"
 import { useAuth } from "@/contexts/auth-context"
 import { supabase } from "@/lib/supabase"
 
 const initialFilters: JobFiltersType = {
   search: "",
   location: "",
-  jobType: [],
-  experienceLevel: [],
-  industry: [],
-  remote: null,
-  salaryRange: { min: 0, max: 200000 },
+  jobType: "all",
+  experienceLevel: "all",
+  industry: "all",
+  remote: false,
 }
 
 const JOBS_PER_PAGE = 6
@@ -34,6 +34,7 @@ export default function JobSearchPage() {
   const [allJobs, setAllJobs] = useState<JobListing[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [lastUpdated, setLastUpdated] = useState<string | null>(null)
+  const [metadata, setMetadata] = useState<any>(null)
   const { toast } = useToast()
   const { user, supabaseUser } = useAuth()
 
@@ -49,6 +50,7 @@ export default function JobSearchPage() {
       setAllJobs(jobs)
 
       const metadata = jobDataService.getMetadata()
+      setMetadata(metadata)
       setLastUpdated(metadata?.lastUpdated || null)
 
       console.log(`📊 Loaded ${jobs.length} jobs for display`)
@@ -81,32 +83,26 @@ export default function JobSearchPage() {
       }
 
       // Job type filter
-      if (filters.jobType.length > 0 && !filters.jobType.includes(job.type)) {
+      if (filters.jobType !== "all" && job.type !== filters.jobType) {
         return false
       }
 
       // Experience level filter
-      if (filters.experienceLevel.length > 0 && !filters.experienceLevel.includes(job.experienceLevel)) {
+      if (filters.experienceLevel !== "all" && job.experienceLevel !== filters.experienceLevel) {
         return false
       }
 
       // Industry filter
-      if (filters.industry.length > 0 && !filters.industry.includes(job.industry)) {
+      if (filters.industry !== "all" && job.industry !== filters.industry) {
         return false
       }
 
-      // Remote filter
-      if (filters.remote !== null && job.remote !== filters.remote) {
+             // Remote filter
+      if (filters.remote && !job.remote) {
         return false
       }
 
-      // Salary range filter
-      const avgSalary = (job.salary.min + job.salary.max) / 2
-      if (avgSalary < filters.salaryRange.min || avgSalary > filters.salaryRange.max) {
-        return false
-      }
-
-      return true
+       return true
     })
   }, [filters, allJobs])
 
@@ -156,6 +152,7 @@ export default function JobSearchPage() {
           industry: job.industry,
           estimated_salary: job.estimatedSalary,
           job_type: job.jobType,
+          company_logo: job.companyLogo,
         })
         .select()
 
@@ -197,6 +194,19 @@ export default function JobSearchPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50/30 via-white to-purple-50/30">
+      {/* Welcome Section with Avatar */}
+      {user && (
+        <div className="mb-6 p-4 bg-white rounded-lg shadow-sm border">
+          <div className="flex items-center space-x-4">
+            <UserAvatar user={user} size="lg" />
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900">Welcome back, {user.name}!</h2>
+              <p className="text-gray-600">Ready to find your next opportunity?</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Filters Sidebar */}
         <div className="w-full lg:w-80 flex-shrink-0">
@@ -227,8 +237,13 @@ export default function JobSearchPage() {
                   <div className="flex items-center space-x-2">
                     <Database className="w-5 h-5 text-green-600" />
                     <div>
-                      <p className="text-sm font-medium text-green-800">Real job data from company career pages</p>
-                      <p className="text-xs text-green-600">Last updated: {new Date(lastUpdated).toLocaleString()}</p>
+                      <p className="text-sm font-medium text-green-800">
+                        {metadata?.hasRealData ? "Real job data from company career pages" : "Mock job data for demonstration"}
+                      </p>
+                      <p className="text-xs text-green-600">
+                        Last updated: {new Date(lastUpdated).toLocaleString()}
+                        {!metadata?.hasRealData && " (Mock data)"}
+                      </p>
                     </div>
                   </div>
                 </CardContent>

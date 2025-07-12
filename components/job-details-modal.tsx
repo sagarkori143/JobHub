@@ -78,6 +78,7 @@ export function JobDetailsModal({ job, isOpen, onClose, onAddToPersonal, onApply
       status: "Applied",
       industry: job.industry,
       estimatedSalary: Math.floor((job.salary.min + job.salary.max) / 2),
+      companyLogo: job.companyLogo,
     }
     onAddToPersonal(personalJob)
     onClose()

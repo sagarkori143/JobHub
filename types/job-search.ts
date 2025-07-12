@@ -43,6 +43,15 @@ export interface JobListing {
   isActive?: boolean
 }
 
+export interface JobFilters {
+  search: string
+  location: string
+  jobType: string
+  experienceLevel: string
+  remote: boolean
+  industry: string
+}
+
 export interface User {
   id: string
   name: string

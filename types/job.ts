@@ -7,4 +7,5 @@ export type Job = {
   industry: string
   estimatedSalary?: number
   jobType?: "Full-time" | "Part-time" | "Contract" | "Internship"
+  companyLogo?: string
 }
