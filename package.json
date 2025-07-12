@@ -2,14 +2,14 @@
   "name": "my-v0-project",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "build": "next build",
     "dev": "next dev",
     "lint": "next lint",
     "start": "next start",
     "job-sync": "node scripts/job-sync.js",
-    "cron-sync": "node scripts/cron-job-sync.js",
-    "test-sync": "node scripts/test-job-sync.js",
+    "scrape-jobs": "node scripts/job-sync.js",
     "setup-sync": "node scripts/setup-job-sync.js"
   },
   "dependencies": {

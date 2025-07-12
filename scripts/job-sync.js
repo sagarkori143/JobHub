@@ -1,6 +1,6 @@
-const fs = require("fs/promises")
-const path = require("path")
-const { createClient } = require('@supabase/supabase-js')
+import fs from "fs/promises"
+import path from "path"
+import { createClient } from '@supabase/supabase-js'
 
 // Supabase configuration
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -505,11 +505,11 @@ process.on("SIGTERM", async () => {
 })
 
 // Run if called directly
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   main().catch(error => {
     console.error("Fatal error:", error)
     process.exit(1)
   })
 }
 
-module.exports = JobSyncManager 
+export default JobSyncManager 
