@@ -293,7 +293,8 @@ export default function NotificationsPage() {
               <Button
                 onClick={async () => {
                   try {
-                    const response = await fetch('/api/notifications/process', {
+                    if (!user?.email) throw new Error('No user email found');
+                    const response = await fetch(`/api/notifications/process?testUserEmail=${encodeURIComponent(user.email)}`, {
                       method: 'GET'
                     })
                     const data = await response.json()

@@ -1,5 +1,6 @@
-import { supabase } from "@/lib/supabase"
+import { createServerSupabaseClient } from "@/lib/supabase"
 import type { JobListing } from "@/types/job-search"
+import { sendRealEmail } from '@/lib/real-email';
 
 export interface JobPreferences {
   keywords: string[]
@@ -87,6 +88,8 @@ export class NotificationHashmapService {
       experienceLevels: {},
     }
 
+    // Use service role key for unrestricted access
+    const supabase = createServerSupabaseClient();
     // Get all users with preferences
     const { data: users, error } = await supabase
       .from('user_profiles')
@@ -108,10 +111,10 @@ export class NotificationHashmapService {
         return
       }
 
-      const { job_preferences } = user
+      const job_preferences: JobPreferences = user.job_preferences;
 
       // Add tech stacks (keywords)
-      job_preferences.keywords.forEach(keyword => {
+      ensureArray(job_preferences.keywords).forEach((keyword: string) => {
         const normalizedKeyword = keyword.toLowerCase().trim()
         if (!this.preferenceHashMaps.techStacks[normalizedKeyword]) {
           this.preferenceHashMaps.techStacks[normalizedKeyword] = []
@@ -120,7 +123,7 @@ export class NotificationHashmapService {
       })
 
       // Add industries
-      job_preferences.industries.forEach(industry => {
+      ensureArray(job_preferences.industries).forEach((industry: string) => {
         if (!this.preferenceHashMaps.industries[industry]) {
           this.preferenceHashMaps.industries[industry] = []
         }
@@ -129,7 +132,7 @@ export class NotificationHashmapService {
       })
 
       // Add companies
-      job_preferences.companies.forEach(company => {
+      ensureArray(job_preferences.companies).forEach((company: string) => {
         if (!this.preferenceHashMaps.companies[company]) {
           this.preferenceHashMaps.companies[company] = []
         }
@@ -138,7 +141,7 @@ export class NotificationHashmapService {
       })
 
       // Add locations
-      job_preferences.locations.forEach(location => {
+      ensureArray(job_preferences.locations).forEach((location: string) => {
         const normalizedLocation = location.toLowerCase().trim()
         if (!this.preferenceHashMaps.locations[normalizedLocation]) {
           this.preferenceHashMaps.locations[normalizedLocation] = []
@@ -147,7 +150,7 @@ export class NotificationHashmapService {
       })
 
       // Add job types
-      job_preferences.jobTypes.forEach(jobType => {
+      ensureArray(job_preferences.jobTypes).forEach((jobType: string) => {
         if (!this.preferenceHashMaps.jobTypes[jobType]) {
           this.preferenceHashMaps.jobTypes[jobType] = []
         }
@@ -155,7 +158,7 @@ export class NotificationHashmapService {
       })
 
       // Add experience levels
-      job_preferences.experienceLevels.forEach(experienceLevel => {
+      ensureArray(job_preferences.experienceLevels).forEach((experienceLevel: string) => {
         if (!this.preferenceHashMaps.experienceLevels[experienceLevel]) {
           this.preferenceHashMaps.experienceLevels[experienceLevel] = []
         }
@@ -237,6 +240,7 @@ export class NotificationHashmapService {
     this.userEmailQueue = {}
 
     // Get all users for reference
+    const supabase = createServerSupabaseClient();
     const { data: users, error } = await supabase
       .from('user_profiles')
       .select('id, email, full_name')
@@ -279,6 +283,7 @@ export class NotificationHashmapService {
 
   // Check if notification was already sent
   private async hasNotificationBeenSent(userId: string, jobId: string): Promise<boolean> {
+    const supabase = createServerSupabaseClient();
     const { data, error } = await supabase
       .from('job_notifications')
       .select('id')
@@ -296,7 +301,8 @@ export class NotificationHashmapService {
   }
 
   // Record notification as sent
-  private async recordNotificationSent(userId: string, jobId: string, status: string = 'sent', errorMessage?: string) {
+  private async recordNotificationSent(userId: string, jobId: string, status: string = 'sent', errorMessage?: string, notificationPayload?: any) {
+    const supabase = createServerSupabaseClient();
     const { error } = await supabase
       .from('job_notifications')
       .insert({
@@ -304,7 +310,8 @@ export class NotificationHashmapService {
         job_id: jobId,
         notification_type: 'email',
         status,
-        error_message: errorMessage
+        error_message: errorMessage,
+        notification_payload: notificationPayload
       })
 
     if (error) {
@@ -313,17 +320,21 @@ export class NotificationHashmapService {
   }
 
   // Send structured email to users
-  private async sendStructuredEmails(): Promise<void> {
+  private async sendStructuredEmails(ignoreNotificationHistory?: boolean): Promise<void> {
     console.log(`📧 Sending structured emails to ${Object.keys(this.userEmailQueue).length} users`)
 
     for (const [userEmail, userData] of Object.entries(this.userEmailQueue)) {
       try {
-        // Filter out jobs that have already been notified
-        const jobsToNotify = []
-        for (const jobId of userData.matchedJobs) {
-          const alreadySent = await this.hasNotificationBeenSent(userData.userId, jobId)
-          if (!alreadySent) {
-            jobsToNotify.push(jobId)
+        // Filter out jobs that have already been notified, unless ignoring history
+        let jobsToNotify = []
+        if (ignoreNotificationHistory) {
+          jobsToNotify = userData.matchedJobs
+        } else {
+          for (const jobId of userData.matchedJobs) {
+            const alreadySent = await this.hasNotificationBeenSent(userData.userId, jobId)
+            if (!alreadySent) {
+              jobsToNotify.push(jobId)
+            }
           }
         }
 
@@ -336,16 +347,35 @@ export class NotificationHashmapService {
         const jobDetails = this.tempNewJobs.filter(job => jobsToNotify.includes(job.id))
         
         // Send email
+        const emailContent = this.generateStructuredEmailContent(userData.userName, jobDetails)
         const success = await this.sendEmailNotification(userEmail, userData.userName, jobDetails)
 
-        // Record notifications
-        for (const jobId of jobsToNotify) {
-          await this.recordNotificationSent(
-            userData.userId,
-            jobId,
-            success ? 'sent' : 'failed',
-            success ? undefined : 'Email sending failed'
-          )
+        // Record notifications (only if not ignoring history)
+        if (!ignoreNotificationHistory) {
+          for (const jobId of jobsToNotify) {
+            // Find the job info for this jobId
+            const jobInfo = jobDetails.find(job => job.id === jobId);
+            // Only store simple job info
+            const simpleJobInfo = jobInfo ? {
+              id: jobInfo.id,
+              company: jobInfo.company,
+              title: jobInfo.title,
+              location: jobInfo.location,
+              postedDate: jobInfo.postedDate,
+              industry: jobInfo.industry,
+              type: jobInfo.type,
+              experienceLevel: jobInfo.experienceLevel,
+              remote: jobInfo.remote,
+              salary: jobInfo.salary
+            } : undefined;
+            await this.recordNotificationSent(
+              userData.userId,
+              jobId,
+              success ? 'sent' : 'failed',
+              success ? undefined : 'Email sending failed',
+              simpleJobInfo ? { job: simpleJobInfo } : undefined
+            )
+          }
         }
 
         console.log(`📧 Email sent to ${userEmail} for ${jobsToNotify.length} jobs`)
@@ -356,22 +386,19 @@ export class NotificationHashmapService {
     }
   }
 
-  // Send email notification (mock implementation)
+  // Send email notification (real implementation with Resend)
   private async sendEmailNotification(userEmail: string, userName: string, jobs: JobListing[]): Promise<boolean> {
     try {
-      console.log(`📧 Sending email to ${userEmail} for ${jobs.length} matching jobs`)
-      
-      // Generate structured email content
-      const emailContent = this.generateStructuredEmailContent(userName, jobs)
-      console.log('Email content:', emailContent)
-      
-      // Simulate email sending delay
-      await new Promise(resolve => setTimeout(resolve, 100))
-      
-      return true
+      const emailContent = this.generateStructuredEmailContent(userName, jobs);
+      await sendRealEmail({
+        to: userEmail,
+        subject: `JobHub: ${jobs.length} new job(s) for you`,
+        text: emailContent,
+      });
+      return true;
     } catch (error) {
-      console.error('Error sending email notification:', error)
-      return false
+      console.error('Error sending real email:', error);
+      return false;
     }
   }
 
@@ -384,7 +411,7 @@ export class NotificationHashmapService {
         💰 $${job.salary.min.toLocaleString()} - $${job.salary.max.toLocaleString()}
         🏷️ ${job.industry} • ${job.type} • ${job.experienceLevel}
         📅 Posted: ${new Date(job.postedDate).toLocaleDateString()}
-        🔗 View Job: https://jobhub.com/jobs/${job.id}
+        🔗 View Job: https://job-hub-wheat.vercel.app/
       `
     }).join('\n\n')
 
@@ -401,7 +428,7 @@ export class NotificationHashmapService {
   }
 
   // Main process function
-  async processNotifications(): Promise<void> {
+  async processNotifications(testUserEmail?: string, ignoreNotificationHistory?: boolean): Promise<void> {
     if (this.tempNewJobs.length === 0) {
       console.log('📧 No new jobs to process for notifications')
       return
@@ -416,14 +443,22 @@ export class NotificationHashmapService {
       // Step 2: Build user email queue
       await this.buildUserEmailQueue()
 
+      // If testUserEmail is provided, filter the queue to only that user
+      if (testUserEmail) {
+        console.log(`🔬 Test mode: Only sending notifications to ${testUserEmail}`)
+        if (this.userEmailQueue[testUserEmail]) {
+          this.userEmailQueue = { [testUserEmail]: this.userEmailQueue[testUserEmail] }
+        } else {
+          this.userEmailQueue = {}
+        }
+      }
+
       // Step 3: Send structured emails
-      await this.sendStructuredEmails()
+      await this.sendStructuredEmails(ignoreNotificationHistory)
 
       console.log(`📧 Notification processing completed`)
-      
       // Clear temporary jobs after processing
       this.clearTempJobs()
-
     } catch (error) {
       console.error('Error processing notifications:', error)
     }
@@ -448,6 +483,17 @@ export class NotificationHashmapService {
       userEmailQueue: this.userEmailQueue
     }
   }
+}
+
+function ensureArray(val: any): any[] {
+  if (Array.isArray(val)) return val;
+  if (typeof val === 'string') {
+    try {
+      const parsed = JSON.parse(val);
+      if (Array.isArray(parsed)) return parsed;
+    } catch {}
+  }
+  return [];
 }
 
 export const notificationHashmapService = new NotificationHashmapService() 

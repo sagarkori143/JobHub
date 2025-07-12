@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { useAuth } from "@/contexts/auth-context"
 import { useToast } from "@/hooks/use-toast"
 import { Bell, Mail, CheckCircle, XCircle, Clock, RefreshCw } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 interface NotificationRecord {
   id: string
@@ -15,6 +16,26 @@ interface NotificationRecord {
   sent_at: string
   status: string
   error_message?: string
+  notification_payload?: {
+    emailContent?: string
+    textContent?: string
+    job?: {
+      company: string
+      title: string
+      location: string
+      postedDate: string
+      industry: string
+      type: string
+      experienceLevel: string
+      remote: boolean
+      salary?: {
+        min: number
+        max: number
+      }
+      url?: string // Added url to the interface
+    }
+    [key: string]: any
+  }
 }
 
 export function NotificationHistory() {
@@ -22,6 +43,7 @@ export function NotificationHistory() {
   const [loading, setLoading] = useState(false)
   const { user } = useAuth()
   const { toast } = useToast()
+  const [selectedNotification, setSelectedNotification] = useState<NotificationRecord | null>(null);
 
   const fetchNotificationHistory = async () => {
     if (!user) return
@@ -135,30 +157,88 @@ export function NotificationHistory() {
             {notifications.map((notification) => (
               <div
                 key={notification.id}
-                className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
+                className="flex flex-col gap-2 p-4 border rounded-lg hover:bg-gray-50"
               >
-                <div className="flex items-center space-x-3">
-                  {getStatusIcon(notification.status)}
-                  <div>
-                    <p className="font-medium text-sm">
-                      Job Alert - {notification.job_id}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {formatDate(notification.sent_at)}
-                    </p>
-                    {notification.error_message && (
-                      <p className="text-xs text-red-500 mt-1">
-                        Error: {notification.error_message}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    {getStatusIcon(notification.status)}
+                    <div>
+                      <p className="font-medium text-sm">
+                        Job Alert - {notification.job_id}
                       </p>
-                    )}
+                      <p className="text-xs text-gray-500">
+                        {formatDate(notification.sent_at)}
+                      </p>
+                      {notification.error_message && (
+                        <p className="text-xs text-red-500 mt-1">
+                          Error: {notification.error_message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    {getStatusBadge(notification.status)}
+                    <Badge variant="outline" className="text-xs">
+                      {notification.notification_type}
+                    </Badge>
                   </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  {getStatusBadge(notification.status)}
-                  <Badge variant="outline" className="text-xs">
-                    {notification.notification_type}
-                  </Badge>
-                </div>
+                {/* Improved job info display */}
+                {notification.notification_payload?.job ? (
+                  <div className="bg-gray-50 rounded p-3 mt-2 border border-gray-100">
+                    <div className="flex items-center gap-2 mb-1">
+                      {notification.notification_payload.job.url ? (
+                        <a
+                          href={notification.notification_payload.job.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-semibold text-base text-blue-700 hover:underline flex items-center gap-1"
+                        >
+                          {notification.notification_payload.job.title}
+                          <span className="text-gray-400">@</span>
+                          <span className="font-medium text-base text-gray-800">{notification.notification_payload.job.company}</span>
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1 inline-block text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 3h7m0 0v7m0-7L10 14m-7 7h7a2 2 0 002-2v-7" /></svg>
+                        </a>
+                      ) : (
+                        <span className="font-semibold text-base text-blue-700">{notification.notification_payload.job.title}</span>
+                      )}
+                      <span className="text-gray-500">@</span>
+                      <span className="font-medium text-base text-gray-800">{notification.notification_payload.job.company}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-gray-700 mb-1">
+                      <div className="flex items-center gap-1">
+                        <span className="font-semibold">Location:</span>
+                        <span>{notification.notification_payload.job.location}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="font-semibold">Posted:</span>
+                        <span>{notification.notification_payload.job.postedDate}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="font-semibold">Industry:</span>
+                        <span>{notification.notification_payload.job.industry}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="font-semibold">Type:</span>
+                        <span>{notification.notification_payload.job.type}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="font-semibold">Experience:</span>
+                        <span>{notification.notification_payload.job.experienceLevel}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="font-semibold">Remote:</span>
+                        <span>{notification.notification_payload.job.remote ? 'Yes' : 'No'}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="font-semibold">Salary:</span>
+                        <span>${notification.notification_payload.job.salary?.min?.toLocaleString?.() ?? ''} - ${notification.notification_payload.job.salary?.max?.toLocaleString?.() ?? ''}</span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-gray-100 rounded p-2 text-xs text-gray-500 mt-2">No job info stored</div>
+                )}
               </div>
             ))}
           </div>

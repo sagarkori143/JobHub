@@ -18,7 +18,8 @@ export default function DebugNotificationsPage() {
   const testNotifications = async () => {
     setLoading(true)
     try {
-      const response = await fetch('/api/notifications/process', {
+      if (!user?.email) throw new Error('No user email found');
+      const response = await fetch(`/api/notifications/process?testUserEmail=${encodeURIComponent(user.email)}`, {
         method: 'GET'
       })
       const data = await response.json()

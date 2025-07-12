@@ -36,7 +36,6 @@ export default function JobSearchPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [lastUpdated, setLastUpdated] = useState<string | null>(null)
   const [metadata, setMetadata] = useState<any>(null)
-  const [countdown, setCountdown] = useState("")
   const { toast } = useToast()
   const { user, supabaseUser } = useAuth()
   
@@ -314,12 +313,7 @@ export default function JobSearchPage() {
                       }
                     </p>
                   </div>
-                  {countdown && (
-                    <div className="flex items-center space-x-1 text-xs text-blue-600">
-                      <Clock className="w-3 h-3" />
-                      <span>Next update in: {countdown}</span>
-                    </div>
-                  )}
+                  {/* Countdown timer removed */}
                 </div>
               </CardContent>
             </Card>

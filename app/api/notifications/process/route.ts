@@ -4,7 +4,7 @@ import { mockJobs } from "@/data/mock-jobs"
 
 export async function POST(request: NextRequest) {
   try {
-    const { newJobs } = await request.json()
+    const { newJobs, testUserEmail } = await request.json()
 
     if (!newJobs || !Array.isArray(newJobs)) {
       return NextResponse.json(
@@ -18,8 +18,8 @@ export async function POST(request: NextRequest) {
     // Add new jobs to the notification service
     notificationHashmapService.addNewJobs(newJobs)
 
-    // Process notifications using hash map approach
-    await notificationHashmapService.processNotifications()
+    // Process notifications using hash map approach (with testUserEmail if provided)
+    await notificationHashmapService.processNotifications(testUserEmail, !!testUserEmail)
 
     // Get hash map statistics
     const stats = notificationHashmapService.getHashMapStats()
@@ -40,8 +40,10 @@ export async function POST(request: NextRequest) {
 }
 
 // GET endpoint to manually trigger notifications with mock data (for testing)
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url)
+    const testUserEmail = searchParams.get('testUserEmail')
     console.log("📧 Manually triggering notifications with mock data using hash map service")
 
     // Use a subset of mock jobs as "new" jobs for testing
@@ -54,8 +56,8 @@ export async function GET() {
     // Add new jobs to the notification service
     notificationHashmapService.addNewJobs(mockNewJobs)
 
-    // Process notifications using hash map approach
-    await notificationHashmapService.processNotifications()
+    // Process notifications using hash map approach (with testUserEmail if provided)
+    await notificationHashmapService.processNotifications(testUserEmail, !!testUserEmail)
 
     // Get hash map statistics and details
     const stats = notificationHashmapService.getHashMapStats()

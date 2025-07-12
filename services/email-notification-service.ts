@@ -181,7 +181,7 @@ export class EmailNotificationService {
         💰 $${job.salary.min.toLocaleString()} - $${job.salary.max.toLocaleString()}
         🏷️ Matched: ${criteriaText}
         📅 Posted: ${new Date(job.postedDate).toLocaleDateString()}
-        🔗 View Job: https://jobhub.com/jobs/${job.id}
+        🔗 View Job: https://job-hub-wheat.vercel.app/
       `
     }).join('\n\n')
 
