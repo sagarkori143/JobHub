@@ -1,46 +1,45 @@
 import { NextResponse } from "next/server"
-import { supabase } from "@/lib/supabase"
+import fs from "fs/promises"
+import path from "path"
 
 export async function GET() {
   try {
-    // Get the most recent job update timestamp from the database
-    const { data: jobs, error } = await supabase
-      .from('jobs')
-      .select('created_at, updated_at')
-      .order('updated_at', { ascending: false })
-      .limit(1)
-
-    if (error) {
-      console.error('Error fetching job metadata:', error)
-      return NextResponse.json({ 
-        error: 'Failed to fetch job metadata',
-        lastUpdated: null 
-      }, { status: 500 })
+    // Read the sync summary file
+    const summaryFile = path.join(process.cwd(), "data", "job-sync-summary.json")
+    let summary
+    try {
+      const summaryData = await fs.readFile(summaryFile, "utf8")
+      summary = JSON.parse(summaryData)
+    } catch (err) {
+      // File does not exist or cannot be read
+      return NextResponse.json({
+        success: true,
+        lastUpdated: null,
+        totalJobs: 0,
+        hasData: false,
+        message: "No sync has been performed yet."
+      })
     }
 
-    // If no jobs exist, return null for lastUpdated
-    const lastUpdated = jobs && jobs.length > 0 ? jobs[0].updated_at : null
-
-    // Get total job count
-    const { count: totalJobs, error: countError } = await supabase
-      .from('jobs')
-      .select('*', { count: 'exact', head: true })
-
-    if (countError) {
-      console.error('Error counting jobs:', countError)
-    }
+    // Get last sync time and total jobs
+    const lastUpdated = summary?.syncSession?.endTime || null
+    // Sum all jobs from all companies
+    const totalJobs = Array.isArray(summary?.results)
+      ? summary.results.reduce((sum, r) => sum + (r.total || 0), 0)
+      : 0
+    const hasData = totalJobs > 0
 
     return NextResponse.json({
       success: true,
       lastUpdated,
-      totalJobs: totalJobs || 0,
-      hasData: jobs && jobs.length > 0
+      totalJobs,
+      hasData
     })
   } catch (error) {
     console.error('Error in jobs metadata API:', error)
-    return NextResponse.json({ 
+    return NextResponse.json({
       error: 'Internal server error',
-      lastUpdated: null 
+      lastUpdated: null
     }, { status: 500 })
   }
 } 

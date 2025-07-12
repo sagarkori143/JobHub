@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, useRef } from "react"
 import { JobListingCard } from "@/components/job-listing-card"
 import { JobFilters } from "@/components/job-filters"
 import { JobDetailsModal } from "@/components/job-details-modal"
@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast"
 import { jobDataService } from "@/services/job-data-service"
 import type { JobListing, JobFilters as JobFiltersType } from "@/types/job-search"
 import type { Job } from "@/types/job"
-import { RefreshCw, Database, AlertCircle } from "lucide-react"
+import { RefreshCw, Database, AlertCircle, Clock } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { UserAvatar } from "@/components/user-avatar"
 import { useAuth } from "@/contexts/auth-context"
@@ -25,6 +25,7 @@ const initialFilters: JobFiltersType = {
 }
 
 const JOBS_PER_PAGE = 6
+const SYNC_INTERVAL_MS = 2 * 60 * 60 * 1000 // 2 hours
 
 export default function JobSearchPage() {
   const [filters, setFilters] = useState<JobFiltersType>(initialFilters)
@@ -35,13 +36,80 @@ export default function JobSearchPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [lastUpdated, setLastUpdated] = useState<string | null>(null)
   const [metadata, setMetadata] = useState<any>(null)
+  const [countdown, setCountdown] = useState("")
   const { toast } = useToast()
   const { user, supabaseUser } = useAuth()
+  
+  // Use refs to avoid re-renders
+  const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const nextUpdateTimeRef = useRef<Date | null>(null)
 
   // Load jobs on component mount
   useEffect(() => {
     loadJobs()
   }, [])
+
+  // Initialize countdown timer (runs only when metadata or lastUpdated changes)
+  useEffect(() => {
+    // Clear existing interval
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current)
+    }
+
+    // Fetch sync metadata for timer
+    const fetchSyncMetadata = async () => {
+      try {
+        const response = await fetch('/api/jobs/sync-metadata')
+        if (response.ok) {
+          const data = await response.json()
+          
+          if (data.nextSync) {
+            const nextUpdateTime = new Date(data.nextSync)
+            nextUpdateTimeRef.current = nextUpdateTime
+            
+            // Start countdown timer
+            const updateCountdown = () => {
+              const now = new Date()
+              const diff = nextUpdateTimeRef.current!.getTime() - now.getTime()
+              
+              if (diff <= 0) {
+                // Countdown finished, check for new data
+                setCountdown("Checking for updates...")
+                loadJobs() // Reload to check for new data
+                
+                // Reset countdown for next cycle (2 hours from now)
+                const newNextUpdate = new Date(now.getTime() + SYNC_INTERVAL_MS)
+                nextUpdateTimeRef.current = newNextUpdate
+              } else {
+                const hours = Math.floor(diff / (1000 * 60 * 60))
+                const minutes = Math.floor((diff / (1000 * 60)) % 60)
+                const seconds = Math.floor((diff / 1000) % 60)
+                setCountdown(`${hours}h ${minutes}m ${seconds}s`)
+              }
+            }
+
+            // Initial call
+            updateCountdown()
+            
+            // Set interval
+            intervalRef.current = setInterval(updateCountdown, 1000)
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching sync metadata:', error)
+      }
+    }
+
+    fetchSyncMetadata()
+
+    // Cleanup function
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
+    }
+  }, [metadata?.hasRealData, lastUpdated]) // Only re-run when these change
 
   const loadJobs = async () => {
     setIsLoading(true)
@@ -97,12 +165,12 @@ export default function JobSearchPage() {
         return false
       }
 
-             // Remote filter
+      // Remote filter
       if (filters.remote && !job.remote) {
         return false
       }
 
-       return true
+      return true
     })
   }, [filters, allJobs])
 
@@ -231,24 +299,30 @@ export default function JobSearchPage() {
             </div>
 
             {/* Data Status Card */}
-            {lastUpdated && (
-              <Card className="mb-6 bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
-                <CardContent className="p-4">
-                  <div className="flex items-center space-x-2">
-                    <Database className="w-5 h-5 text-green-600" />
-                    <div>
-                      <p className="text-sm font-medium text-green-800">
-                        {metadata?.hasRealData ? "Real job data from company career pages" : "Mock job data for demonstration"}
-                      </p>
-                      <p className="text-xs text-green-600">
-                        Last updated: {new Date(lastUpdated).toLocaleString()}
-                        {!metadata?.hasRealData && " (Mock data)"}
-                      </p>
-                    </div>
+            <Card className="mb-6 bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-2">
+                  <Database className="w-5 h-5 text-green-600" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-green-800">
+                      {metadata?.hasRealData ? "Real job data from company career pages" : "Mock job data for demonstration"}
+                    </p>
+                    <p className="text-xs text-green-600">
+                      {metadata?.hasRealData && lastUpdated
+                        ? `Last updated: ${new Date(lastUpdated).toLocaleString()}`
+                        : "Last updated: Never"
+                      }
+                    </p>
                   </div>
-                </CardContent>
-              </Card>
-            )}
+                  {countdown && (
+                    <div className="flex items-center space-x-1 text-xs text-blue-600">
+                      <Clock className="w-3 h-3" />
+                      <span>Next update in: {countdown}</span>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
 
             {/* No Data Warning */}
             {allJobs.length === 0 && (
@@ -257,10 +331,9 @@ export default function JobSearchPage() {
                   <div className="flex items-center space-x-2">
                     <AlertCircle className="w-5 h-5 text-yellow-600" />
                     <div>
-                      <p className="text-sm font-medium text-yellow-800">No scraped job data available</p>
+                      <p className="text-sm font-medium text-yellow-800">No job data available</p>
                       <p className="text-xs text-yellow-600">
-                        Run <code className="bg-yellow-100 px-1 rounded">npm run scrape-jobs</code> to fetch real job
-                        data
+                        Run <code className="bg-yellow-100 px-1 rounded">npm run job-sync</code> to fetch real job data
                       </p>
                     </div>
                   </div>

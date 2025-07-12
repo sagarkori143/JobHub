@@ -35,7 +35,7 @@ export async function GET() {
       jobs: [],
       metadata: null,
       count: 0,
-      error: "Job data not available. Run the scraper first.",
+      error: "Job data not available. Run the job sync first.",
       lastFetch: new Date().toISOString(),
     })
   }

@@ -1,13 +1,13 @@
-name: Hourly Job Scraper
+name: Job Sync (Every 2 Hours)
 
 on:
   schedule:
-    # Runs every hour at minute 0
-    - cron: '0 * * * *'
+    # Runs every 2 hours at minute 0
+    - cron: '0 */2 * * *'
   workflow_dispatch: # Allows manual triggering from GitHub UI
 
 jobs:
-  scrape:
+  sync:
     runs-on: ubuntu-latest
 
     steps:
@@ -17,23 +17,28 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20' # Use a stable Node.js version compatible with Puppeteer
+          node-version: '20'
 
       - name: Install dependencies
         run: npm install
 
-      - name: Install Puppeteer dependencies
-        run: sudo apt-get update && sudo apt-get install -y libnss3 libatk-bridge2.0-0 libxkbcommon0 libgbm-dev
+      - name: Setup environment
+        run: |
+          echo "NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" >> .env
+          echo "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" >> .env
 
-      - name: Run Job Scraper
-        run: npm run scrape-jobs
+      - name: Create data directory
+        run: mkdir -p data logs
+
+      - name: Run Job Sync
+        run: npm run cron-sync
 
       - name: Commit and Push Changes
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
-          git add data/posts.json data/scraping-metadata.json data/*.json
-          git commit -m "Automated: Scraped and updated job data" || echo "No changes to commit"
+          git add data/*.json logs/*.log
+          git commit -m "Automated: Job sync completed - $(date)" || echo "No changes to commit"
           git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

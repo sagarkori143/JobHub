@@ -1,20 +1,29 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 
+// Validate environment variables
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
 // Create service role client for admin operations
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-)
+const supabaseAdmin = supabaseUrl && supabaseServiceKey 
+  ? createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    })
+  : null
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if Supabase is configured
+    if (!supabaseAdmin) {
+      return NextResponse.json({ 
+        error: 'Storage service not configured' 
+      }, { status: 503 })
+    }
+
     const formData = await request.formData()
     const file = formData.get('file') as File
     const userId = formData.get('userId') as string
@@ -99,6 +108,13 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    // Check if Supabase is configured
+    if (!supabaseAdmin) {
+      return NextResponse.json({ 
+        error: 'Storage service not configured' 
+      }, { status: 503 })
+    }
+
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')
 

@@ -26,23 +26,47 @@ class JobDataService {
   private metadata: JobMetadata | null = null
 
   async loadJobs(): Promise<JobListing[]> {
-    // In a real implementation, this would load from a database or API
-    // For now, we'll use mock data
-    this.jobs = [...mockJobs]
-    
-    // Fetch actual last update time from database
     try {
-      const response = await fetch('/api/jobs/metadata')
+      // Try to load from merged posts.json file first
+      const response = await fetch('/api/jobs')
       if (response.ok) {
         const data = await response.json()
+        
+        if (data.jobs && data.jobs.length > 0) {
+          // Use real data from merged file
+          this.jobs = data.jobs
+          this.metadata = {
+            lastUpdated: data.lastFetch || new Date().toISOString(),
+            totalJobs: this.jobs.length,
+            companies: this.getCompanyStats(),
+            hasRealData: true
+          }
+          
+          console.log(`📊 Loaded ${this.jobs.length} jobs from merged file`)
+          return this.jobs
+        }
+      }
+    } catch (error) {
+      console.log('Could not load from merged file, falling back to mock data')
+    }
+
+    // Fallback to mock data if merged file is not present or empty
+    console.log('📊 Using mock data as fallback')
+    this.jobs = [...mockJobs]
+    
+    // Fetch metadata to check if real data exists
+    try {
+      const metadataResponse = await fetch('/api/jobs/metadata')
+      if (metadataResponse.ok) {
+        const metadataData = await metadataResponse.json()
         this.metadata = {
-          lastUpdated: data.lastUpdated || new Date().toISOString(),
+          lastUpdated: metadataData.lastUpdated || new Date().toISOString(),
           totalJobs: this.jobs.length,
           companies: this.getCompanyStats(),
-          hasRealData: data.hasData
+          hasRealData: metadataData.hasData || false
         }
       } else {
-        // Fallback to current time if API fails
+        // Fallback metadata for mock data
         this.metadata = {
           lastUpdated: new Date().toISOString(),
           totalJobs: this.jobs.length,
@@ -52,7 +76,7 @@ class JobDataService {
       }
     } catch (error) {
       console.error('Error fetching job metadata:', error)
-      // Fallback to current time if API fails
+      // Fallback metadata for mock data
       this.metadata = {
         lastUpdated: new Date().toISOString(),
         totalJobs: this.jobs.length,
@@ -72,30 +96,16 @@ class JobDataService {
   }
 
   async refreshJobs(): Promise<void> {
-    // Simulate fetching new jobs
-    const newJobs = mockJobs.slice(0, 5).map((job, index) => ({
-      ...job,
-      id: `new-${Date.now()}-${index}`,
-      postedDate: new Date().toISOString().split('T')[0],
-    }))
-
-    // Add new jobs to the existing list
-    this.jobs = [...newJobs, ...this.jobs]
-
+    // Reload jobs (this will check merged file first, then fallback to mock)
+    await this.loadJobs()
+    
     // Update metadata
     this.metadata = {
       lastUpdated: new Date().toISOString(),
       totalJobs: this.jobs.length,
       companies: this.getCompanyStats(),
-      scrapingSession: {
-        timestamp: new Date().toISOString(),
-        companiesProcessed: 5,
-        totalActiveJobs: newJobs.length,
-      },
+      hasRealData: this.metadata?.hasRealData || false
     }
-
-    // Trigger notifications for new jobs using hash map service
-    await this.triggerNotifications(newJobs)
   }
 
   private async triggerNotifications(newJobs: JobListing[]): Promise<void> {
@@ -135,7 +145,7 @@ class JobDataService {
       }
 
       stats[job.company].total++
-      if (job.isActive) {
+      if (job.isActive !== false) {
         stats[job.company].active++
       } else {
         stats[job.company].expired++

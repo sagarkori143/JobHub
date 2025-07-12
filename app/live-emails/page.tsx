@@ -133,7 +133,7 @@ export default function LiveEmailsPage() {
               <p className="font-medium text-blue-800">Email alerts are triggered by backend processes.</p>
               <p className="text-sm text-blue-700">
                 For a real demonstration, you would integrate the `emailService.sendNewJobAlerts()` call into your
-                scraper or a dedicated serverless function.
+                job sync system or a dedicated serverless function.
               </p>
             </div>
           </CardContent>
