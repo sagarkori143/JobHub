@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import { emailNotificationService } from "@/services/email-notification-service"
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   try {
     const stats = await emailNotificationService.getNotificationStats()

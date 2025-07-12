@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { emailNotificationService } from "@/services/email-notification-service"
-import { supabase } from "@/lib/supabase"
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   try {
