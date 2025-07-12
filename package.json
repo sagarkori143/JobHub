@@ -9,7 +9,7 @@
     "lint": "next lint",
     "start": "next start",
     "job-sync": "node scripts/job-sync.js",
-    "scrape-jobs": "node scripts/job-sync.js",
+    "cron-sync": "node scripts/job-sync.js",
     "setup-sync": "node scripts/setup-job-sync.js"
   },
   "dependencies": {
