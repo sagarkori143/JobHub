@@ -115,8 +115,8 @@ export function JobListingCard({ job, onViewDetails, onApply }: JobListingCardPr
 
           <p className="text-sm text-gray-700 line-clamp-2">{job.description}</p>
 
-          <div className="flex items-center justify-between">
-            <div className="flex space-x-2">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex space-x-2 flex-wrap">
               <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
                 {job.industry}
               </Badge>
@@ -124,7 +124,7 @@ export function JobListingCard({ job, onViewDetails, onApply }: JobListingCardPr
                 {job.experienceLevel}
               </Badge>
             </div>
-            <div className="flex space-x-2">
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto sm:justify-end">
               <Button
                 variant="outline"
                 size="sm"
@@ -132,7 +132,7 @@ export function JobListingCard({ job, onViewDetails, onApply }: JobListingCardPr
                   e.stopPropagation()
                   onViewDetails(job)
                 }}
-                className="hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300"
+                className="hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 w-full sm:w-auto"
               >
                 <ExternalLink className="w-4 h-4 mr-1" />
                 View Details
@@ -143,7 +143,7 @@ export function JobListingCard({ job, onViewDetails, onApply }: JobListingCardPr
                   e.stopPropagation()
                   onApply(job)
                 }}
-                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-md"
+                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-md w-full sm:w-auto"
               >
                 Apply Now
               </Button>
