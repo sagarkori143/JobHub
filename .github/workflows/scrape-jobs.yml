@@ -42,7 +42,8 @@ jobs:
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
-          git add data/*.json logs/*.log
+          find data -name '*.json' -exec git add {} + || true
+          find logs -name '*.log' -exec git add {} + || true
           git commit -m "Automated: Job sync completed - $(date)" || echo "No changes to commit"
           git push
         env:
