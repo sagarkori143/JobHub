@@ -37,9 +37,10 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
       return
     }
     setIsLoading(true)
-
+    console.log('[LOGIN MODAL] Submitting login for:', email)
     try {
       const result = await login(email, password) // Get the detailed result
+      console.log('[LOGIN MODAL] Login result:', result)
       if (result.success) {
         toast({
           title: "Welcome back!",
@@ -54,8 +55,10 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
           description: result.message || "Invalid email or password.",
           variant: "destructive",
         })
+        console.error('[LOGIN MODAL] Login failed:', result)
       }
     } catch (error) {
+      console.error('[LOGIN MODAL] Error during login:', error)
       toast({
         title: "Error",
         description: "Something went wrong. Please try again.",

@@ -37,9 +37,10 @@ export function SignUpModal({ isOpen, onClose }: SignUpModalProps) {
       return
     }
     setIsLoading(true)
-
+    console.log('[SIGNUP MODAL] Submitting signup for:', email)
     try {
       const result = await signup(name, email, password, gender)
+      console.log('[SIGNUP MODAL] Signup result:', result)
       if (result.success) {
         toast({
           title: "OTP Sent!",
@@ -52,8 +53,10 @@ export function SignUpModal({ isOpen, onClose }: SignUpModalProps) {
           description: result.message || "Could not register. Please try again.",
           variant: "destructive",
         })
+        console.error('[SIGNUP MODAL] Signup failed:', result)
       }
     } catch (error) {
+      console.error('[SIGNUP MODAL] Error during signup:', error)
       toast({
         title: "Error",
         description: "Something went wrong during sign up. Please try again.",
@@ -75,8 +78,10 @@ export function SignUpModal({ isOpen, onClose }: SignUpModalProps) {
       return
     }
     setIsLoading(true)
+    console.log('[SIGNUP MODAL] Verifying OTP for:', email)
     try {
       const result = await verifyEmailOtp(email, otp)
+      console.log('[SIGNUP MODAL] OTP verification result:', result)
       if (result.success) {
         toast({
           title: "Account Verified!",
@@ -95,8 +100,10 @@ export function SignUpModal({ isOpen, onClose }: SignUpModalProps) {
           description: result.message || "Invalid OTP. Please try again.",
           variant: "destructive",
         })
+        console.error('[SIGNUP MODAL] OTP verification failed:', result)
       }
     } catch (error) {
+      console.error('[SIGNUP MODAL] Error during OTP verification:', error)
       toast({
         title: "Error",
         description: "Something went wrong during OTP verification. Please try again.",

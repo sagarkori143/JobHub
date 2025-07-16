@@ -142,12 +142,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       setLoading(true)
+      console.log('[AUTH STATE] Event:', event, 'Session:', session)
       if (session?.user) {
         setSupabaseUser(session.user)
         const profile = await fetchUserProfile(session.user.id)
         if (profile) {
           setUser(profile)
           setJobPreferences(profile.jobPreferences)
+          console.log('[AUTH STATE] User profile loaded:', profile)
         } else {
           // If no profile exists, create one with default preferences
           const newProfile = await createOrUpdateUserProfile(session.user, defaultJobPreferences)
@@ -163,26 +165,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               jobPreferences: newProfile.job_preferences,
             })
             setJobPreferences(newProfile.job_preferences)
+            console.log('[AUTH STATE] New user profile created:', newProfile)
           }
         }
         setIsAuthenticated(true)
+        console.log('[AUTH STATE] Authenticated!')
       } else {
         setUser(null)
         setSupabaseUser(null)
         setIsAuthenticated(false)
         setJobPreferences(defaultJobPreferences) // Reset to default on logout
+        console.log('[AUTH STATE] User signed out or no session.')
       }
       setLoading(false)
     })
 
     // Initial check for session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
+      console.log('[AUTH STATE] Initial session check:', session)
       if (session?.user) {
         setSupabaseUser(session.user)
         const profile = await fetchUserProfile(session.user.id)
         if (profile) {
           setUser(profile)
           setJobPreferences(profile.jobPreferences)
+          console.log('[AUTH STATE] User profile loaded (initial):', profile)
         } else {
           const newProfile = await createOrUpdateUserProfile(session.user, defaultJobPreferences)
           if (newProfile) {
@@ -197,9 +204,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               jobPreferences: newProfile.job_preferences,
             })
             setJobPreferences(newProfile.job_preferences)
+            console.log('[AUTH STATE] New user profile created (initial):', newProfile)
           }
         }
         setIsAuthenticated(true)
+        console.log('[AUTH STATE] Authenticated! (initial)')
       }
       setLoading(false)
     })
@@ -211,15 +220,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string): Promise<LoginResult> => {
     setLoading(true)
+    console.log('[LOGIN] Attempting login for:', email)
     const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
-
+    console.log('[LOGIN] Supabase response:', { signInData, signInError })
     setLoading(false)
 
     if (signInData?.user) {
+      console.log('[LOGIN] Login successful for:', email)
       return { success: true, message: "You have successfully signed in." }
     }
 
     // Always show a generic error for failed login
+    console.error('[LOGIN] Login failed:', signInError)
     return {
       success: false,
       message: "Invalid email or password.",
@@ -234,6 +246,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     gender: string,
   ): Promise<{ success: boolean; message?: string }> => {
     setLoading(true)
+    console.log('[SIGNUP] Attempting signup for:', email)
     // Use signInWithOtp for signup to send OTP
     const { data, error } = await supabase.auth.signInWithOtp({
       email,
@@ -248,7 +261,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })
 
     if (error) {
-      console.error("Sign-up OTP send error:", error.message)
+      console.error('[SIGNUP] Sign-up OTP send error:', error.message)
       setLoading(false)
       if (
         error instanceof AuthApiError &&
@@ -260,6 +273,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { success: false, message: error.message || "Failed to send OTP for signup." }
     }
 
+    console.log('[SIGNUP] OTP sent for signup:', data)
     setLoading(false)
     return { success: true, message: "OTP sent to your email. Please verify to complete signup." }
   }
@@ -360,6 +374,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const loginWithGoogle = async () => {
     setLoading(true)
+    console.log('[GOOGLE LOGIN] Initiating Google sign-in')
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
@@ -368,7 +383,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })
 
     if (error) {
-      console.error("Google sign-in error:", error.message)
+      console.error('[GOOGLE LOGIN] Google sign-in error:', error.message)
       setLoading(false)
       throw error // Re-throw to be caught by the component
     }
