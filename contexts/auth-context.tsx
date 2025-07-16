@@ -146,33 +146,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (session?.user) {
         setSupabaseUser(session.user)
         console.log('[AUTH STATE] session.user:', session.user)
-        const profile = await fetchUserProfile(session.user.id)
-        console.log('[AUTH STATE] fetchUserProfile result:', profile)
-        let finalProfile = profile;
-        if (profile) {
-          setUser(profile)
-          setJobPreferences(profile.jobPreferences)
-          console.log('[AUTH STATE] User profile loaded:', profile)
-        } else {
-          // If no profile exists, create one with default preferences
-          const newProfile = await createOrUpdateUserProfile(session.user, defaultJobPreferences)
-          console.log('[AUTH STATE] createOrUpdateUserProfile result:', newProfile)
-          if (newProfile) {
-            setUser({
-              id: newProfile.id,
-              name: newProfile.full_name || newProfile.email.split("@")[0],
-              email: newProfile.email,
-              avatar: newProfile.avatar_url,
-              role: newProfile.role,
-              joinedDate: newProfile.joined_date,
-              gender: newProfile.gender, // Include gender
-            })
-            setJobPreferences(newProfile.job_preferences)
-            console.log('[AUTH STATE] New user profile created:', newProfile)
-            finalProfile = newProfile;
+        let finalProfile = null;
+        try {
+          const profile = await fetchUserProfile(session.user.id)
+          console.log('[AUTH STATE] fetchUserProfile result:', profile)
+          finalProfile = profile;
+          if (profile) {
+            setUser(profile)
+            setJobPreferences(profile.jobPreferences)
+            console.log('[AUTH STATE] User profile loaded:', profile)
           } else {
-            console.error('[AUTH STATE] Failed to create user profile for:', session.user.id)
+            // If no profile exists, create one with default preferences
+            const newProfile = await createOrUpdateUserProfile(session.user, defaultJobPreferences)
+            console.log('[AUTH STATE] createOrUpdateUserProfile result:', newProfile)
+            if (newProfile) {
+              setUser({
+                id: newProfile.id,
+                name: newProfile.full_name || newProfile.email.split("@")[0],
+                email: newProfile.email,
+                avatar: newProfile.avatar_url,
+                role: newProfile.role,
+                joinedDate: newProfile.joined_date,
+                gender: newProfile.gender, // Include gender
+              })
+              setJobPreferences(newProfile.job_preferences)
+              console.log('[AUTH STATE] New user profile created:', newProfile)
+              finalProfile = newProfile;
+            } else {
+              console.error('[AUTH STATE] Failed to create user profile for:', session.user.id)
+            }
           }
+        } catch (err) {
+          console.error('[AUTH STATE] Error in fetchUserProfile:', err)
         }
         setIsAuthenticated(true)
         console.log('[AUTH STATE] Authenticated! user:', finalProfile, 'isAuthenticated:', true)
