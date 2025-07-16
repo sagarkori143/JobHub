@@ -30,11 +30,10 @@ const JOBS_PER_PAGE = 6
 const SYNC_INTERVAL_MS = 2 * 60 * 60 * 1000 // 2 hours
 
 export default function JobSearchPage() {
-  // Use auth guard to redirect authenticated users to dashboard
+  // Use auth guard to allow all users to access job search
   const { isAuthenticated } = useAuthGuard({
     requireAuth: false,
-    redirectIfAuthenticated: true,
-    redirectTo: "/dashboard"
+    redirectIfAuthenticated: false
   });
   
   // Track visits to the website
@@ -48,6 +47,7 @@ export default function JobSearchPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [lastUpdated, setLastUpdated] = useState<string | null>(null)
   const [metadata, setMetadata] = useState<any>(null)
+  const [countdown, setCountdown] = useState<string>("")
   const { toast } = useToast()
   const { user, supabaseUser } = useAuth()
   

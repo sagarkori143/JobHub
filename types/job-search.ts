@@ -66,6 +66,17 @@ export interface User {
   target_positions?: string[]
   experience_level?: string
   jobPreferences?: any // Allow jobPreferences for localStorage hydration
+  // Resume and ATS scoring fields
+  resumeUrl?: string | null
+  atsScores?: any[] // Array of ATS scores with timestamps
+  streaks?: any // Streaks data (days active, applications sent, etc.)
+  // New streak tracking fields
+  currentStreak?: number
+  longestStreak?: number
+  totalApplications?: number
+  loginDates?: string[]
+  lastLoginDate?: string | null
+  lastApplicationDate?: string | null
 }
 
 export interface JobTag {

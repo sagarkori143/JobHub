@@ -26,7 +26,7 @@ import {
   Bug,
   BarChart,
 } from "lucide-react"
-import { useState } from "react" // Keep useState for potential future desktop collapse
+import { useState, useEffect } from "react"
 import { useAuth } from "@/contexts/auth-context"
 import { LoginModal } from "@/components/login-modal"
 import { ProfileModal } from "@/components/profile-modal"
@@ -42,7 +42,7 @@ const navigationItems = [
   {
     name: "Portal Stats",
     href: "/portal-stats",
-    icon: BarChart, // Make sure BarChart is imported from the icon library
+    icon: BarChart,
     color: "text-blue-600 bg-blue-100"
   },
 ]
@@ -55,14 +55,36 @@ export function Sidebar({}: SidebarProps) {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
   const [isJobPreferencesModalOpen, setIsJobPreferencesModalOpen] = useState(false)
   const { user, isAuthenticated, logout, loading } = useAuth()
+  const [showProfileSection, setShowProfileSection] = useState(false)
+
+  // Determine when to show the profile section
+  useEffect(() => {
+    // Show profile section if:
+    // 1. User is authenticated and user data exists, OR
+    // 2. Loading is false and we have a cached user in localStorage
+    if (isAuthenticated && user) {
+      setShowProfileSection(true)
+    } else if (!loading) {
+      // Check localStorage as fallback
+      const cachedUser = localStorage.getItem("jobhub_user")
+      if (cachedUser) {
+        try {
+          const parsed = JSON.parse(cachedUser)
+          setShowProfileSection(true)
+        } catch {
+          setShowProfileSection(false)
+        }
+      } else {
+        setShowProfileSection(false)
+      }
+    }
+  }, [isAuthenticated, user, loading])
 
   const handleLogout = () => {
     logout()
   }
 
-  // isCollapsed state is kept but not actively used for mobile responsiveness here
-  // It could be used for a desktop collapse feature if desired later.
-  const [isCollapsed, setIsCollapsed] = useState(false) // Keeping for potential future use
+  const [isCollapsed, setIsCollapsed] = useState(false)
 
   return (
     <>
@@ -113,7 +135,7 @@ export function Sidebar({}: SidebarProps) {
                 <Skeleton className="h-3 w-16 rounded" />
               </div>
             </div>
-          ) : isAuthenticated && user ? (
+          ) : showProfileSection && user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className={`w-full justify-start h-12 hover:bg-white/50`}>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import React, { useState, useMemo, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Button } from "@/components/ui/button"
@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge"
 import { Upload, TrendingUp, Flame, UserCheck, FileText, Calendar, Sparkles, Loader2, LayoutDashboard } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { mockJobs } from "@/data/mock-jobs"
+import { StreaksService, type StreakData } from "@/lib/streaks-service"
+import { StreaksCalendar } from "@/components/streaks-calendar"
 import { useRouter } from "next/navigation"
 import { JobPreferencesModal } from "@/components/job-preferences-modal"
 import { LoginModal } from "@/components/login-modal"
@@ -48,7 +50,7 @@ async function loadPdfJs() {
   return window.pdfjsLib;
 }
 
-async function extractTextFromPdf(file) {
+async function extractTextFromPdf(file: File) {
   const pdfjs = await loadPdfJs();
   if (!pdfjs) throw new Error("PDF.js failed to load");
   const arrayBuffer = await file.arrayBuffer();
@@ -57,13 +59,28 @@ async function extractTextFromPdf(file) {
   for (let i = 0; i < pdf.numPages; i++) {
     const page = await pdf.getPage(i + 1);
     const textContent = await page.getTextContent();
-    fullText += textContent.items.map((item) => item.str).join(" ");
+    fullText += textContent.items.map((item: { str: string }) => item.str).join(" ");
   }
   return fullText;
 }
 
+// Helper function to check if streaks were updated today
+function hasStreaksUpdatedToday(userId: string): boolean {
+  if (typeof window === "undefined") return false;
+  const today = new Date().toISOString().split('T')[0];
+  const lastUpdate = localStorage.getItem(`streaks_updated_${userId}`);
+  return lastUpdate === today;
+}
+
+// Helper function to mark streaks as updated today
+function markStreaksUpdatedToday(userId: string): void {
+  if (typeof window === "undefined") return;
+  const today = new Date().toISOString().split('T')[0];
+  localStorage.setItem(`streaks_updated_${userId}`, today);
+}
+
 export default function MainDashboard() {
-  const { user, updateProfile, isAuthenticated } = useAuth()
+  const { user, updateProfile, isAuthenticated, refreshUserProfile } = useAuth()
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
   
   const [resumeUploading, setResumeUploading] = useState(false)
@@ -95,10 +112,76 @@ export default function MainDashboard() {
     return mockJobs.filter(job => topCompanies.includes(job.company)).slice(0, 5)
   }, [])
 
-  // Streaks (mock logic)
-  const streaks = user?.streaks || { daysActive: 3, applicationsSent: 7 }
+  // Streaks with new database structure
+  const streaks: StreakData = useMemo(() => {
+    if (user?.currentStreak !== undefined) {
+      // Use database values
+      return {
+        currentStreak: user.currentStreak || 0,
+        longestStreak: user.longestStreak || 0,
+        totalApplications: user.totalApplications || 0,
+        loginDates: user.loginDates || [],
+        lastLoginDate: user.lastLoginDate || null,
+        lastApplicationDate: user.lastApplicationDate || null
+      }
+    } else {
+      // Fallback to old structure or generate new
+      const newStreaks = {
+        currentStreak: 0,
+        longestStreak: 0,
+        totalApplications: 0,
+        loginDates: [],
+        lastLoginDate: null,
+        lastApplicationDate: null
+      }
+      // Initialize streaks in user profile if they don't exist
+      if (user?.id) {
+        updateProfile({ 
+          currentStreak: newStreaks.currentStreak,
+          longestStreak: newStreaks.longestStreak,
+          totalApplications: newStreaks.totalApplications,
+          loginDates: newStreaks.loginDates,
+          lastLoginDate: newStreaks.lastLoginDate,
+          lastApplicationDate: newStreaks.lastApplicationDate
+        }).catch(console.error);
+      }
+      return newStreaks
+    }
+  }, [user, updateProfile])
 
-  // ATS Score Trends (real logic)
+  // Update streaks when user is active (only once per day)
+  const updateUserStreaks = async () => {
+    if (!user?.id) return;
+    
+    // Check if streaks were already updated today
+    if (hasStreaksUpdatedToday(user.id)) {
+      return;
+    }
+    
+    try {
+      const updatedStreaks = StreaksService.updateLoginStreak(streaks);
+      await updateProfile({
+        currentStreak: updatedStreaks.currentStreak,
+        longestStreak: updatedStreaks.longestStreak,
+        totalApplications: updatedStreaks.totalApplications,
+        loginDates: updatedStreaks.loginDates,
+        lastLoginDate: updatedStreaks.lastLoginDate,
+        lastApplicationDate: updatedStreaks.lastApplicationDate
+      });
+      // Mark as updated today
+      markStreaksUpdatedToday(user.id);
+    } catch (error) {
+      console.error("Failed to update streaks:", error);
+    }
+  };
+
+  // Update streaks on component mount (moved outside conditional rendering)
+  useEffect(() => {
+    if (isAuthenticated && user?.id) {
+      updateUserStreaks();
+    }
+  }, [isAuthenticated, user?.id]);
+
   // Show sign-in prompt if user is not authenticated
   if (!isAuthenticated) {
     return (
@@ -126,8 +209,8 @@ export default function MainDashboard() {
     )
   }
 
-  const atsScores = user?.resume_scores || [];
-  const hasResume = !!user?.resume_url;
+  const atsScores = user?.atsScores || [];
+  const hasResume = !!user?.resumeUrl;
 
   const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -156,9 +239,8 @@ export default function MainDashboard() {
         throw new Error("Failed to upload and score resume")
       }
       // Refetch user profile to update ATS scores
-      if (updateProfile) {
-        await updateProfile({})
-      }
+      // Refresh user profile to get the latest ATS scores
+      await refreshUserProfile()
       toast({
         title: "Resume Scored!",
         description: "Your ATS score has been updated.",
@@ -338,23 +420,12 @@ export default function MainDashboard() {
         </Card>
       </div>
 
-      {/* Streaks */}
-      <Card className="bg-gradient-to-r from-green-50 to-blue-50 border-green-200 mt-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Calendar className="w-5 h-5 text-blue-600" /> Streaks</CardTitle>
-          <CardDescription>Keep your job search momentum going!</CardDescription>
-        </CardHeader>
-        <CardContent className="flex gap-8 items-center">
-          <div className="flex flex-col items-center">
-            <span className="text-3xl font-bold text-blue-700">{streaks.daysActive}</span>
-            <span className="text-xs text-gray-500">Days Active</span>
-          </div>
-          <div className="flex flex-col items-center">
-            <span className="text-3xl font-bold text-green-700">{streaks.applicationsSent}</span>
-            <span className="text-xs text-gray-500">Applications Sent</span>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Streaks Calendar */}
+      <StreaksCalendar 
+        loginDates={streaks.loginDates}
+        currentStreak={streaks.currentStreak}
+        longestStreak={streaks.longestStreak}
+      />
 
       {/* Job Preferences Modal */}
       <JobPreferencesModal isOpen={isJobPreferencesModalOpen} onClose={() => setIsJobPreferencesModalOpen(false)} />
