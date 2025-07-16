@@ -145,7 +145,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('[AUTH STATE] Event:', event, 'Session:', session)
       if (session?.user) {
         setSupabaseUser(session.user)
+        console.log('[AUTH STATE] session.user:', session.user)
         const profile = await fetchUserProfile(session.user.id)
+        console.log('[AUTH STATE] fetchUserProfile result:', profile)
+        let finalProfile = profile;
         if (profile) {
           setUser(profile)
           setJobPreferences(profile.jobPreferences)
@@ -153,6 +156,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } else {
           // If no profile exists, create one with default preferences
           const newProfile = await createOrUpdateUserProfile(session.user, defaultJobPreferences)
+          console.log('[AUTH STATE] createOrUpdateUserProfile result:', newProfile)
           if (newProfile) {
             setUser({
               id: newProfile.id,
@@ -162,20 +166,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               role: newProfile.role,
               joinedDate: newProfile.joined_date,
               gender: newProfile.gender, // Include gender
-              jobPreferences: newProfile.job_preferences,
             })
             setJobPreferences(newProfile.job_preferences)
             console.log('[AUTH STATE] New user profile created:', newProfile)
+            finalProfile = newProfile;
+          } else {
+            console.error('[AUTH STATE] Failed to create user profile for:', session.user.id)
           }
         }
         setIsAuthenticated(true)
-        console.log('[AUTH STATE] Authenticated!')
+        console.log('[AUTH STATE] Authenticated! user:', finalProfile, 'isAuthenticated:', true)
       } else {
         setUser(null)
         setSupabaseUser(null)
         setIsAuthenticated(false)
         setJobPreferences(defaultJobPreferences) // Reset to default on logout
-        console.log('[AUTH STATE] User signed out or no session.')
+        console.log('[AUTH STATE] User signed out or no session. user:', null, 'isAuthenticated:', false)
       }
       setLoading(false)
     })
