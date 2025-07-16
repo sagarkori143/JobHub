@@ -28,8 +28,7 @@ export const mockJobs: JobListing[] = [
     applicationDeadline: "2024-02-12",
     industry: "Technology",
     experienceLevel: "Mid",
-    remote: true,
-    companyLogo: "/placeholder.svg?height=40&width=40",
+    remote: true
   },
   {
     id: "4",
@@ -58,8 +57,7 @@ export const mockJobs: JobListing[] = [
     applicationDeadline: "2024-02-11",
     industry: "Technology",
     experienceLevel: "Senior",
-    remote: false,
-    companyLogo: "/placeholder.svg?height=40&width=40",
+    remote: false
   },
   {
     id: "5",
@@ -88,8 +86,7 @@ export const mockJobs: JobListing[] = [
     applicationDeadline: "2024-02-09",
     industry: "Technology",
     experienceLevel: "Senior",
-    remote: true,
-    companyLogo: "/placeholder.svg?height=40&width=40",
+    remote: true
   },
   {
     id: "6",
@@ -118,8 +115,7 @@ export const mockJobs: JobListing[] = [
     applicationDeadline: "2024-02-13",
     industry: "Technology",
     experienceLevel: "Senior",
-    remote: false,
-    companyLogo: "/placeholder.svg?height=40&width=40",
+    remote: false
   },
   {
     id: "7",
@@ -148,8 +144,7 @@ export const mockJobs: JobListing[] = [
     applicationDeadline: "2024-02-14",
     industry: "Technology",
     experienceLevel: "Senior",
-    remote: true,
-    companyLogo: "/placeholder.svg?height=40&width=40",
+    remote: true
   },
   {
     id: "8",
@@ -178,8 +173,7 @@ export const mockJobs: JobListing[] = [
     applicationDeadline: "2024-02-15",
     industry: "Technology",
     experienceLevel: "Mid",
-    remote: true,
-    companyLogo: "/placeholder.svg?height=40&width=40",
+    remote: true
   },
   {
     id: "9",
@@ -208,8 +202,7 @@ export const mockJobs: JobListing[] = [
     applicationDeadline: "2024-02-16",
     industry: "Technology",
     experienceLevel: "Mid",
-    remote: false,
-    companyLogo: "/placeholder.svg?height=40&width=40",
+    remote: false
   },
   {
     id: "10",
@@ -238,8 +231,7 @@ export const mockJobs: JobListing[] = [
     applicationDeadline: "2024-02-17",
     industry: "Technology",
     experienceLevel: "Senior",
-    remote: true,
-    companyLogo: "/placeholder.svg?height=40&width=40",
+    remote: true
   },
   {
     id: "11",
@@ -268,8 +260,7 @@ export const mockJobs: JobListing[] = [
     applicationDeadline: "2024-02-18",
     industry: "Technology",
     experienceLevel: "Senior",
-    remote: false,
-    companyLogo: "/placeholder.svg?height=40&width=40",
+    remote: false
   },
   {
     id: "12",
@@ -298,8 +289,7 @@ export const mockJobs: JobListing[] = [
     applicationDeadline: "2024-02-19",
     industry: "Technology",
     experienceLevel: "Mid",
-    remote: true,
-    companyLogo: "/placeholder.svg?height=40&width=40",
+    remote: true
   },
   {
     id: "13",
@@ -328,8 +318,7 @@ export const mockJobs: JobListing[] = [
     applicationDeadline: "2024-02-20",
     industry: "Technology",
     experienceLevel: "Senior",
-    remote: true,
-    companyLogo: "/placeholder.svg?height=40&width=40",
+    remote: true
   },
   {
     id: "14",
@@ -358,8 +347,7 @@ export const mockJobs: JobListing[] = [
     applicationDeadline: "2024-02-21",
     industry: "Technology",
     experienceLevel: "Mid",
-    remote: true,
-    companyLogo: "/placeholder.svg?height=40&width=40",
+    remote: true
   },
   {
     id: "15",
@@ -388,8 +376,7 @@ export const mockJobs: JobListing[] = [
     applicationDeadline: "2024-02-22",
     industry: "Technology",
     experienceLevel: "Mid",
-    remote: true,
-    companyLogo: "/placeholder.svg?height=40&width=40",
+    remote: true
   },
   {
     id: "16",
@@ -418,8 +405,7 @@ export const mockJobs: JobListing[] = [
     applicationDeadline: "2024-02-23",
     industry: "Technology",
     experienceLevel: "Senior",
-    remote: true,
-    companyLogo: "/placeholder.svg?height=40&width=40",
+    remote: true
   },
   {
     id: "17",
@@ -448,8 +434,7 @@ export const mockJobs: JobListing[] = [
     applicationDeadline: "2024-02-24",
     industry: "Design",
     experienceLevel: "Senior",
-    remote: true,
-    companyLogo: "/placeholder.svg?height=40&width=40",
+    remote: true
   },
   {
     id: "18",
@@ -478,8 +463,7 @@ export const mockJobs: JobListing[] = [
     applicationDeadline: "2024-02-25",
     industry: "Technology",
     experienceLevel: "Mid",
-    remote: true,
-    companyLogo: "/placeholder.svg?height=40&width=40",
+    remote: true
   },
   {
     id: "19",
@@ -508,8 +492,7 @@ export const mockJobs: JobListing[] = [
     applicationDeadline: "2024-02-26",
     industry: "Technology",
     experienceLevel: "Senior",
-    remote: false,
-    companyLogo: "/placeholder.svg?height=40&width=40",
+    remote: false
   },
   {
     id: "20",
@@ -538,8 +521,7 @@ export const mockJobs: JobListing[] = [
     applicationDeadline: "2024-02-27",
     industry: "Technology",
     experienceLevel: "Senior",
-    remote: true,
-    companyLogo: "/placeholder.svg?height=40&width=40",
+    remote: true
   },
   {
     id: "21",
@@ -568,8 +550,7 @@ export const mockJobs: JobListing[] = [
     applicationDeadline: "2024-02-09",
     industry: "Design",
     experienceLevel: "Mid",
-    remote: false,
-    companyLogo: "/placeholder.svg?height=40&width=40",
+    remote: false
   },
   {
     id: "22",
@@ -598,8 +579,7 @@ export const mockJobs: JobListing[] = [
     applicationDeadline: "2024-02-11",
     industry: "Finance",
     experienceLevel: "Entry",
-    remote: false,
-    companyLogo: "/placeholder.svg?height=40&width=40",
+    remote: false
   },
   {
     id: "23",
@@ -628,8 +608,7 @@ export const mockJobs: JobListing[] = [
     applicationDeadline: "2024-02-28",
     industry: "Marketing",
     experienceLevel: "Mid",
-    remote: true,
-    companyLogo: "/placeholder.svg?height=40&width=40",
+    remote: true
   },
   {
     id: "24",
@@ -658,8 +637,7 @@ export const mockJobs: JobListing[] = [
     applicationDeadline: "2024-03-01",
     industry: "Technology",
     experienceLevel: "Entry",
-    remote: false,
-    companyLogo: "/placeholder.svg?height=40&width=40",
+    remote: false
   },
   {
     id: "25",
@@ -688,8 +666,7 @@ export const mockJobs: JobListing[] = [
     applicationDeadline: "2024-03-02",
     industry: "Technology",
     experienceLevel: "Mid",
-    remote: true,
-    companyLogo: "/placeholder.svg?height=40&width=40",
+    remote: true
   },
   {
     id: "25",
@@ -730,8 +707,7 @@ export const mockJobs: JobListing[] = [
     applicationDeadline: "2024-02-20",
     industry: "Technology",
     experienceLevel: "Entry",
-    remote: false,
-    companyLogo: "/placeholder.svg?height=40&width=40",
+    remote: false
   },
   {
     id: "26",
@@ -774,8 +750,7 @@ export const mockJobs: JobListing[] = [
     applicationDeadline: "2024-02-21",
     industry: "Technology",
     experienceLevel: "Entry",
-    remote: true,
-    companyLogo: "/placeholder.svg?height=40&width=40",
+    remote: true
   },
   {
     id: "27",
@@ -820,8 +795,7 @@ export const mockJobs: JobListing[] = [
     applicationDeadline: "2024-02-22",
     industry: "Technology",
     experienceLevel: "Entry",
-    remote: false,
-    companyLogo: "/placeholder.svg?height=40&width=40",
+    remote: false
   },
   {
     id: "28",
@@ -867,8 +841,7 @@ export const mockJobs: JobListing[] = [
     applicationDeadline: "2024-02-23",
     industry: "Technology",
     experienceLevel: "Entry",
-    remote: true,
-    companyLogo: "/placeholder.svg?height=40&width=40",
+    remote: true
   },
   {
     id: "29",
@@ -914,8 +887,7 @@ export const mockJobs: JobListing[] = [
     applicationDeadline: "2024-02-24",
     industry: "Technology",
     experienceLevel: "Entry",
-    remote: false,
-    companyLogo: "/placeholder.svg?height=40&width=40",
+    remote: false
   },
   {
     id: "30",
@@ -944,8 +916,7 @@ export const mockJobs: JobListing[] = [
     applicationDeadline: "2024-02-25",
     industry: "Technology",
     experienceLevel: "Entry",
-    remote: true,
-    companyLogo: "/placeholder.svg?height=40&width=40",
+    remote: true
   },
   {
     id: "31",
@@ -974,8 +945,7 @@ export const mockJobs: JobListing[] = [
     applicationDeadline: "2024-02-26",
     industry: "Technology",
     experienceLevel: "Entry",
-    remote: false,
-    companyLogo: "/placeholder.svg?height=40&width=40",
+    remote: false
   },
   {
     id: "32",
@@ -1004,8 +974,7 @@ export const mockJobs: JobListing[] = [
     applicationDeadline: "2024-02-27",
     industry: "Technology",
     experienceLevel: "Entry",
-    remote: true,
-    companyLogo: "/placeholder.svg?height=40&width=40",
+    remote: true
   },
   {
     id: "33",
@@ -1034,8 +1003,7 @@ export const mockJobs: JobListing[] = [
     applicationDeadline: "2024-02-28",
     industry: "Technology",
     experienceLevel: "Entry",
-    remote: false,
-    companyLogo: "/placeholder.svg?height=40&width=40",
+    remote: false
   },
   {
     id: "34",
@@ -1064,8 +1032,7 @@ export const mockJobs: JobListing[] = [
     applicationDeadline: "2024-02-29",
     industry: "Technology",
     experienceLevel: "Entry",
-    remote: true,
-    companyLogo: "/placeholder.svg?height=40&width=40",
+    remote: true
   },
   {
     id: "35",
@@ -1112,8 +1079,7 @@ export const mockJobs: JobListing[] = [
     applicationDeadline: "2024-03-01",
     industry: "Technology",
     experienceLevel: "Entry",
-    remote: false,
-    companyLogo: "/placeholder.svg?height=40&width=40",
+    remote: false
   },
   {
     id: "36",
@@ -1142,8 +1108,7 @@ export const mockJobs: JobListing[] = [
     applicationDeadline: "2024-03-02",
     industry: "Technology",
     experienceLevel: "Entry",
-    remote: true,
-    companyLogo: "/placeholder.svg?height=40&width=40",
+    remote: true
   },
   {
     id: "37",
@@ -1172,8 +1137,7 @@ export const mockJobs: JobListing[] = [
     applicationDeadline: "2024-03-03",
     industry: "Technology",
     experienceLevel: "Entry",
-    remote: false,
-    companyLogo: "/placeholder.svg?height=40&width=40",
+    remote: false
   },
   {
     id: "38",
@@ -1202,8 +1166,7 @@ export const mockJobs: JobListing[] = [
     applicationDeadline: "2024-03-04",
     industry: "Technology",
     experienceLevel: "Entry",
-    remote: true,
-    companyLogo: "/placeholder.svg?height=40&width=40",
+    remote: true
   },
   {
     id: "39",
@@ -1232,8 +1195,7 @@ export const mockJobs: JobListing[] = [
     applicationDeadline: "2024-03-05",
     industry: "Technology",
     experienceLevel: "Entry",
-    remote: false,
-    companyLogo: "/placeholder.svg?height=40&width=40",
+    remote: false
   },
   {
     id: "40",
@@ -1262,8 +1224,7 @@ export const mockJobs: JobListing[] = [
     applicationDeadline: "2024-03-06",
     industry: "Technology",
     experienceLevel: "Entry",
-    remote: true,
-    companyLogo: "/placeholder.svg?height=40&width=40",
+    remote: true
   },
   {
     id: "1",
@@ -1292,8 +1253,7 @@ export const mockJobs: JobListing[] = [
     applicationDeadline: "2024-02-10",
     industry: "Technology",
     experienceLevel: "Senior",
-    remote: true,
-    companyLogo: "/placeholder.svg?height=40&width=40",
+    remote: true
   },
   {
     id: "2",
@@ -1321,7 +1281,6 @@ export const mockJobs: JobListing[] = [
     applicationDeadline: "2024-02-08",
     industry: "Marketing",
     experienceLevel: "Mid",
-    remote: false,
-    companyLogo: "/placeholder.svg?height=40&width=40",
+    remote: false
   },
 ]

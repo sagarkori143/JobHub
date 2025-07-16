@@ -157,9 +157,9 @@ export function ProfileImageUpload({
   const displayAvatar = previewUrl || currentAvatar
 
   return (
-    <Card className={cn("w-full max-w-md", className)}>
-      <CardContent className="p-6">
-        <div className="space-y-4">
+    <Card className={cn("w-full max-w-xs", className)}>
+      <CardContent className="p-4">
+        <div className="space-y-2">
           {/* Avatar Display */}
           <div className="flex justify-center">
             <div className="relative">
@@ -168,18 +168,18 @@ export function ProfileImageUpload({
                   <img
                     src={displayAvatar}
                     alt={`${userName}'s avatar`}
-                    className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
+                    className="w-16 h-16 rounded-full object-cover border-2 border-white shadow"
                   />
                   <button
                     onClick={handleRemoveImage}
                     disabled={isUploading}
                     className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 disabled:opacity-50"
                   >
-                    <X className="w-4 h-4" />
+                    <X className="w-3 h-3" />
                   </button>
                 </div>
               ) : (
-                <DefaultAvatar name={userName} size="xl" className="w-24 h-24" />
+                <DefaultAvatar name={userName} size="lg" className="w-16 h-16" />
               )}
             </div>
           </div>
@@ -187,7 +187,7 @@ export function ProfileImageUpload({
           {/* Upload Area */}
           <div
             className={cn(
-              "border-2 border-dashed rounded-lg p-6 text-center transition-colors",
+              "border-2 border-dashed rounded-lg p-3 text-center transition-colors",
               isDragOver 
                 ? "border-blue-500 bg-blue-50" 
                 : "border-gray-300 hover:border-gray-400"
@@ -196,18 +196,17 @@ export function ProfileImageUpload({
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
           >
-            <div className="space-y-2">
-              <Camera className="w-8 h-8 mx-auto text-gray-400" />
+            <div className="space-y-1">
+              <Camera className="w-6 h-6 mx-auto text-gray-400" />
               <div>
-                <p className="text-sm font-medium text-gray-700">
+                <p className="text-xs font-medium text-gray-700">
                   {displayAvatar ? "Change Profile Picture" : "Upload Profile Picture"}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-500 mt-0.5">
                   Drag and drop an image here, or click to browse
                 </p>
               </div>
-              
-              <div className="flex justify-center space-x-2">
+              <div className="flex justify-center">
                 <Button
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isUploading}
@@ -223,18 +222,18 @@ export function ProfileImageUpload({
 
           {/* Upload Button - Only show when file is selected */}
           {selectedFile && (
-            <div className="text-center space-y-2">
-              <p className="text-sm text-gray-600">
+            <div className="text-center space-y-1">
+              <p className="text-xs text-gray-600">
                 Selected: {selectedFile.name}
               </p>
-              <div className="flex flex-wrap justify-center gap-2">
+              <div className="flex flex-wrap justify-center gap-1">
                 <Button
                   onClick={handleAutoCrop}
                   disabled={isUploading}
                   size="sm"
                   variant="outline"
                 >
-                  <Square className="w-4 h-4 mr-2" />
+                  <Square className="w-4 h-4 mr-1" />
                   Auto Crop
                 </Button>
                 <Button
@@ -243,61 +242,37 @@ export function ProfileImageUpload({
                   size="sm"
                   variant="outline"
                 >
-                  <Crop className="w-4 h-4 mr-2" />
+                  <Crop className="w-4 h-4 mr-1" />
                   Manual Crop
                 </Button>
                 <Button
                   onClick={handleUploadImage}
                   disabled={isUploading}
                   size="sm"
-                  className="bg-blue-600 hover:bg-blue-700"
+                  variant="default"
                 >
-                  <Upload className="w-4 h-4 mr-2" />
-                  {isUploading ? "Uploading..." : "Upload Image"}
-                </Button>
-                <Button
-                  onClick={() => {
-                    setSelectedFile(null)
-                    setPreviewUrl(null)
-                    setOriginalImageUrl(null)
-                  }}
-                  disabled={isUploading}
-                  variant="outline"
-                  size="sm"
-                >
-                  Cancel
+                  <Upload className="w-4 h-4 mr-1" />
+                  Upload
                 </Button>
               </div>
             </div>
           )}
-
-          {/* File Input */}
-          <Input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleFileInputChange}
-            className="hidden"
-          />
-
-          {/* Upload Info */}
-          <div className="text-xs text-gray-500 text-center">
-            <p>Supported formats: JPG, PNG, GIF</p>
-            <p>Maximum size: 5MB</p>
-          </div>
         </div>
-      </CardContent>
-
-      {/* Image Cropper */}
-      {originalImageUrl && (
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleFileInputChange}
+        />
+        {/* Image Cropper Modal */}
         <ImageCropper
           isOpen={isCropperOpen}
+          imageSrc={originalImageUrl || ""}
           onClose={() => setIsCropperOpen(false)}
-          imageSrc={originalImageUrl}
           onCropComplete={handleCropComplete}
-          aspectRatio={1}
         />
-      )}
+      </CardContent>
     </Card>
   )
 } 

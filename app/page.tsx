@@ -13,6 +13,8 @@ import { RefreshCw, Database, AlertCircle, Clock } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { UserAvatar } from "@/components/user-avatar"
 import { useAuth } from "@/contexts/auth-context"
+import { useAuthGuard } from "@/hooks/use-auth-guard"
+import { useVisitTracking } from "@/hooks/use-visit-tracking"
 import { supabase } from "@/lib/supabase"
 
 const initialFilters: JobFiltersType = {
@@ -28,6 +30,16 @@ const JOBS_PER_PAGE = 6
 const SYNC_INTERVAL_MS = 2 * 60 * 60 * 1000 // 2 hours
 
 export default function JobSearchPage() {
+  // Use auth guard to redirect authenticated users to dashboard
+  const { isAuthenticated } = useAuthGuard({
+    requireAuth: false,
+    redirectIfAuthenticated: true,
+    redirectTo: "/dashboard"
+  });
+  
+  // Track visits to the website
+  useVisitTracking();
+  
   const [filters, setFilters] = useState<JobFiltersType>(initialFilters)
   const [selectedJob, setSelectedJob] = useState<JobListing | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -47,6 +59,8 @@ export default function JobSearchPage() {
   useEffect(() => {
     loadJobs()
   }, [])
+
+
 
   // Initialize countdown timer (runs only when metadata or lastUpdated changes)
   useEffect(() => {
@@ -304,7 +318,7 @@ export default function JobSearchPage() {
                   <Database className="w-5 h-5 text-green-600" />
                   <div className="flex-1">
                     <p className="text-sm font-medium text-green-800">
-                      {metadata?.hasRealData ? "Real job data from company career pages" : "Mock job data for demonstration"}
+                      {metadata?.hasRealData ? "Real job data from company career pages" : "Mock job data for demonstration (Real data coming soon!)"}
                     </p>
                     <p className="text-xs text-green-600">
                       {metadata?.hasRealData && lastUpdated

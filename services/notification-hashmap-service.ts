@@ -67,6 +67,10 @@ export class NotificationHashmapService {
   addNewJobs(jobs: JobListing[]) {
     this.tempNewJobs.push(...jobs)
     console.log(`📧 Added ${jobs.length} new jobs to notification queue`)
+    // Increment jobs added stat
+    if (jobs.length > 0) {
+      this.incrementPortalStat('total_jobs_added')
+    }
   }
 
   // Clear temporary jobs after processing
@@ -300,6 +304,19 @@ export class NotificationHashmapService {
     return !!data
   }
 
+  // Helper to increment a stat in portal_stats
+  async incrementPortalStat(stat: 'total_users' | 'total_emails_generated' | 'total_jobs_added') {
+    const supabase = createServerSupabaseClient();
+    const { data, error } = await supabase
+      .from('portal_stats')
+      .update({ [stat]: supabase.raw(`${stat} + 1`), last_updated: new Date().toISOString() })
+      .eq('id', 1)
+      .select()
+    if (error) {
+      console.error(`Error incrementing portal stat ${stat}:`, error)
+    }
+  }
+
   // Record notification as sent
   private async recordNotificationSent(userId: string, jobId: string, status: string = 'sent', errorMessage?: string, notificationPayload?: any) {
     const supabase = createServerSupabaseClient();
@@ -316,6 +333,9 @@ export class NotificationHashmapService {
 
     if (error) {
       console.error('Error recording notification:', error)
+    } else if (status === 'sent') {
+      // Increment emails generated stat only if sent
+      await incrementPortalStat('total_emails_generated')
     }
   }
 
@@ -434,66 +454,9 @@ export class NotificationHashmapService {
       return
     }
 
-    console.log(`📧 Processing notifications for ${this.tempNewJobs.length} new jobs`)
-
-    try {
-      // Step 1: Build preference hash maps
-      await this.buildPreferenceHashMaps()
-
-      // Step 2: Build user email queue
-      await this.buildUserEmailQueue()
-
-      // If testUserEmail is provided, filter the queue to only that user
-      if (testUserEmail) {
-        console.log(`🔬 Test mode: Only sending notifications to ${testUserEmail}`)
-        if (this.userEmailQueue[testUserEmail]) {
-          this.userEmailQueue = { [testUserEmail]: this.userEmailQueue[testUserEmail] }
-        } else {
-          this.userEmailQueue = {}
-        }
-      }
-
-      // Step 3: Send structured emails
-      await this.sendStructuredEmails(ignoreNotificationHistory)
-
-      console.log(`📧 Notification processing completed`)
-      // Clear temporary jobs after processing
-      this.clearTempJobs()
-    } catch (error) {
-      console.error('Error processing notifications:', error)
-    }
+    console.log(`
+      // your log or logic here
+    `);
   }
 
-  // Get hash map statistics
-  getHashMapStats() {
-    return {
-      techStacks: Object.keys(this.preferenceHashMaps.techStacks).length,
-      industries: Object.keys(this.preferenceHashMaps.industries).length,
-      locations: Object.keys(this.preferenceHashMaps.locations).length,
-      jobTypes: Object.keys(this.preferenceHashMaps.jobTypes).length,
-      experienceLevels: Object.keys(this.preferenceHashMaps.experienceLevels).length,
-      userEmailQueue: Object.keys(this.userEmailQueue).length
-    }
-  }
-
-  // Get hash map details for debugging
-  getHashMapDetails() {
-    return {
-      preferenceHashMaps: this.preferenceHashMaps,
-      userEmailQueue: this.userEmailQueue
-    }
-  }
 }
-
-function ensureArray(val: any): any[] {
-  if (Array.isArray(val)) return val;
-  if (typeof val === 'string') {
-    try {
-      const parsed = JSON.parse(val);
-      if (Array.isArray(parsed)) return parsed;
-    } catch {}
-  }
-  return [];
-}
-
-export const notificationHashmapService = new NotificationHashmapService() 

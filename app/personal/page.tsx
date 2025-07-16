@@ -88,6 +88,14 @@ export default function PersonalDashboard() {
     }
   }, [authLoading, fetchJobs])
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Loading your dashboard...</p>
+      </div>
+    )
+  }
+
   if (!isAuthenticated) {
     return (
       <>
@@ -98,22 +106,23 @@ export default function PersonalDashboard() {
             </div>
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
-                Personal Dashboard
+                Applications Tracking
               </h1>
               <p className="text-gray-600 text-base sm:text-lg">
                 Sign in to access your job applications and track your progress
               </p>
             </div>
             <div className="space-y-4">
-              <Button
-                onClick={() => setIsLoginModalOpen(true)}
-                className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg"
-                size="lg"
-              >
-                <LogIn className="mr-2 h-5 w-5" />
-                Sign In to Continue
-              </Button>
-
+              {!authLoading && (
+                <Button
+                  onClick={() => setIsLoginModalOpen(true)}
+                  className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg"
+                  size="lg"
+                >
+                  <LogIn className="mr-2 h-5 w-5" />
+                  Sign In to Continue
+                </Button>
+              )}
               <div className="text-sm text-gray-500">Demo credentials: sagar@gmail.com / sagarkori</div>
             </div>
             <Card className="bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200">
@@ -133,14 +142,6 @@ export default function PersonalDashboard() {
 
         <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
       </>
-    )
-  }
-
-  if (loadingJobs || authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>Loading your dashboard...</p>
-      </div>
     )
   }
 
@@ -294,7 +295,7 @@ export default function PersonalDashboard() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-              Hello, {user?.name || "Guest"}! 👋
+              Applications Tracking
             </h1>
             <p className="text-gray-600 text-base md:text-lg mt-2">Welcome back to your job application dashboard</p>
           </div>
@@ -351,88 +352,75 @@ export default function PersonalDashboard() {
         </div>
 
         <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4 auto-rows-auto">
-          {jobs.length === 0 ? (
-            <div className="md:col-span-2 lg:col-span-4">
-              <Card className="bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200">
-                <CardContent className="p-8 text-center">
-                  <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <PlusCircle className="w-8 h-8 text-blue-600" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-800 mb-2">Welcome to your Job Dashboard!</h3>
-                  <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                    Start tracking your job applications by adding your first job. You can also add jobs from the job search page.
-                  </p>
-                  <div className="space-y-3">
-                    <Button 
-                      onClick={() => setIsDialogOpen(true)}
-                      className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white"
-                    >
-                      <PlusCircle className="mr-2 h-4 w-4" />
-                      Add Your First Job
-                    </Button>
-                    <p className="text-sm text-gray-500">
-                      Or browse jobs and add them from the main job search page
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          ) : (
-            <>
-              <div className={`space-y-4 ${appliedJobs.length > 5 ? "md:col-span-2 lg:col-span-2" : ""}`}>
-                <h2 className="text-xl font-semibold mb-4 text-blue-600">Applied Jobs ({appliedJobs.length})</h2>
-                {appliedJobs.map((job) => (
-                  <JobCard
-                    key={job.id}
-                    job={job}
-                    className="bg-blue-50 border-blue-200"
-                    onUpdate={handleUpdateJob}
-                    onDelete={handleDeleteJob}
-                    onMoveStatus={handleMoveStatus}
-                  />
-                ))}
-              </div>
-              <div className={`space-y-4 ${interviewingJobs.length > 5 ? "md:col-span-2 lg:col-span-2" : ""}`}>
-                <h2 className="text-xl font-semibold mb-4 text-yellow-600">Interviewing ({interviewingJobs.length})</h2>
-                {interviewingJobs.map((job) => (
-                  <JobCard
-                    key={job.id}
-                    job={job}
-                    className="bg-yellow-50 border-yellow-200"
-                    onUpdate={handleUpdateJob}
-                    onDelete={handleDeleteJob}
-                    onMoveStatus={handleMoveStatus}
-                  />
-                ))}
-              </div>
-              <div className={`space-y-4 ${offerJobs.length > 5 ? "md:col-span-2 lg:col-span-2" : ""}`}>
-                <h2 className="text-xl font-semibold mb-4 text-green-600">Offers ({offerJobs.length})</h2>
-                {offerJobs.map((job) => (
-                  <JobCard
-                    key={job.id}
-                    job={job}
-                    className="bg-green-50 border-green-200"
-                    onUpdate={handleUpdateJob}
-                    onDelete={handleDeleteJob}
-                    onMoveStatus={handleMoveStatus}
-                  />
-                ))}
-              </div>
-              <div className={`space-y-4 ${rejectedJobs.length > 5 ? "md:col-span-2 lg:col-span-2" : ""}`}>
-                <h2 className="text-xl font-semibold mb-4 text-red-600">Rejected ({rejectedJobs.length})</h2>
-                {rejectedJobs.map((job) => (
-                  <JobCard
-                    key={job.id}
-                    job={job}
-                    className="bg-red-50 border-red-200"
-                    onUpdate={handleUpdateJob}
-                    onDelete={handleDeleteJob}
-                    onMoveStatus={handleMoveStatus}
-                  />
-                ))}
-              </div>
-            </>
-          )}
+          {/* Always render all four status columns side by side */}
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold mb-4 text-blue-600">Applied Jobs ({appliedJobs.length})</h2>
+            {appliedJobs.length === 0 ? (
+              <p className="text-gray-400 text-sm">No jobs in this section.</p>
+            ) : (
+              appliedJobs.map((job) => (
+                <JobCard
+                  key={job.id}
+                  job={job}
+                  className="bg-blue-50 border-blue-200"
+                  onUpdate={handleUpdateJob}
+                  onDelete={handleDeleteJob}
+                  onMoveStatus={handleMoveStatus}
+                />
+              ))
+            )}
+          </div>
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold mb-4 text-yellow-600">Interviewing ({interviewingJobs.length})</h2>
+            {interviewingJobs.length === 0 ? (
+              <p className="text-gray-400 text-sm">No jobs in this section.</p>
+            ) : (
+              interviewingJobs.map((job) => (
+                <JobCard
+                  key={job.id}
+                  job={job}
+                  className="bg-yellow-50 border-yellow-200"
+                  onUpdate={handleUpdateJob}
+                  onDelete={handleDeleteJob}
+                  onMoveStatus={handleMoveStatus}
+                />
+              ))
+            )}
+          </div>
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold mb-4 text-green-600">Offers ({offerJobs.length})</h2>
+            {offerJobs.length === 0 ? (
+              <p className="text-gray-400 text-sm">No jobs in this section.</p>
+            ) : (
+              offerJobs.map((job) => (
+                <JobCard
+                  key={job.id}
+                  job={job}
+                  className="bg-green-50 border-green-200"
+                  onUpdate={handleUpdateJob}
+                  onDelete={handleDeleteJob}
+                  onMoveStatus={handleMoveStatus}
+                />
+              ))
+            )}
+          </div>
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold mb-4 text-red-600">Rejected ({rejectedJobs.length})</h2>
+            {rejectedJobs.length === 0 ? (
+              <p className="text-gray-400 text-sm">No jobs in this section.</p>
+            ) : (
+              rejectedJobs.map((job) => (
+                <JobCard
+                  key={job.id}
+                  job={job}
+                  className="bg-red-50 border-red-200"
+                  onUpdate={handleUpdateJob}
+                  onDelete={handleDeleteJob}
+                  onMoveStatus={handleMoveStatus}
+                />
+              ))
+            )}
+          </div>
         </div>
 
         <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>

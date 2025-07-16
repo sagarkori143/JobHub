@@ -6,7 +6,17 @@ CREATE TABLE IF NOT EXISTS user_profiles (
   role TEXT,
   joined_date DATE,
   job_preferences JSONB,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  resume_url TEXT, -- stores the user's resume file URL
+  ats_scores JSONB, -- stores an array of ATS scores with timestamps
+  streaks JSONB, -- stores streaks data (days active, applications sent, etc.)
+  resume_text TEXT, -- stores extracted text from the latest resume
+  resume_scores JSONB, -- array of { score, date, resume_url }
+  login_history JSONB, -- array of login timestamps
+  target_field TEXT, -- user's target field/industry
+  target_companies TEXT[], -- array of target companies
+  target_positions TEXT[], -- array of target job titles/roles
+  experience_level TEXT -- user's experience level (e.g., Entry, Mid, Senior)
 );
 
 -- Enable Row Level Security (RLS)

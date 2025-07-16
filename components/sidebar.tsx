@@ -24,21 +24,27 @@ import {
   Bell,
   Mail,
   Bug,
+  BarChart,
 } from "lucide-react"
 import { useState } from "react" // Keep useState for potential future desktop collapse
 import { useAuth } from "@/contexts/auth-context"
 import { LoginModal } from "@/components/login-modal"
 import { ProfileModal } from "@/components/profile-modal"
 import { JobPreferencesModal } from "@/components/job-preferences-modal"
+import { Skeleton } from "@/components/ui/skeleton"
 
 const navigationItems = [
   { name: "Search Jobs", href: "/", icon: Search, color: "text-blue-600 bg-blue-100" },
   { name: "Main Dashboard", href: "/dashboard", icon: LayoutDashboard, color: "text-green-600 bg-green-100" },
-  { name: "Personal Dashboard", href: "/personal", icon: User, color: "text-purple-600 bg-purple-100" },
-  { name: "Notifications", href: "/notifications", icon: Bell, color: "text-orange-600 bg-orange-100" },
-  { name: "Live Emails", href: "/live-emails", icon: Mail, color: "text-pink-600 bg-pink-100" },
+  { name: "Applications Tracking", href: "/personal", icon: User, color: "text-purple-600 bg-purple-100" },
+  { name: "Job Notifications", href: "/notifications", icon: Bell, color: "text-orange-600 bg-orange-100" },
   { name: "Resume ATS Scoring", href: "/resume-scoring", icon: FileText, color: "text-indigo-600 bg-indigo-100" },
-  { name: "Debug Notifications", href: "/debug/notifications", icon: Bug, color: "text-red-600 bg-red-100" },
+  {
+    name: "Portal Stats",
+    href: "/portal-stats",
+    icon: BarChart, // Make sure BarChart is imported from the icon library
+    color: "text-blue-600 bg-blue-100"
+  },
 ]
 
 type SidebarProps = {}
@@ -48,7 +54,7 @@ export function Sidebar({}: SidebarProps) {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
   const [isJobPreferencesModalOpen, setIsJobPreferencesModalOpen] = useState(false)
-  const { user, isAuthenticated, logout } = useAuth()
+  const { user, isAuthenticated, logout, loading } = useAuth()
 
   const handleLogout = () => {
     logout()
@@ -99,7 +105,15 @@ export function Sidebar({}: SidebarProps) {
 
         {/* User Section - Fixed at bottom */}
         <div className="p-4 border-t bg-gradient-to-r from-gray-50 to-gray-100 flex-shrink-0">
-          {isAuthenticated && user ? (
+          {loading ? (
+            <div className="flex items-center gap-3">
+              <Skeleton className="w-10 h-10 rounded-full" />
+              <div className="flex flex-col gap-1 flex-1 min-w-0">
+                <Skeleton className="h-4 w-24 rounded" />
+                <Skeleton className="h-3 w-16 rounded" />
+              </div>
+            </div>
+          ) : isAuthenticated && user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className={`w-full justify-start h-12 hover:bg-white/50`}>
@@ -136,10 +150,6 @@ export function Sidebar({}: SidebarProps) {
                   Job Preferences
                 </DropdownMenuItem>
                 <DropdownMenuItem>
-                  <Settings className="mr-2 h-4 w-4" />
-                  Account Settings
-                </DropdownMenuItem>
-                <DropdownMenuItem>
                   <HelpCircle className="mr-2 h-4 w-4" />
                   Help & Support
                 </DropdownMenuItem>
@@ -151,12 +161,14 @@ export function Sidebar({}: SidebarProps) {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button
-              onClick={() => setIsLoginModalOpen(true)}
-              className={`w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white`}
-            >
-              Sign In
-            </Button>
+            !loading && (
+              <Button
+                onClick={() => setIsLoginModalOpen(true)}
+                className={`w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white`}
+              >
+                Sign In
+              </Button>
+            )
           )}
         </div>
       </div>

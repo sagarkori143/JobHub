@@ -9,13 +9,13 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet" // Imp
 import { Button } from "@/components/ui/button"
 import { Menu, Briefcase } from "lucide-react"
 import Link from "next/link"
+import TrackVisit from "@/components/track-visit";
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "JobHub - Your Career Platform",
-  description: "Find jobs, manage applications, and optimize your resume with ATS scoring",
-    generator: 'v0.dev'
+  description: "Find jobs, manage applications, and optimize your resume with ATS scoring"
 }
 
 export default function RootLayout({
@@ -26,6 +26,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
+        <TrackVisit />
         <AuthProvider>
           <div className="flex h-screen">
             {/* Desktop Sidebar - Fixed */}

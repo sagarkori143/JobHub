@@ -291,39 +291,12 @@ export default function NotificationsPage() {
                 Test your notification setup with sample job alerts
               </p>
               <Button
-                onClick={async () => {
-                  try {
-                    if (!user?.email) throw new Error('No user email found');
-                    const response = await fetch(`/api/notifications/process?testUserEmail=${encodeURIComponent(user.email)}`, {
-                      method: 'GET'
-                    })
-                    const data = await response.json()
-                    
-                    if (data.success) {
-                      toast({
-                        title: "Test Notifications Sent!",
-                        description: `Processed ${data.jobsProcessed} mock job notifications. Check your email and notification history.`,
-                      })
-                    } else {
-                      toast({
-                        title: "Error",
-                        description: "Failed to send test notifications",
-                        variant: "destructive",
-                      })
-                    }
-                  } catch (error) {
-                    toast({
-                      title: "Error",
-                      description: "Failed to send test notifications",
-                      variant: "destructive",
-                    })
-                  }
-                }}
+                disabled
                 variant="outline"
-                className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white"
+                className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white opacity-60 cursor-not-allowed"
               >
                 <Bell className="w-4 h-4 mr-2" />
-                Send Test Notifications
+                Send Test Notifications (Disabled)
               </Button>
             </div>
           </CardContent>

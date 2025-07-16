@@ -7,7 +7,7 @@ import { Pencil, Trash2, ChevronLeft, ChevronRight, Building } from "lucide-reac
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { JobEditForm } from "@/components/job-edit-form"
 import { Badge } from "@/components/ui/badge"
-import { getCompanyLogo, getCompanyLogoAsync } from "@/lib/company-logos"
+import { getCompanyLogo } from "@/lib/company-logos"
 import type { Job } from "@/types/job"
 
 interface JobCardProps {
@@ -27,35 +27,10 @@ export function JobCard({ job, className, onUpdate, onDelete, onMoveStatus }: Jo
   const currentStatusIndex = statusOrder.indexOf(job.status)
 
   useEffect(() => {
-    const loadCompanyLogo = async () => {
-      // If job already has a logo, use it
-      if (job.companyLogo) {
-        setCompanyLogo(job.companyLogo)
-        return
-      }
-
-      // Try to get from existing database first
-      const existingLogo = getCompanyLogo(job.company)
-      if (existingLogo && !existingLogo.includes("placeholder")) {
-        setCompanyLogo(existingLogo)
-        return
-      }
-
-      // If not found, search dynamically
-      setIsLoadingLogo(true)
-      try {
-        const logoUrl = await getCompanyLogoAsync(job.company)
-        setCompanyLogo(logoUrl)
-      } catch (error) {
-        console.error("Error loading company logo:", error)
-        setCompanyLogo("/placeholder.svg?height=32&width=32")
-      } finally {
-        setIsLoadingLogo(false)
-      }
-    }
-
-    loadCompanyLogo()
-  }, [job.company, job.companyLogo])
+    // Always use the central mapping for company logos
+    const logo = getCompanyLogo(job.company)
+    setCompanyLogo(logo)
+  }, [job.company])
 
   const handleEditSubmit = (updatedJob: Job) => {
     onUpdate(updatedJob)
@@ -107,22 +82,16 @@ export function JobCard({ job, className, onUpdate, onDelete, onMoveStatus }: Jo
         <div className="space-y-2">
           <div className="flex items-center gap-3">
             <div className="flex-shrink-0">
-              {isLoadingLogo ? (
-                <div className="w-8 h-8 rounded-md bg-gray-100 animate-pulse flex items-center justify-center">
-                  <Building className="w-4 h-4 text-gray-400" />
-                </div>
-              ) : (
-                <img 
-                  src={companyLogo} 
-                  alt={`${job.company} logo`}
-                  className="w-8 h-8 rounded-md object-cover border border-gray-200"
-                  onError={(e) => {
-                    // Fallback to placeholder if image fails to load
-                    const target = e.target as HTMLImageElement
-                    target.src = "/placeholder.svg?height=32&width=32"
-                  }}
-                />
-              )}
+              <img 
+                src={companyLogo} 
+                alt={`${job.company} logo`}
+                className="w-8 h-8 rounded-md object-cover border border-gray-200"
+                onError={(e) => {
+                  // Fallback to placeholder if image fails to load
+                  const target = e.target as HTMLImageElement
+                  target.src = "/placeholder.svg?height=32&width=32"
+                }}
+              />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 truncate">{job.company}</p>

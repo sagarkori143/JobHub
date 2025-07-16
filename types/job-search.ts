@@ -56,10 +56,16 @@ export interface User {
   id: string
   name: string
   email: string
-  avatar?: string
+  avatar?: string | null
   role: string
   joinedDate: string
   gender?: string // Added gender field
+  // New fields for personalized resume scoring
+  target_field?: string
+  target_companies?: string[]
+  target_positions?: string[]
+  experience_level?: string
+  jobPreferences?: any // Allow jobPreferences for localStorage hydration
 }
 
 export interface JobTag {

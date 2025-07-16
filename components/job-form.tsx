@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { getCompanyLogo, getCompanyLogoAsync } from "@/lib/company-logos"
+import { getCompanyLogo } from "@/lib/company-logos"
 import type { Job } from "@/types/job"
 
 interface JobFormProps {
@@ -32,7 +32,7 @@ export function JobForm({ onSubmit, initialData }: JobFormProps) {
     e.preventDefault()
     
     // Get company logo asynchronously
-    const companyLogo = await getCompanyLogoAsync(company)
+    const companyLogo = getCompanyLogo(company)
     
     onSubmit({
       company,

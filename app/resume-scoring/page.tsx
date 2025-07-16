@@ -1,9 +1,8 @@
 "use client"
 
-import type React from "react"
+import React, { useState, useRef, useEffect } from "react"
 import { Suspense } from "react"
 
-import { useState, useRef, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -12,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { FileText, CheckCircle, AlertCircle, XCircle, Sparkles, Loader2, Upload, ChevronDown } from "lucide-react"
+import { ResumeStepperLoader } from "@/components/ResumeStepperLoader"
 import { toast } from "@/hooks/use-toast"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { mockJobs } from "@/data/mock-jobs" // Assuming mockJobs is suitable for client-side use
@@ -69,6 +69,8 @@ function ResumeScoringContent() {
   const [result, setResult] = useState<ATSResult | null>(null)
   const resumeFileInputRef = useRef<HTMLInputElement>(null)
   const searchParams = useSearchParams()
+  const [loadingStep, setLoadingStep] = useState<null | "extract" | "upload" | "score" | "done">(null)
+  // Remove stepperStep state, handled in loader component
 
   // Pre-fill job description from URL parameter
   useEffect(() => {
@@ -103,48 +105,26 @@ function ResumeScoringContent() {
     const file = event.target.files?.[0]
     if (file) {
       setResumeFile(file)
-      setResumeText("") // Clear text if file is uploaded
+      setResumeText("")
       setResult(null)
-
       if (file.type === "application/pdf") {
         try {
-          setIsAnalyzing(true) // Indicate that PDF parsing is happening
           const extractedText = await extractTextFromPdf(file)
           setResumeText(extractedText)
-          toast({
-            title: "PDF Parsed",
-            description: "Text extracted from your resume PDF.",
-          })
+          toast({ title: "PDF Parsed", description: "Text extracted from your resume PDF." })
         } catch (error) {
           console.error("Error parsing PDF:", error)
-          toast({
-            title: "PDF Parsing Failed",
-            description: "Could not extract text from PDF. Please try pasting text directly.",
-            variant: "destructive",
-          })
+          toast({ title: "PDF Parsing Failed", description: "Could not extract text from PDF. Please try pasting text directly.", variant: "destructive" })
           setResumeFile(null)
           setResumeText("")
-        } finally {
-          setIsAnalyzing(false)
         }
       } else if (file.type === "text/plain") {
         const reader = new FileReader()
         reader.onload = (e) => {
           setResumeText(e.target?.result as string)
-          toast({
-            title: "Text File Loaded",
-            description: "Content extracted from your text file.",
-          })
+          toast({ title: "Text File Loaded", description: "Content extracted from your text file." })
         }
         reader.readAsText(file)
-      } else {
-        toast({
-          title: "Unsupported File Type",
-          description: "Please upload a PDF or plain text file.",
-          variant: "destructive",
-        })
-        setResumeFile(null)
-        setResumeText("")
       }
     }
   }
@@ -159,50 +139,43 @@ function ResumeScoringContent() {
 
   const analyzeResume = async () => {
     const finalResumeContent = resumeText.trim()
-
     if (!finalResumeContent || !jobDescription.trim()) {
-      toast({
-        title: "Missing Information",
-        description: "Please provide either resume text/file and job description.",
-        variant: "destructive",
-      })
+      toast({ title: "Missing Information", description: "Please provide either resume text/file and job description.", variant: "destructive" })
       return
     }
-
     setIsAnalyzing(true)
     setResult(null)
-
-    try {
-      const response = await fetch("/api/score-resume", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ resumeText: finalResumeContent, jobDescription }),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || "Failed to fetch ATS score.")
+    setLoadingStep("upload")
+    let stepIdx = 0;
+    const stepSequence = ["upload", "extract", "score"];
+    for (const step of stepSequence) {
+      setLoadingStep(step as any);
+      await new Promise(res => setTimeout(res, 1000));
+      stepIdx++;
+      if (step === "score") {
+        try {
+          const response = await fetch("/api/score-resume", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ resumeText: finalResumeContent, jobDescription }),
+          })
+          if (!response.ok) {
+            const errorData = await response.json()
+            throw new Error(errorData.error || "Failed to fetch ATS score.")
+          }
+          const data: ATSResult = await response.json()
+          setResult(data)
+        } catch (error: any) {
+          setLoadingStep(null)
+          setIsAnalyzing(false)
+          toast({ title: "Error", description: error.message || "Failed to score resume. Please try again.", variant: "destructive" })
+          return;
+        }
       }
-
-      const data: ATSResult = await response.json()
-      setResult(data)
-
-      toast({
-        title: "Resume Scored!",
-        description: `Your resume scored ${data.score}%.`,
-      })
-    } catch (error: any) {
-      console.error("Error scoring resume:", error)
-      toast({
-        title: "Error",
-        description: error.message || "Failed to score resume. Please try again.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsAnalyzing(false)
     }
+    setLoadingStep("done")
+    setTimeout(() => setLoadingStep(null), 1200)
+    setIsAnalyzing(false)
   }
 
   const getScoreColor = (score: number) => {
@@ -217,8 +190,31 @@ function ResumeScoringContent() {
     return <XCircle className="w-6 h-6 text-red-600" />
   }
 
+  const loaderStepMessage = {
+    extract: "Extracting text from your resume...",
+    upload: "Uploading and analyzing your resume...",
+    score: "Scoring your resume with AI...",
+    done: "Resume scored!"
+  };
+
+  const steps = [
+    { key: "extract", label: "Extract" },
+    { key: "upload", label: "Upload" },
+    { key: "score", label: "Score" }
+  ];
+  const stepIndex = steps.findIndex(s => s.key === loadingStep);
+
+  // Responsive, labeled stepper loader
+  const stepperLabels = ["Uploaded", "Extracted", "Calculating"];
+  const stepperKeys = ["upload", "extract", "score"];
+  const currentStepIdx = stepperKeys.indexOf(loadingStep as string);
+
   return (
     <div className="space-y-8 p-4 md:p-0">
+      {/* Toggle for loader style */}
+      {/* Remove showModalLoader and toggle */}
+      {/* Modal/Overlay Loader */}
+      {/* Remove showModalLoader and toggle */}
       <div>
         <h1 className="text-2xl md:text-3xl font-bold mb-2">AI Resume ATS Scoring</h1>
         <p className="text-gray-600 text-base md:text-lg">
@@ -253,9 +249,10 @@ function ResumeScoringContent() {
                 <span className="mx-2">OR</span>
               </div>
               <div>
-                <Label htmlFor="resume-file">Upload Resume (PDF or TXT)</Label>
                 <input
                   id="resume-file"
+             
+             
                   type="file"
                   accept=".pdf,.txt"
                   onChange={handleResumeUpload}
@@ -264,7 +261,7 @@ function ResumeScoringContent() {
                 />
                 <Button onClick={() => resumeFileInputRef.current?.click()} className="w-full mt-1" variant="outline">
                   <Upload className="mr-2 h-4 w-4" />
-                  {resumeFile ? resumeFile.name : "Choose File"}
+                  {resumeFile ? resumeFile.name : "Choose File (PDF or TXT)"}
                 </Button>
                 {resumeFile && (
                   <div className="flex items-center space-x-2 mt-2 text-sm text-gray-600">
@@ -307,138 +304,131 @@ function ResumeScoringContent() {
             </div>
           </div>
 
-          <Button
-            onClick={analyzeResume}
-            disabled={(!resumeText.trim() && !resumeFile) || !jobDescription.trim() || isAnalyzing}
-            className="w-full"
-          >
-            {isAnalyzing ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Analyzing Resume...
-              </>
-            ) : (
-              <>
-                <Sparkles className="mr-2 h-4 w-4" />
-                Analyze Resume
-              </>
-            )}
-          </Button>
+          {/* Stepper Loader for Analyze Button */}
+          {loadingStep ? (
+            <ResumeStepperLoader step={loadingStep} steps={loaderSteps} />
+          ) : (
+            <Button
+              onClick={analyzeResume}
+              disabled={(!resumeText.trim() && !resumeFile) || !jobDescription.trim() || isAnalyzing || !!loadingStep}
+              className="w-full"
+            >
+              {isAnalyzing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Analyzing Resume...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Analyze Resume
+                </>
+              )}
+            </Button>
+          )}
         </CardContent>
       </Card>
 
       {/* Results Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>ATS Analysis Results</CardTitle>
-          <CardDescription>Detailed insights from the AI analysis.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {!result && !isAnalyzing && (
-            <div className="text-center py-8 text-gray-500">
-              Provide your resume and job description to see AI-powered results.
-            </div>
-          )}
-
-          {isAnalyzing && (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Analyzing your resume...</p>
-            </div>
-          )}
-
-          {result && (
-            <div className="space-y-6">
-              {/* Score */}
-              <div className="text-center">
-                <div className="flex items-center justify-center space-x-2 mb-2">
-                  {getScoreIcon(result.score)}
-                  <span className={`text-3xl font-bold ${getScoreColor(result.score)}`}>{result.score}%</span>
-                </div>
-                <Progress value={result.score} className="w-full" />
-                <p className="text-sm text-gray-600 mt-2">ATS Compatibility Score</p>
-              </div>
-
-              {/* Keywords */}
-              <div>
-                <h3 className="font-semibold mb-3">Keyword Analysis</h3>
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-sm font-medium text-green-600 mb-2">Found Keywords</p>
-                    <div className="flex flex-wrap gap-1">
-                      {result.keywords.found.length > 0 ? (
-                        result.keywords.found.map((keyword) => (
-                          <Badge key={keyword} variant="secondary" className="bg-green-100 text-green-800">
-                            {keyword}
-                          </Badge>
-                        ))
-                      ) : (
-                        <span className="text-sm text-gray-500">No specific keywords found.</span>
-                      )}
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-red-600 mb-2">Missing Keywords</p>
-                    <div className="flex flex-wrap gap-1">
-                      {result.keywords.missing.length > 0 ? (
-                        result.keywords.missing.map((keyword) => (
-                          <Badge key={keyword} variant="secondary" className="bg-red-100 text-red-800">
-                            {keyword}
-                          </Badge>
-                        ))
-                      ) : (
-                        <span className="text-sm text-gray-500">All key terms seem to be present!</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-      {/* Detailed Results */}
       {result && (
-        <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+        <>
+          {/* Score and Keywords */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-green-600">Strengths</CardTitle>
+              <CardTitle>ATS Analysis Results</CardTitle>
+              <CardDescription>Detailed insights from the AI analysis.</CardDescription>
             </CardHeader>
             <CardContent>
-              <ul className="space-y-2">
-                {result.strengths.length > 0 ? (
-                  result.strengths.map((strength, index) => (
-                    <li key={index} className="flex items-start space-x-2">
-                      <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                      <span className="text-sm">{strength}</span>
-                    </li>
-                  ))
-                ) : (
-                  <span className="text-sm text-gray-500">No specific strengths identified.</span>
-                )}
-              </ul>
+              <div className="space-y-6">
+                {/* Score */}
+                <div className="text-center">
+                  <div className="flex items-center justify-center space-x-2 mb-2">
+                    {getScoreIcon(result.score)}
+                    <span className={`text-3xl font-bold ${getScoreColor(result.score)}`}>{result.score}%</span>
+                  </div>
+                  <Progress value={result.score} className="w-full" />
+                  <p className="text-sm text-gray-600 mt-2">ATS Compatibility Score</p>
+                </div>
+
+                {/* Keywords */}
+                <div>
+                  <h3 className="font-semibold mb-3">Keyword Analysis</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-sm font-medium text-green-600 mb-2">Found Keywords</p>
+                      <div className="flex flex-wrap gap-1">
+                        {result.keywords.found.length > 0 ? (
+                          result.keywords.found.map((keyword) => (
+                            <Badge key={keyword} variant="secondary" className="bg-green-100 text-green-800">
+                              {keyword}
+                            </Badge>
+                          ))
+                        ) : (
+                          <span className="text-sm text-gray-500">No specific keywords found.</span>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-red-600 mb-2">Missing Keywords</p>
+                      <div className="flex flex-wrap gap-1">
+                        {result.keywords.missing.length > 0 ? (
+                          result.keywords.missing.map((keyword) => (
+                            <Badge key={keyword} variant="secondary" className="bg-red-100 text-red-800">
+                              {keyword}
+                            </Badge>
+                          ))
+                        ) : (
+                          <span className="text-sm text-gray-500">All key terms seem to be present!</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-orange-600">Areas for Improvement</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2">
-                {result.improvements.length > 0 ? (
-                  result.improvements.map((improvement, index) => (
-                    <li key={index} className="flex items-start space-x-2">
-                      <AlertCircle className="w-4 h-4 text-orange-600 mt-0.5 flex-shrink-0" />
-                      <span className="text-sm">{improvement}</span>
-                    </li>
-                  ))
-                ) : (
-                  <span className="text-sm text-gray-500">No specific improvements suggested.</span>
-                )}
-              </ul>
-            </CardContent>
-          </Card>
-        </div>
+          {/* Strengths and Improvements */}
+          <div className="grid gap-6 grid-cols-1 lg:grid-cols-2 mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-green-600">Strengths</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  {result.strengths.length > 0 ? (
+                    result.strengths.map((strength, index) => (
+                      <li key={index} className="flex items-start space-x-2">
+                        <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                        <span className="text-sm">{strength}</span>
+                      </li>
+                    ))
+                  ) : (
+                    <span className="text-sm text-gray-500">No specific strengths identified.</span>
+                  )}
+                </ul>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-orange-600">Areas for Improvement</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  {result.improvements.length > 0 ? (
+                    result.improvements.map((improvement, index) => (
+                      <li key={index} className="flex items-start space-x-2">
+                        <AlertCircle className="w-4 h-4 text-orange-600 mt-0.5 flex-shrink-0" />
+                        <span className="text-sm">{improvement}</span>
+                      </li>
+                    ))
+                  ) : (
+                    <span className="text-sm text-gray-500">No specific improvements suggested.</span>
+                  )}
+                </ul>
+              </CardContent>
+            </Card>
+          </div>
+        </>
       )}
     </div>
   )

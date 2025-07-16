@@ -37,10 +37,8 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
       return
     }
     setIsLoading(true)
-    console.log('[LOGIN MODAL] Submitting login for:', email)
     try {
       const result = await login(email, password) // Get the detailed result
-      console.log('[LOGIN MODAL] Login result:', result)
       if (result.success) {
         toast({
           title: "Welcome back!",
@@ -55,10 +53,8 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
           description: result.message || "Invalid email or password.",
           variant: "destructive",
         })
-        console.error('[LOGIN MODAL] Login failed:', result)
       }
     } catch (error) {
-      console.error('[LOGIN MODAL] Error during login:', error)
       toast({
         title: "Error",
         description: "Something went wrong. Please try again.",
@@ -138,31 +134,32 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 required
               />
             </div>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="w-full mb-2 text-xs"
+              onClick={() => {
+                setEmail("sagarkoriup11@gmail.com");
+                setPassword("666666");
+              }}
+            >
+              Use Demo Credentials
+            </Button>
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Signing in..." : "Sign In"}
             </Button>
-            <div className="text-center text-sm text-gray-600">Demo credentials: sagar@gmail.com / sagarkori</div>
           </form>
           <Button variant="link" className="w-full text-center text-sm" onClick={openForgotPasswordModal}>
             Forgot Password?
           </Button>
-          <div className="relative my-4">
+          <div className="relative ">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t" />
             </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
-            </div>
+            
           </div>
-          <Button
-            variant="outline"
-            className="w-full flex items-center gap-2 bg-transparent"
-            onClick={handleGoogleLogin}
-            disabled={isLoading}
-          >
-            <GoogleIcon className="h-5 w-5" />
-            Sign in with Google
-          </Button>
+          
           <Button variant="link" className="w-full text-center" onClick={openSignUpModal}>
             Don't have an account? Sign Up
           </Button>
