@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -21,6 +21,10 @@ const industriesArray = ["Technology", "Healthcare", "Finance", "Education", "Ma
 // Rename component to match the import in app/page.tsx
 export function JobFilters({ filters, onFiltersChange }: JobFiltersProps) {
   const [localFilters, setLocalFilters] = useState(filters)
+
+  useEffect(() => {
+    setLocalFilters(filters)
+  }, [filters])
 
   const handleFilterChange = (key: keyof JobFilters, value: any) => {
     const newFilters = { ...localFilters, [key]: value }

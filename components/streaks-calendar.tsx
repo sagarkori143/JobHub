@@ -17,71 +17,61 @@ export function StreaksCalendar({ loginDates, currentStreak, longestStreak }: St
   const monthName = StreaksService.getMonthName()
 
   return (
-    <Card className="bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Calendar className="w-4 h-4 text-blue-600" />
-          Activity Calendar - {monthName}
+    <Card className="bg-gradient-to-r from-green-50 to-blue-50 border-green-200 max-w-sm mx-auto">
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center gap-2 text-sm">
+          <Calendar className="w-3 h-3 text-blue-600" />
+          {monthName}
         </CardTitle>
       </CardHeader>
       <CardContent className="pt-0">
-        <div className="space-y-3">
+        <div className="space-y-2">
           {/* Week day headers */}
-          <div className="grid grid-cols-7 gap-1">
+          <div className="grid grid-cols-7 gap-0.5">
             {weekDays.map((day) => (
-              <div key={day} className="text-center text-xs font-medium text-gray-500 py-1">
+              <div key={day} className="text-center text-[10px] font-medium text-gray-500">
                 {day}
               </div>
             ))}
           </div>
 
           {/* Calendar grid */}
-          <div className="grid grid-cols-7 gap-1">
+          <div className="grid grid-cols-7 gap-0.5">
             {calendarData.map((day, index) => (
               <div
                 key={index}
                 className={`
-                  aspect-[1.2] flex items-center justify-center text-xs font-medium rounded-md border
+                  h-6 flex items-center justify-center text-[10px] font-medium rounded-sm border
                   ${day.isCurrentMonth 
-                    ? day.isToday 
-                      ? 'bg-blue-100 border-blue-300 text-blue-800' 
-                      : day.isLoggedIn 
-                        ? 'bg-green-100 border-green-300 text-green-800' 
-                        : 'bg-white border-gray-200 text-gray-700'
+                    ? day.isLoggedIn && day.isToday
+                      ? 'bg-green-100 border-blue-400 text-green-800'
+                      : day.isToday 
+                        ? 'bg-blue-50 border-blue-200 text-blue-700' 
+                        : day.isLoggedIn 
+                          ? 'bg-green-100 border-green-300 text-green-800' 
+                          : 'bg-white border-gray-200 text-gray-700'
                     : 'bg-gray-50 border-gray-100 text-gray-400'
                   }
                   ${day.isLoggedIn ? 'relative' : ''}
                 `}
               >
-                {day.isLoggedIn && (
-                  <CheckCircle className="absolute top-0.5 right-0.5 w-2.5 h-2.5 text-green-600" />
+                {day.isLoggedIn && !day.isToday && (
+                  <div className="absolute top-0 right-0 w-1 h-1 bg-green-500 rounded-full"></div>
                 )}
                 {day.day}
               </div>
             ))}
           </div>
 
-          {/* Legend */}
-          <div className="flex items-center justify-center gap-3 text-xs">
-            <div className="flex items-center gap-1">
-              <div className="w-2.5 h-2.5 bg-green-100 border border-green-300 rounded"></div>
-              <span>Logged in</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-2.5 h-2.5 bg-blue-100 border border-blue-300 rounded"></div>
-              <span>Today</span>
-            </div>
-          </div>
-
           {/* Streak stats */}
-          <div className="grid grid-cols-2 gap-4 pt-3 border-t">
+          <div className="flex justify-center gap-4 pt-2 border-t border-gray-100">
             <div className="text-center">
-              <div className="text-xl font-bold text-blue-700">{currentStreak}</div>
-              <div className="text-xs text-gray-500">Current Streak</div>
+              <div className="text-sm font-bold text-blue-700">{currentStreak}</div>
+              <div className="text-[10px] text-gray-500">Current</div>
             </div>
             <div className="text-center">
-              <div className="text-xl font-bold text-green-700">{longestStreak}</div>
-              <div className="text-xs text-gray-500">Best Streak</div>
+              <div className="text-sm font-bold text-green-700">{longestStreak}</div>
+              <div className="text-[10px] text-gray-500">Best</div>
             </div>
           </div>
         </div>

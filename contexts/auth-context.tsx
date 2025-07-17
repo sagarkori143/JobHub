@@ -109,6 +109,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         resumeUrl: data.resume_url || null,
         atsScores: data.resume_scores || [],
         streaks: data.streaks || {},
+        // Map streak fields from DB columns to camelCase
+        loginDates: data.login_dates || [],
+        currentStreak: data.current_streak || 0,
+        longestStreak: data.longest_streak || 0,
+        totalApplications: data.total_applications || 0,
+        lastLoginDate: data.last_login_date || null,
+        lastApplicationDate: data.last_application_date || null,
       };
       
       return profile;
@@ -507,6 +514,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     if (updates.experience_level !== undefined) {
       updatePayload.experience_level = updates.experience_level;
+    }
+    if (updates.currentStreak !== undefined) {
+      updatePayload.current_streak = updates.currentStreak;
+    }
+    if (updates.longestStreak !== undefined) {
+      updatePayload.longest_streak = updates.longestStreak;
+    }
+    if (updates.totalApplications !== undefined) {
+      updatePayload.total_applications = updates.totalApplications;
+    }
+    if (updates.loginDates !== undefined) {
+      updatePayload.login_dates = updates.loginDates;
+    }
+    if (updates.lastLoginDate !== undefined) {
+      updatePayload.last_login_date = updates.lastLoginDate;
+    }
+    if (updates.lastApplicationDate !== undefined) {
+      updatePayload.last_application_date = updates.lastApplicationDate;
     }
 
     const { data, error } = await supabase.from("user_profiles").update(updatePayload).eq("id", user.id).select();

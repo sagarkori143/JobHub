@@ -1,6 +1,6 @@
 "use client"
 
-import type React from "react"
+import React from "react"
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -15,7 +15,7 @@ interface JobListingCardProps {
   onApply: (job: JobListing) => void
 }
 
-export function JobListingCard({ job, onViewDetails, onApply }: JobListingCardProps) {
+const JobListingCardComponent = ({ job, onViewDetails, onApply }: JobListingCardProps) => {
   const formatSalary = (min: number, max: number, currency: string) => {
     // If min and max are the same or very close, show a fixed salary
     if (Math.abs(max - min) <= 1000) {
@@ -154,3 +154,5 @@ export function JobListingCard({ job, onViewDetails, onApply }: JobListingCardPr
     </Card>
   )
 }
+
+export const JobListingCard = React.memo(JobListingCardComponent);

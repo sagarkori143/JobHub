@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect, useRef } from "react"
+import { useState, useMemo, useEffect, useRef, useCallback } from "react"
 import { JobListingCard } from "@/components/job-listing-card"
 import { JobFilters } from "@/components/job-filters"
 import { JobDetailsModal } from "@/components/job-details-modal"
@@ -197,19 +197,20 @@ export default function JobSearchPage() {
     setCurrentPage(1)
   }, [filters])
 
-  const handleViewDetails = (job: JobListing) => {
+  // Memoize handler functions
+  const handleViewDetails = useCallback((job: JobListing) => {
     setSelectedJob(job)
     setIsModalOpen(true)
-  }
+  }, [])
 
-  const handleApply = (job: JobListing) => {
+  const handleApply = useCallback((job: JobListing) => {
     toast({
       title: "ℹ️ Application Link Not Available",
       description: `The application link for ${job.title} at ${job.company} has not been updated yet. Please stay tuned for updates!`,
       duration: 5000,
       className: "bg-blue-50 border-blue-300 text-blue-900",
     })
-  }
+  }, [toast])
 
   const handleAddToPersonal = async (job: Omit<Job, "id">) => {
     if (!supabaseUser) {

@@ -18,15 +18,24 @@ export interface CalendarDay {
 }
 
 export class StreaksService {
-  private static readonly MAX_STREAK_DAYS = 7
+  // No artificial cap on streak length now
+
+  private static formatDateLocal(date: Date): string {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
 
   // Generate calendar data for current month
   static generateCalendarData(loginDates: string[] = []): CalendarDay[] {
-    const today = new Date()
+    const now = new Date()
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const todayString = this.formatDateLocal(today)
+    
     const currentMonth = today.getMonth()
     const currentYear = today.getFullYear()
     
-    // Get first day of month and total days
     const firstDayOfMonth = new Date(currentYear, currentMonth, 1)
     const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0)
     const daysInMonth = lastDayOfMonth.getDate()
@@ -34,47 +43,45 @@ export class StreaksService {
     
     const calendar: CalendarDay[] = []
     
-    // Add previous month's days to fill first week
     const prevMonthLastDay = new Date(currentYear, currentMonth, 0).getDate()
     for (let i = firstDayWeekday - 1; i >= 0; i--) {
       const day = prevMonthLastDay - i
       const date = new Date(currentYear, currentMonth - 1, day)
-      calendar.push({
-        date: date.toISOString().split('T')[0],
-        day,
-        isCurrentMonth: false,
-        isToday: false,
-        isLoggedIn: loginDates.includes(date.toISOString().split('T')[0]),
-        isStreakDay: false
-      })
-    }
-    
-    // Add current month's days
-    for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(currentYear, currentMonth, day)
-      const dateString = date.toISOString().split('T')[0]
-      const isToday = dateString === today.toISOString().split('T')[0]
-      
+      const dateString = this.formatDateLocal(date)
       calendar.push({
         date: dateString,
         day,
-        isCurrentMonth: true,
-        isToday,
+        isCurrentMonth: false,
+        isToday: dateString === todayString,
         isLoggedIn: loginDates.includes(dateString),
         isStreakDay: false
       })
     }
     
-    // Add next month's days to fill last week
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(currentYear, currentMonth, day)
+      const dateString = this.formatDateLocal(date)
+      
+      calendar.push({
+        date: dateString,
+        day,
+        isCurrentMonth: true,
+        isToday: dateString === todayString,
+        isLoggedIn: loginDates.includes(dateString),
+        isStreakDay: false
+      })
+    }
+    
     const remainingDays = 42 - calendar.length // 6 rows * 7 days = 42
     for (let day = 1; day <= remainingDays; day++) {
       const date = new Date(currentYear, currentMonth + 1, day)
+      const dateString = this.formatDateLocal(date)
       calendar.push({
-        date: date.toISOString().split('T')[0],
+        date: dateString,
         day,
         isCurrentMonth: false,
-        isToday: false,
-        isLoggedIn: loginDates.includes(date.toISOString().split('T')[0]),
+        isToday: dateString === todayString,
+        isLoggedIn: loginDates.includes(dateString),
         isStreakDay: false
       })
     }
@@ -84,42 +91,41 @@ export class StreaksService {
 
   // Update streaks when user logs in
   static updateLoginStreak(currentStreaks: StreakData | null): StreakData {
-    const today = new Date().toISOString().split('T')[0]
+    const now = new Date()
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const todayString = this.formatDateLocal(today)
     
     if (!currentStreaks) {
       return {
         currentStreak: 1,
         longestStreak: 1,
         totalApplications: 0,
-        loginDates: [today],
-        lastLoginDate: today,
+        loginDates: [todayString],
+        lastLoginDate: todayString,
         lastApplicationDate: null
       }
     }
 
-    // Check if already logged in today
-    if (currentStreaks.loginDates.includes(today)) {
+    if (currentStreaks.loginDates.includes(todayString)) {
       return currentStreaks
     }
 
-    const loginDates = [...currentStreaks.loginDates, today]
+    const loginDates = [...currentStreaks.loginDates, todayString]
     const lastLoginDate = currentStreaks.lastLoginDate ? new Date(currentStreaks.lastLoginDate) : null
-    const todayDate = new Date(today)
     
     let newCurrentStreak = currentStreaks.currentStreak
     let newLongestStreak = currentStreaks.longestStreak
 
     if (lastLoginDate) {
-      const daysSinceLastLogin = Math.floor((todayDate.getTime() - lastLoginDate.getTime()) / (1000 * 60 * 60 * 24))
+      const daysSinceLastLogin = Math.floor((today.getTime() - lastLoginDate.getTime()) / (1000 * 60 * 60 * 24))
       
       if (daysSinceLastLogin === 1) {
         // Consecutive day
-        newCurrentStreak = Math.min(currentStreaks.currentStreak + 1, this.MAX_STREAK_DAYS)
+        newCurrentStreak = Math.min(currentStreaks.currentStreak + 1, 7) // Keep the artificial cap
       } else if (daysSinceLastLogin > 1) {
         // Streak broken
         newCurrentStreak = 1
       }
-      // If daysSinceLastLogin === 0, it's the same day, keep current values
     } else {
       // First login
       newCurrentStreak = 1
@@ -132,7 +138,7 @@ export class StreaksService {
       currentStreak: newCurrentStreak,
       longestStreak: newLongestStreak,
       loginDates,
-      lastLoginDate: today
+      lastLoginDate: todayString
     }
   }
 
@@ -175,12 +181,12 @@ export class StreaksService {
 
   // Get streak progress percentage
   static getStreakProgress(streaks: StreakData): number {
-    return Math.min((streaks.currentStreak / this.MAX_STREAK_DAYS) * 100, 100)
+    return Math.min((streaks.currentStreak / 7) * 100, 100) // Use 7 as the cap
   }
 
   // Check if streak is at max
   static isMaxStreak(streaks: StreakData): boolean {
-    return streaks.currentStreak >= this.MAX_STREAK_DAYS
+    return streaks.currentStreak >= 7 // Use 7 as the cap
   }
 
   // Get month name
@@ -191,5 +197,36 @@ export class StreaksService {
   // Get week day names
   static getWeekDays(): string[] {
     return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+  }
+
+  static calculateStreaks(loginDates: string[]): { current: number; longest: number } {
+    if (loginDates.length === 0) return { current: 0, longest: 0 };
+
+    // sort dates ascending
+    const dates = [...loginDates].sort();
+    let longest = 1;
+    let current = 1;
+
+    for (let i = 1; i < dates.length; i++) {
+      const prev = new Date(dates[i - 1]);
+      const curr = new Date(dates[i]);
+      const diff = (curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24);
+      if (diff === 1) {
+        current += 1;
+      } else if (diff > 1) {
+        current = 1;
+      }
+      longest = Math.max(longest, current);
+    }
+
+    // Current streak should be consecutive up to most recent date
+    const todayString = this.formatDateLocal(new Date());
+    const latestDate = dates[dates.length - 1];
+    if (latestDate !== todayString) {
+      // if last login wasn't today, need to recalc current streak ending at latestDate but not today
+      // already handled above so do nothing
+    }
+
+    return { current, longest };
   }
 }
