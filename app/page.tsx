@@ -192,8 +192,8 @@ export default function JobSearchPage() {
   const startIndex = (currentPage - 1) * JOBS_PER_PAGE
   const paginatedJobs = filteredJobs.slice(startIndex, startIndex + JOBS_PER_PAGE)
 
-  // Reset to page 1 when filters change
-  useMemo(() => {
+  // Reset to page 1 when filters change (useEffect avoids state update during render)
+  useEffect(() => {
     setCurrentPage(1)
   }, [filters])
 

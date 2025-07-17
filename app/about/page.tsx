@@ -4,7 +4,7 @@ import React from "react"
 import Link from "next/link"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { CheckCircle, Github, Linkedin, Instagram, Mail, User as UserIcon } from "lucide-react"
-import { JobHubWorkflow } from "@/components/jobhub-workflow"
+import { JobHubWorkflow } from "../../components/jobhub-workflow"
 import Image from "next/image"
 
 const features = [
@@ -37,6 +37,7 @@ const developers = [
     image: "/omkar-patil.jpg",
     linkedin: "https://www.linkedin.com/in/omkar-patil-32b926253/",
     instagram: "https://www.instagram.com/skyom_11/",
+    email: "imomkarpatil003@gmail.com",
   },
 ]
 
