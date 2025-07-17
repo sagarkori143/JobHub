@@ -1,47 +1,49 @@
 import { NextResponse } from "next/server"
-import { promises as fs } from "fs"
-import path from "path"
-
-const reviewsFilePath = path.join(process.cwd(), "data", "reviews.json")
-
-async function readReviews() {
-  try {
-    const data = await fs.readFile(reviewsFilePath, "utf-8")
-    return JSON.parse(data)
-  } catch {
-    return []
-  }
-}
-
-async function writeReviews(reviews: any) {
-  await fs.writeFile(reviewsFilePath, JSON.stringify(reviews, null, 2))
-}
+import { createServerSupabaseClient } from "@/lib/supabase"
 
 export async function GET() {
-  const reviews = await readReviews()
-  return NextResponse.json({ reviews })
+  const supabase = createServerSupabaseClient()
+  const { data, error } = await supabase
+    .from("reviews")
+    .select("name, experience, issues, suggestions, created_at")
+    .order("created_at", { ascending: false })
+    .limit(10)
+
+  if (error) {
+    console.error("Reviews GET error", error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  return NextResponse.json({ reviews: data })
 }
 
 export async function POST(request: Request) {
   try {
     const { name, experience, issues, suggestions } = await request.json()
-    if (!name || !experience) {
-      return NextResponse.json({ error: "Name and experience are required" }, { status: 400 })
+
+    if (!experience || experience.trim() === "") {
+      return NextResponse.json(
+        { error: "Experience is required" },
+        { status: 400 }
+      )
     }
-    const newReview = {
-      id: Date.now(),
-      name,
+
+    const supabase = createServerSupabaseClient()
+    const { error } = await supabase.from("reviews").insert({
+      name: name || null,
       experience,
-      issues,
-      suggestions,
-      created_at: new Date().toISOString(),
+      issues: issues || null,
+      suggestions: suggestions || null,
+    })
+
+    if (error) {
+      console.error("Insert review error", error)
+      return NextResponse.json({ error: error.message }, { status: 500 })
     }
-    const reviews = await readReviews()
-    reviews.push(newReview)
-    await writeReviews(reviews)
-    return NextResponse.json({ success: true, review: newReview }, { status: 201 })
+
+    return NextResponse.json({ success: true }, { status: 201 })
   } catch (err: any) {
-    console.error(err)
+    console.error("Review POST error", err)
     return NextResponse.json({ error: "Invalid request" }, { status: 400 })
   }
 } 
