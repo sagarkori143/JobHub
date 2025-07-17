@@ -62,30 +62,50 @@ export function Sidebar({}: SidebarProps) {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
   const [isJobPreferencesModalOpen, setIsJobPreferencesModalOpen] = useState(false)
   const { user, isAuthenticated, logout, loading } = useAuth()
-  const [showProfileSection, setShowProfileSection] = useState(false)
-
-  // Determine when to show the profile section
-  useEffect(() => {
-    // Show profile section if:
-    // 1. User is authenticated and user data exists, OR
-    // 2. Loading is false and we have a cached user in localStorage
-    if (isAuthenticated && user) {
-      setShowProfileSection(true)
-    } else if (!loading) {
-      // Check localStorage as fallback
-      const cachedUser = localStorage.getItem("jobhub_user")
-      if (cachedUser) {
-        try {
-          const parsed = JSON.parse(cachedUser)
-          setShowProfileSection(true)
-        } catch {
-          setShowProfileSection(false)
-        }
-      } else {
-        setShowProfileSection(false)
+  // Cache user in localStorage once authenticated to avoid flicker on reload
+  const [cachedUser, setCachedUser] = useState<any>(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("jobhub_user")
+      if (stored) {
+        try { return JSON.parse(stored) } catch {}
       }
     }
-  }, [isAuthenticated, user, loading])
+    return null
+  })
+
+  // Whenever context user becomes available store it
+  useEffect(() => {
+    if (user) {
+      setCachedUser(user)
+      if (typeof window !== "undefined") {
+        localStorage.setItem("jobhub_user", JSON.stringify(user))
+      }
+    }
+  }, [user])
+
+  // Refresh cached user when tab regains focus or storage changes (other tab sign-in/out)
+  useEffect(() => {
+    const syncCached = () => {
+      const stored = localStorage.getItem("jobhub_user")
+      if (stored) {
+        try { setCachedUser(JSON.parse(stored)) } catch {}
+      } else {
+        setCachedUser(null)
+      }
+    }
+    const visHandler = () => {
+      if (document.visibilityState === 'visible') syncCached()
+    }
+    window.addEventListener('storage', syncCached)
+    document.addEventListener('visibilitychange', visHandler)
+    return () => {
+      window.removeEventListener('storage', syncCached)
+      document.removeEventListener('visibilitychange', visHandler)
+    }
+  }, [])
+
+  const profileUser = user || cachedUser
+  const profileVisible = !!profileUser
 
   const handleLogout = () => {
     logout()
@@ -142,16 +162,16 @@ export function Sidebar({}: SidebarProps) {
                 <Skeleton className="h-3 w-16 rounded" />
               </div>
             </div>
-          ) : showProfileSection && user ? (
+          ) : profileVisible && profileUser ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className={`w-full justify-start h-12 hover:bg-white/50`}>
                   <div className={`flex items-center gap-3`}>
-                    <UserAvatar user={user} size="md" className="ring-2 ring-blue-200 flex-shrink-0" />
+                    <UserAvatar user={profileUser} size="md" className="ring-2 ring-blue-200 flex-shrink-0" />
                     <div className="text-left min-w-0 flex-1">
-                      <p className="text-sm font-medium text-gray-800 truncate">{user.name}</p>
+                      <p className="text-sm font-medium text-gray-800 truncate">{profileUser.name}</p>
                       <p className="text-xs text-gray-500 truncate">
-                        {user.role && user.role !== "User" ? user.role : "Please select role"}
+                        {profileUser.role && profileUser.role !== "User" ? profileUser.role : "Please select role"}
                       </p>
                     </div>
                   </div>
@@ -159,11 +179,11 @@ export function Sidebar({}: SidebarProps) {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <div className="flex items-center space-x-2 p-2">
-                  <UserAvatar user={user} size="sm" className="flex-shrink-0" />
+                  <UserAvatar user={profileUser} size="sm" className="flex-shrink-0" />
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium truncate">{user.name}</p>
+                    <p className="text-sm font-medium truncate">{profileUser.name}</p>
                     <p className="text-xs text-gray-500 truncate">
-                      {user.role && user.role !== "User" ? user.role : "Please select role"}
+                      {profileUser.role && profileUser.role !== "User" ? profileUser.role : "Please select role"}
                     </p>
                   </div>
                 </div>
@@ -208,3 +228,4 @@ export function Sidebar({}: SidebarProps) {
     </>
   )
 }
+
