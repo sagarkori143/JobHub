@@ -462,12 +462,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     
     try {
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        // Handle error but continue with logout
-      }
-      
+      const { error } = await supabase.auth.signOut({ scope: "global" });
+
       // Clear localStorage immediately
       localStorage.removeItem("jobhub_user");
       
