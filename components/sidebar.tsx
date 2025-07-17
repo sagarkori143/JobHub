@@ -25,6 +25,7 @@ import {
   Mail,
   Bug,
   BarChart,
+  Info,
 } from "lucide-react"
 import { useState, useEffect } from "react"
 import { useAuth } from "@/contexts/auth-context"
@@ -44,6 +45,12 @@ const navigationItems = [
     href: "/portal-stats",
     icon: BarChart,
     color: "text-blue-600 bg-blue-100"
+  },
+  {
+    name: "About",
+    href: "/about",
+    icon: Info,
+    color: "text-gray-600 bg-gray-100",
   },
 ]
 

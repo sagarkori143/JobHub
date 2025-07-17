@@ -198,8 +198,8 @@ function ResumeScoringContent() {
   };
 
   const steps = [
-    { key: "extract", label: "Extract" },
     { key: "upload", label: "Upload" },
+    { key: "extract", label: "Extract" },
     { key: "score", label: "Score" }
   ];
   const stepIndex = steps.findIndex(s => s.key === loadingStep);
@@ -306,7 +306,7 @@ function ResumeScoringContent() {
 
           {/* Stepper Loader for Analyze Button */}
           {loadingStep ? (
-            <ResumeStepperLoader step={loadingStep} steps={loaderSteps} />
+            <ResumeStepperLoader step={loadingStep} steps={steps} />
           ) : (
             <Button
               onClick={analyzeResume}
