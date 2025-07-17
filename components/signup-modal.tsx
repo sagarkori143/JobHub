@@ -45,7 +45,7 @@ export function SignUpModal({ isOpen, onClose }: SignUpModalProps) {
         body: JSON.stringify({ email })
       })
       const dataCheck = await res.json()
-      if (dataCheck.exists) {
+      if (dataCheck.exists === true) {
         toast({
           title: "Account Exists",
           description: "This email is already registered. Please log in.",
@@ -55,6 +55,7 @@ export function SignUpModal({ isOpen, onClose }: SignUpModalProps) {
         setIsLoading(false)
         return
       }
+      // if exists is false, either no user or unverified -> allow OTP resend
     } catch {}
 
     try {
@@ -100,6 +101,7 @@ export function SignUpModal({ isOpen, onClose }: SignUpModalProps) {
     try {
       const result = await verifyEmailOtp(email, otp)
       if (result.success) {
+        setIsLoading(false)
         toast({
           title: "Account Verified!",
           description: result.message,

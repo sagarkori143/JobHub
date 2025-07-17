@@ -8,10 +8,14 @@ export async function POST(request: Request) {
   const supabase = createServerSupabaseClient()
   console.log("[CheckEmail] lookup email", email)
   try {
-    const { data } = await supabase.auth.admin.listUsers({ email })
-    console.log("[CheckEmail] admin listUsers result", data)
-    const exists = data?.users?.length > 0
-    return NextResponse.json({ exists })
+    const emailLower = email.toLowerCase()
+    const { data, error: adminErr } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 })
+    if (adminErr) {
+      return NextResponse.json({ error: adminErr.message }, { status: 500 })
+    }
+    const user = data?.users?.find((u: any) => u.email?.toLowerCase() === emailLower)
+    const verified = user ? !!user.email_confirmed_at : false
+    return NextResponse.json({ exists: verified })
   } catch (err: any) {
     console.error("[CheckEmail] error", err)
     return NextResponse.json({ error: "Check failed" }, { status: 500 })
