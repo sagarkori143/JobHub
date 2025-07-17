@@ -23,6 +23,7 @@ export function SignUpModal({ isOpen, onClose }: SignUpModalProps) {
   const [gender, setGender] = useState("")
   const [otp, setOtp] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [emailExists, setEmailExists] = useState(false)
   const { signup, verifyEmailOtp } = useAuth()
   const { toast } = useToast()
 
@@ -38,6 +39,25 @@ export function SignUpModal({ isOpen, onClose }: SignUpModalProps) {
     }
     setIsLoading(true)
     try {
+      const res = await fetch("/api/check-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email })
+      })
+      const dataCheck = await res.json()
+      if (dataCheck.exists) {
+        toast({
+          title: "Account Exists",
+          description: "This email is already registered. Please log in.",
+          variant: "destructive"
+        })
+        setEmailExists(true)
+        setIsLoading(false)
+        return
+      }
+    } catch {}
+
+    try {
       const result = await signup(name, email, password, gender)
       if (result.success) {
         toast({
@@ -51,6 +71,9 @@ export function SignUpModal({ isOpen, onClose }: SignUpModalProps) {
           description: result.message || "Could not register. Please try again.",
           variant: "destructive",
         })
+        if (result.message?.toLowerCase().includes("account with this email")) {
+          setEmailExists(true)
+        }
       }
     } catch (error) {
       toast({
@@ -166,6 +189,16 @@ export function SignUpModal({ isOpen, onClose }: SignUpModalProps) {
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Sending OTP..." : "Sign Up"}
             </Button>
+            <Button
+              variant="link"
+              className="w-full text-center text-sm"
+              onClick={onClose}
+            >
+              Already have an account? Go to Login
+            </Button>
+            {emailExists && (
+              <p className="text-red-600 text-sm text-center">Email already registered. Please log in.</p>
+            )}
           </form>
         )}
         {step === 2 && (

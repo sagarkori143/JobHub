@@ -139,6 +139,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (gender) {
         profilePayload.gender = gender
+      } else if (supabaseUser.user_metadata?.gender) {
+        profilePayload.gender = supabaseUser.user_metadata.gender
       }
 
       const { data, error } = await supabase.from("user_profiles").upsert(profilePayload, { onConflict: "id" }).select()
@@ -310,6 +312,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     gender: string,
   ): Promise<{ success: boolean; message?: string }> => {
     setLoading(true);
+
+    // Client no longer checks existing user; handled by server API before signup
+
     const { data, error } = await supabase.auth.signInWithOtp({
       email,
       options: {
@@ -340,10 +345,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const verifyEmailOtp = async (email: string, token: string): Promise<{ success: boolean; message?: string }> => {
     setLoading(true);
-    const {
-      data: { user: supabaseUser, session },
-      error,
-    } = await supabase.auth.verifyOtp({ email, token, type: "signup" });
+    let verifyRes = await supabase.auth.verifyOtp({ email, token, type: "signup" });
+
+    if (verifyRes.error) {
+      // Retry with magiclink in case the user already existed
+      verifyRes = await supabase.auth.verifyOtp({ email, token, type: "magiclink" });
+    }
+
+    const { data: { user: supabaseUser, session }, error } = verifyRes;
 
     if (error) {
       setLoading(false);

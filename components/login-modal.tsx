@@ -41,7 +41,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
       const result = await login(email, password) // Get the detailed result
       if (result.success) {
         toast({
-          title: "Welcome back!",
+          title: "Signed in!",
           description: result.message || "You have successfully signed in.",
         })
         onClose()

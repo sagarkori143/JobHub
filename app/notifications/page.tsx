@@ -10,10 +10,12 @@ import { NotificationHistory } from "@/components/notification-history"
 import { useAuth } from "@/contexts/auth-context"
 import { useToast } from "@/hooks/use-toast"
 import { Bell, Settings, Mail, MessageSquare, Smartphone, BarChart3 } from "lucide-react"
+import { LoginModal } from "@/components/login-modal"
 
 export default function NotificationsPage() {
   const [isPreferencesModalOpen, setIsPreferencesModalOpen] = useState(false)
   const { user, isAuthenticated, jobPreferences } = useAuth()
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
   const { toast } = useToast()
 
   if (!isAuthenticated) {
@@ -31,9 +33,13 @@ export default function NotificationsPage() {
               Sign in to manage your job notifications and preferences
             </p>
           </div>
-          <Button className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg">
+          <Button
+            onClick={() => setIsLoginModalOpen(true)}
+            className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg"
+          >
             Sign In to Continue
           </Button>
+          <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
         </div>
       </div>
     )

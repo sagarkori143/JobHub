@@ -123,17 +123,17 @@ export default function PersonalDashboard() {
                   Sign In to Continue
                 </Button>
               )}
-              <div className="text-sm text-gray-500">Demo credentials: sagar@gmail.com / sagarkori</div>
             </div>
             <Card className="bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200">
               <CardContent className="p-6">
-                <h3 className="font-semibold text-blue-800 mb-2">What you'll get access to:</h3>
+                <h3 className="font-semibold text-blue-800 mb-2">Here is what you will get</h3>
                 <ul className="text-sm text-blue-700 space-y-1 text-left">
                   <li>• Track your job applications</li>
                   <li>• Manage application status</li>
                   <li>• Set job preferences & alerts</li>
                   <li>• Resume ATS scoring</li>
                   <li>• Application analytics</li>
+                  <li>• And a lot more...</li>
                 </ul>
               </CardContent>
             </Card>

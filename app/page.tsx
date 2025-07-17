@@ -282,7 +282,7 @@ export default function JobSearchPage() {
           <div className="flex items-center space-x-4">
             <UserAvatar user={user} size="lg" />
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">Welcome back, {user.name}!</h2>
+              <h2 className="text-xl font-semibold text-gray-900">Welcome, {user.name}!</h2>
               <p className="text-gray-600">Ready to find your next opportunity?</p>
             </div>
           </div>

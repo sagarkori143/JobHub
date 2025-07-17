@@ -152,32 +152,30 @@ export default function MainDashboard() {
   // Update streaks when user is active (only once per day)
   const updateUserStreaks = async () => {
     if (!user?.id) return;
-
-    const updatedStreaks = StreaksService.updateLoginStreak(streaks);
-
-    // If no new login was added, do nothing
-    if (updatedStreaks.loginDates.length === streaks.loginDates.length) {
+    
+    // Check if streaks were already updated today
+    if (hasStreaksUpdatedToday(user.id)) {
       return;
     }
-
-    // Recalculate longest streak with the new loginDates
-    const calc = StreaksService.calculateStreaks(updatedStreaks.loginDates);
+    
     try {
+      const updatedStreaks = StreaksService.updateLoginStreak(streaks);
       await updateProfile({
-        currentStreak: calc.current,
-        longestStreak: calc.longest,
+        currentStreak: updatedStreaks.currentStreak,
+        longestStreak: updatedStreaks.longestStreak,
         totalApplications: updatedStreaks.totalApplications,
         loginDates: updatedStreaks.loginDates,
         lastLoginDate: updatedStreaks.lastLoginDate,
         lastApplicationDate: updatedStreaks.lastApplicationDate
       });
-      await refreshUserProfile();
+      // Mark as updated today
+      markStreaksUpdatedToday(user.id);
     } catch (error) {
       console.error("Failed to update streaks:", error);
     }
   };
 
-  // Update streaks on component mount
+  // Update streaks on component mount (moved outside conditional rendering)
   useEffect(() => {
     if (isAuthenticated && user?.id) {
       updateUserStreaks();
@@ -206,6 +204,7 @@ export default function MainDashboard() {
           >
             Sign In to Continue
           </Button>
+          <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
         </div>
       </div>
     )
@@ -271,10 +270,6 @@ export default function MainDashboard() {
     { key: "score", label: "Score" }
   ];
   const stepIndex = steps.findIndex(s => s.key === loadingStep);
-
-  const computed = StreaksService.calculateStreaks(streaks.loginDates);
-  const displayCurrentStreak = computed.current;
-  const displayLongestStreak = computed.longest;
 
   return (
     <div className="space-y-8 p-4 md:p-0">
@@ -429,8 +424,8 @@ export default function MainDashboard() {
       {/* Streaks Calendar */}
       <StreaksCalendar 
         loginDates={streaks.loginDates}
-        currentStreak={displayCurrentStreak}
-        longestStreak={displayLongestStreak}
+        currentStreak={streaks.currentStreak}
+        longestStreak={streaks.longestStreak}
       />
 
       {/* Job Preferences Modal */}
