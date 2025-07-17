@@ -19,7 +19,8 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { name, experience, issues, suggestions } = await request.json()
+    const body = await request.json()
+    const { name, experience, issues, suggestions } = body
 
     if (!experience || experience.trim() === "") {
       return NextResponse.json(
@@ -30,6 +31,7 @@ export async function POST(request: Request) {
 
     const supabase = createServerSupabaseClient()
     const { error } = await supabase.from("reviews").insert({
+      id: crypto.randomUUID(),
       name: name || null,
       experience,
       issues: issues || null,
