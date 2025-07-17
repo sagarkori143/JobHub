@@ -78,7 +78,7 @@ export default function AboutPage() {
           <p className="text-sm text-gray-700">
             Explore the source code, report issues, or contribute on {" "}
             <Link
-              href="https://github.com/yourusername/JobHub"
+              href="https://github.com/sagarkori143/JobHub"
               target="_blank"
               className="text-blue-600 underline"
             >
