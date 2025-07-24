@@ -13,7 +13,6 @@ async function main() {
       subject: 'Test Email from Resend',
       html: '<p>This is a <strong>test email</strong> sent directly using Resend API.</p>',
     });
-    console.log('Email sent result:', result);
   } catch (error) {
     console.error('Error sending email:', error);
   }

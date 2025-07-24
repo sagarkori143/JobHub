@@ -42,16 +42,16 @@ class JobDataService {
             hasRealData: true
           }
           
-          console.log(`📊 Loaded ${this.jobs.length} jobs from merged file`)
+          
           return this.jobs
         }
       }
     } catch (error) {
-      console.log('Could not load from merged file, falling back to mock data')
+      
     }
 
     // Fallback to mock data if merged file is not present or empty
-    console.log('📊 Using mock data as fallback')
+    
     this.jobs = [...mockJobs]
     
     // Fetch metadata to check if real data exists
@@ -75,7 +75,6 @@ class JobDataService {
         }
       }
     } catch (error) {
-      console.error('Error fetching job metadata:', error)
       // Fallback metadata for mock data
       this.metadata = {
         lastUpdated: new Date().toISOString(),
@@ -110,8 +109,7 @@ class JobDataService {
 
   private async triggerNotifications(newJobs: JobListing[]): Promise<void> {
     try {
-      console.log(`📧 Triggering notifications for ${newJobs.length} new jobs using hash map service`)
-      
+     
       const response = await fetch('/api/notifications/process', {
         method: 'POST',
         headers: {
@@ -122,13 +120,9 @@ class JobDataService {
 
       if (response.ok) {
         const data = await response.json()
-        console.log(`📧 Notifications processed: ${data.message}`)
-        console.log(`📊 Hash map stats:`, data.stats)
       } else {
-        console.error('Failed to trigger notifications')
       }
     } catch (error) {
-      console.error('Error triggering notifications:', error)
     }
   }
 

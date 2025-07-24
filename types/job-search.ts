@@ -77,6 +77,7 @@ export interface User {
   loginDates?: string[]
   lastLoginDate?: string | null
   lastApplicationDate?: string | null
+  jobsTracking?: any[];
 }
 
 export interface JobTag {

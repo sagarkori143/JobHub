@@ -18,7 +18,6 @@ import { LoginModal } from "@/components/login-modal"
 import { JobCard } from "@/components/job-card"
 import type { Job } from "@/types/job"
 import { useAuth } from "@/contexts/auth-context"
-import { supabase } from "@/lib/supabase"
 import { useToast } from "@/hooks/use-toast"
 
 const toDbColumns = (job: Omit<Job, "id"> | Job) => ({
@@ -33,54 +32,28 @@ const toDbColumns = (job: Omit<Job, "id"> | Job) => ({
 })
 
 export default function PersonalDashboard() {
-  const [jobs, setJobs] = useState<Job[]>([])
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [jobToDelete, setJobToDelete] = useState<Job | null>(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
   const [loadingJobs, setLoadingJobs] = useState(true)
 
-  const { user, isAuthenticated, loading: authLoading, supabaseUser } = useAuth()
+  const { user, isAuthenticated, loading: authLoading, addTrackedJob, updateTrackedJob, removeTrackedJob } = useAuth()
   const { toast } = useToast()
 
+  // Use jobsTracking from user context
+  const jobs = user?.jobsTracking || [];
   const fetchJobs = useCallback(async () => {
-    if (!supabaseUser) {
-      setJobs([])
+    if (!user) {
       setLoadingJobs(false)
       return
     }
 
     setLoadingJobs(true)
-    const { data, error } = await supabase
-      .from("user_job_applications")
-      .select("*")
-      .eq("user_id", supabaseUser.id)
-      .order("date_applied", { ascending: false })
 
-    if (error) {
-      console.error("Error fetching jobs:", error)
-      toast({
-        title: "Error",
-        description: "Failed to load your job applications.",
-        variant: "destructive",
-      })
-      setJobs([])
-    } else {
-      const fetchedJobs: Job[] = data.map((item) => ({
-        id: item.id,
-        company: item.company,
-        position: item.position,
-        dateApplied: item.date_applied,
-        status: item.status as Job["status"],
-        industry: item.industry,
-        estimatedSalary: item.estimated_salary,
-        jobType: item.job_type as Job["jobType"],
-        companyLogo: item.company_logo,
-      }))
-      setJobs(fetchedJobs)
-    }
+    
     setLoadingJobs(false)
-  }, [supabaseUser, toast])
+  }, [user, toast])
 
   useEffect(() => {
     if (!authLoading) {
@@ -151,114 +124,42 @@ export default function PersonalDashboard() {
   const rejectedJobs = jobs.filter((job) => job.status === "Rejected")
 
   const handleAddJob = async (newJob: Omit<Job, "id">) => {
-    if (!supabaseUser) return
-
-    const { data, error } = await supabase
-      .from("user_job_applications")
-      .insert({
-        user_id: supabaseUser.id,
-        ...toDbColumns(newJob),
-      })
-      .select()
-
-    if (error) {
-      console.error("Error adding job:", error)
-      toast({
-        title: "Error",
-        description: "Failed to add job application.",
-        variant: "destructive",
-      })
-    } else if (data && data[0]) {
-      setJobs((prevJobs) => [
-        {
-          id: data[0].id,
-          company: data[0].company,
-          position: data[0].position,
-          dateApplied: data[0].date_applied,
-          status: data[0].status,
-          industry: data[0].industry,
-          estimatedSalary: data[0].estimated_salary,
-          jobType: data[0].job_type,
-          companyLogo: data[0].company_logo,
-        },
-        ...prevJobs,
-      ])
-      toast({
-        title: "Success!",
-        description: "Job application added successfully.",
-      })
-      setIsDialogOpen(false)
-    }
-  }
+    // Generate a unique id for the job (could use uuid or Date.now for demo)
+    const jobWithId = { ...newJob, id: Date.now().toString() };
+    await addTrackedJob(jobWithId);
+    toast({
+      title: "Success!",
+      description: "Job application added successfully.",
+    });
+    setIsDialogOpen(false);
+  };
 
   const handleUpdateJob = async (updatedJob: Job) => {
-    if (!supabaseUser) return
-
-    const { error } = await supabase
-      .from("user_job_applications")
-      .update({
-        company: updatedJob.company,
-        position: updatedJob.position,
-        date_applied: updatedJob.dateApplied,
-        status: updatedJob.status,
-        industry: updatedJob.industry,
-        estimated_salary: updatedJob.estimatedSalary,
-        job_type: updatedJob.jobType,
-        company_logo: updatedJob.companyLogo,
-      })
-      .eq("id", updatedJob.id)
-      .eq("user_id", supabaseUser.id)
-
-    if (error) {
-      console.error("Error updating job:", error)
-      toast({
-        title: "Error",
-        description: "Failed to update job application.",
-        variant: "destructive",
-      })
-    } else {
-      setJobs((prevJobs) => prevJobs.map((job) => (job.id === updatedJob.id ? updatedJob : job)))
-      toast({
-        title: "Success!",
-        description: "Job application updated successfully.",
-      })
-    }
-  }
+    await updateTrackedJob(updatedJob.id, updatedJob);
+    toast({
+      title: "Success!",
+      description: "Job application updated successfully.",
+    });
+  };
 
   const handleDeleteJob = (job: Job) => {
-    setJobToDelete(job)
-    setIsDeleteDialogOpen(true)
-  }
+    setJobToDelete(job);
+    setIsDeleteDialogOpen(true);
+  };
 
   const confirmDeleteJob = async () => {
-    if (!jobToDelete || !supabaseUser) return
-
-    const { error } = await supabase
-      .from("user_job_applications")
-      .delete()
-      .eq("id", jobToDelete.id)
-      .eq("user_id", supabaseUser.id)
-
-    if (error) {
-      console.error("Error deleting job:", error)
-      toast({
-        title: "Error",
-        description: "Failed to delete job application.",
-        variant: "destructive",
-      })
-    } else {
-      setJobs((prevJobs) => prevJobs.filter((job) => job.id !== jobToDelete.id))
-      toast({
-        title: "Success!",
-        description: "Job application deleted successfully.",
-      })
-      setJobToDelete(null)
-      setIsDeleteDialogOpen(false)
-    }
-  }
+    if (!jobToDelete) return;
+    await removeTrackedJob(jobToDelete.id);
+    toast({
+      title: "Success!",
+      description: "Job application deleted successfully.",
+    });
+    setJobToDelete(null);
+    setIsDeleteDialogOpen(false);
+  };
 
   const handleMoveStatus = async (job: Job, direction: "forward" | "backward") => {
-    if (!supabaseUser) return
+    if (!user) return
 
     const statusOrder = ["Applied", "Interviewing", "Offer", "Rejected"]
     const currentIndex = statusOrder.indexOf(job.status)
@@ -266,26 +167,12 @@ export default function PersonalDashboard() {
 
     if (newIndex >= 0 && newIndex < statusOrder.length) {
       const newStatus = statusOrder[newIndex] as Job["status"]
-      const { error } = await supabase
-        .from("user_job_applications")
-        .update({ status: newStatus })
-        .eq("id", job.id)
-        .eq("user_id", supabaseUser.id)
-
-      if (error) {
-        console.error("Error moving job status:", error)
-        toast({
-          title: "Error",
-          description: "Failed to update job status.",
-          variant: "destructive",
-        })
-      } else {
-        setJobs((prevJobs) => prevJobs.map((j) => (j.id === job.id ? { ...j, status: newStatus } : j)))
-        toast({
-          title: "Success!",
-          description: `Job status moved to ${newStatus}.`,
-        })
-      }
+      const updatedJob = { ...job, status: newStatus };
+      await updateTrackedJob(job.id, updatedJob);
+      toast({
+        title: "Success!",
+        description: `Job status moved to ${newStatus}.`,
+      })
     }
   }
 

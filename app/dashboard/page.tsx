@@ -8,8 +8,6 @@ import { Badge } from "@/components/ui/badge"
 import { Upload, TrendingUp, Flame, UserCheck, FileText, Calendar, Sparkles, Loader2, LayoutDashboard } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { mockJobs } from "@/data/mock-jobs"
-import { StreaksService, type StreakData } from "@/lib/streaks-service"
-import { StreaksCalendar } from "@/components/streaks-calendar"
 import { useRouter } from "next/navigation"
 import { JobPreferencesModal } from "@/components/job-preferences-modal"
 import { LoginModal } from "@/components/login-modal"
@@ -112,42 +110,7 @@ export default function MainDashboard() {
     return mockJobs.filter(job => topCompanies.includes(job.company)).slice(0, 5)
   }, [])
 
-  // Streaks with new database structure
-  const streaks: StreakData = useMemo(() => {
-    if (user?.currentStreak !== undefined) {
-      // Use database values
-      return {
-        currentStreak: user.currentStreak || 0,
-        longestStreak: user.longestStreak || 0,
-        totalApplications: user.totalApplications || 0,
-        loginDates: user.loginDates || [],
-        lastLoginDate: user.lastLoginDate || null,
-        lastApplicationDate: user.lastApplicationDate || null
-      }
-    } else {
-      // Fallback to old structure or generate new
-      const newStreaks = {
-        currentStreak: 0,
-        longestStreak: 0,
-        totalApplications: 0,
-        loginDates: [],
-        lastLoginDate: null,
-        lastApplicationDate: null
-      }
-      // Initialize streaks in user profile if they don't exist
-      if (user?.id) {
-        updateProfile({ 
-          currentStreak: newStreaks.currentStreak,
-          longestStreak: newStreaks.longestStreak,
-          totalApplications: newStreaks.totalApplications,
-          loginDates: newStreaks.loginDates,
-          lastLoginDate: newStreaks.lastLoginDate,
-          lastApplicationDate: newStreaks.lastApplicationDate
-        }).catch(console.error);
-      }
-      return newStreaks
-    }
-  }, [user, updateProfile])
+  
 
   // Update streaks when user is active (only once per day)
   const updateUserStreaks = async () => {
@@ -158,21 +121,7 @@ export default function MainDashboard() {
       return;
     }
     
-    try {
-      const updatedStreaks = StreaksService.updateLoginStreak(streaks);
-      await updateProfile({
-        currentStreak: updatedStreaks.currentStreak,
-        longestStreak: updatedStreaks.longestStreak,
-        totalApplications: updatedStreaks.totalApplications,
-        loginDates: updatedStreaks.loginDates,
-        lastLoginDate: updatedStreaks.lastLoginDate,
-        lastApplicationDate: updatedStreaks.lastApplicationDate
-      });
-      // Mark as updated today
-      markStreaksUpdatedToday(user.id);
-    } catch (error) {
-      console.error("Failed to update streaks:", error);
-    }
+    
   };
 
   // Update streaks on component mount (moved outside conditional rendering)
@@ -420,13 +369,6 @@ export default function MainDashboard() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Streaks Calendar */}
-      <StreaksCalendar 
-        loginDates={streaks.loginDates}
-        currentStreak={streaks.currentStreak}
-        longestStreak={streaks.longestStreak}
-      />
 
       {/* Job Preferences Modal */}
       <JobPreferencesModal isOpen={isJobPreferencesModalOpen} onClose={() => setIsJobPreferencesModalOpen(false)} />

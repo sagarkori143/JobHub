@@ -11,7 +11,13 @@ if (!supabaseUrl || !supabaseAnonKey) {
 /**
  * Client-side Supabase instance (uses anon key).
  */
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+  },
+})
 
 /**
  * Server-side helper that uses the Service Role key.

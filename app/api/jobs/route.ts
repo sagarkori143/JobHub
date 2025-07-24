@@ -18,7 +18,6 @@ export async function GET() {
       const metadataData = await fs.readFile(metadataFile, "utf8")
       metadata = JSON.parse(metadataData)
     } catch (error) {
-      console.log("No metadata file found")
     }
 
     return NextResponse.json({

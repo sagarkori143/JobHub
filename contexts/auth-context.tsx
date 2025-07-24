@@ -59,6 +59,10 @@ interface AuthContextType {
   refreshUserProfile: () => Promise<void>
   loading: boolean
   supabaseUser: SupabaseUser | null
+  isInitialized: boolean
+  addTrackedJob: (job: any) => Promise<void>
+  updateTrackedJob: (jobId: string, updates: any) => Promise<void>
+  removeTrackedJob: (jobId: string) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -116,6 +120,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         totalApplications: data.total_applications || 0,
         lastLoginDate: data.last_login_date || null,
         lastApplicationDate: data.last_application_date || null,
+        jobsTracking: data.jobs_tracking || [],
       };
       
       return profile;
@@ -123,6 +128,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     return null;
   }, [])
+
+  // Helper methods for jobsTracking
+  const addTrackedJob = async (job: any) => {
+    if (!user || !supabaseUser) return;
+    const updatedJobs = [...(user.jobsTracking || []), job];
+    await supabase.from("user_profiles").update({ jobs_tracking: updatedJobs }).eq("id", user.id);
+    setUser((prev) => prev ? { ...prev, jobsTracking: updatedJobs } : null);
+  };
+
+  const updateTrackedJob = async (jobId: string, updates: any) => {
+    if (!user || !supabaseUser) return;
+    const updatedJobs = (user.jobsTracking || []).map((job) => job.id === jobId ? { ...job, ...updates } : job);
+    await supabase.from("user_profiles").update({ jobs_tracking: updatedJobs }).eq("id", user.id);
+    setUser((prev) => prev ? { ...prev, jobsTracking: updatedJobs } : null);
+  };
+
+  const removeTrackedJob = async (jobId: string) => {
+    if (!user || !supabaseUser) return;
+    const updatedJobs = (user.jobsTracking || []).filter((job) => job.id !== jobId);
+    await supabase.from("user_profiles").update({ jobs_tracking: updatedJobs }).eq("id", user.id);
+    setUser((prev) => prev ? { ...prev, jobsTracking: updatedJobs } : null);
+  };
 
   const createOrUpdateUserProfile = useCallback(
     async (supabaseUser: SupabaseUser, preferences: JobPreferences, name?: string, gender?: string, extraFields?: Record<string, unknown>) => {
@@ -153,27 +180,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [],
   )
 
-  // Initialize auth state - check both localStorage and Supabase session
-  useEffect(() => {
-    const initializeAuth = async () => {
-      setLoading(true);
-      
-      try {
-        // First, check Supabase session
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (session?.user) {
-          setSupabaseUser(session.user);
-          
-          // Try to fetch user profile
+  // Refactored: Only check Supabase session on mount and tab visibility change
+  const initializeAuth = useCallback(async () => {
+    setLoading(true);
+    let session;
+    try {
+      const { data } = await supabase.auth.getSession();
+      session = data.session;
+      if (session?.user) {
+        setSupabaseUser(session.user);
+        try {
           const profile = await fetchUserProfile(session.user.id);
-          
           if (profile) {
             setUser(profile);
             setJobPreferences(profile.jobPreferences);
             setIsAuthenticated(true);
           } else {
-            // Create profile if it doesn't exist
             const newProfile = await createOrUpdateUserProfile(session.user, defaultJobPreferences);
             if (newProfile) {
               const userProfile = {
@@ -191,60 +213,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               setIsAuthenticated(true);
             }
           }
-        } else {
-          // No Supabase session, check localStorage as fallback
-          const cached = localStorage.getItem("jobhub_user");
-          if (cached) {
-            try {
-              const parsed = JSON.parse(cached);
-              setUser(parsed);
-              setIsAuthenticated(true);
-              if (parsed.jobPreferences) {
-                setJobPreferences(parsed.jobPreferences);
-              }
-            } catch (error) {
-              localStorage.removeItem("jobhub_user");
-            }
-          } else {
-            // No cached user, ensure clean state
-            setUser(null);
-            setIsAuthenticated(false);
-            setJobPreferences(defaultJobPreferences);
-          }
+        } catch (profileError) {
+          console.error("[Auth Debug] Error fetching profile:", profileError);
         }
-      } catch (error) {
-        // On error, ensure clean state
-        setUser(null);
+      } else {
+        if (user !== null) {
+          setUser(null);
+        }
         setIsAuthenticated(false);
         setJobPreferences(defaultJobPreferences);
-      } finally {
-        setLoading(false);
-        setIsInitialized(true);
+        setSupabaseUser(null);
       }
-    };
-
-    initializeAuth();
+    } catch (error) {
+      console.error("[Auth Debug] Error in initializeAuth:", error);
+      if (user !== null) {
+        setUser(null);
+      }
+      setIsAuthenticated(false);
+      setJobPreferences(defaultJobPreferences);
+      setSupabaseUser(null);
+    } finally {
+      setLoading(false);
+      setIsInitialized(true);
+    }
   }, [fetchUserProfile, createOrUpdateUserProfile]);
 
-  // Listen for auth state changes
+  useEffect(() => {
+    initializeAuth();
+  }, [initializeAuth]);
+
+  // Listen for auth state changes (sign in/sign out)
   useEffect(() => {
     if (!isInitialized) return;
-
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       setLoading(true);
-      
       if (session?.user) {
         setSupabaseUser(session.user);
-        
         try {
           const profile = await fetchUserProfile(session.user.id);
-          
           if (profile) {
             setUser(profile);
             setJobPreferences(profile.jobPreferences);
             setIsAuthenticated(true);
           } else {
-            // Create profile if it doesn't exist
             const newProfile = await createOrUpdateUserProfile(session.user, defaultJobPreferences);
             if (newProfile) {
               const userProfile = {
@@ -271,23 +282,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSupabaseUser(null);
         setIsAuthenticated(false);
         setJobPreferences(defaultJobPreferences);
-        localStorage.removeItem("jobhub_user");
       }
-      
       setLoading(false);
     });
-
     return () => {
       authListener.subscription.unsubscribe();
     };
   }, [isInitialized, fetchUserProfile, createOrUpdateUserProfile]);
 
-  // Save user to localStorage when it changes
+  // Listen for tab visibility change (tab change)
   useEffect(() => {
-    if (user && isAuthenticated) {
-      localStorage.setItem("jobhub_user", JSON.stringify(user));
-    }
-  }, [user, isAuthenticated]);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        initializeAuth();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [initializeAuth]);
+
+  // Remove all localStorage usage for user persistence
 
   const login = async (email: string, password: string): Promise<LoginResult> => {
     setLoading(true);
@@ -465,7 +481,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.auth.signOut({ scope: "global" });
 
       // Clear localStorage immediately
-      localStorage.removeItem("jobhub_user");
+      // localStorage.removeItem("jobhub_user"); // Removed as per new logic
       
       // Reset all state
       setUser(null);
@@ -669,6 +685,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         refreshUserProfile,
         loading,
         supabaseUser,
+        isInitialized,
+        addTrackedJob,
+        updateTrackedJob,
+        removeTrackedJob,
       }}
     >
       {children}
@@ -681,5 +701,5 @@ export function useAuth() {
   if (context === undefined) {
     throw new Error("useAuth must be used within an AuthProvider")
   }
-  return context
+  return context as AuthContextType
 }

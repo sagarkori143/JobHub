@@ -51,9 +51,9 @@ export function ReviewModal({ isOpen, onClose, onSuccess }: ReviewModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md pt-10">
         <DialogHeader>
-          <DialogTitle className="text-lg font-bold">We'd love your feedback!</DialogTitle>
+          <DialogTitle className="text-lg font-bold">Jo likhna hai bindass likho.. Need a feedback not a testimonial 😁</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <Input placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)} />

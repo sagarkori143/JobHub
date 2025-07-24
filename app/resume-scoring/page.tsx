@@ -1,8 +1,6 @@
 "use client"
 
-import React, { useState, useRef, useEffect } from "react"
-import { Suspense } from "react"
-
+import React, { useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -67,7 +65,7 @@ function ResumeScoringContent() {
   const [jobDescription, setJobDescription] = useState("")
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [result, setResult] = useState<ATSResult | null>(null)
-  const resumeFileInputRef = useRef<HTMLInputElement>(null)
+  const resumeFileInputRef = React.useRef<HTMLInputElement>(null)
   const searchParams = useSearchParams()
   const [loadingStep, setLoadingStep] = useState<null | "extract" | "upload" | "score" | "done">(null)
   // Remove stepperStep state, handled in loader component
@@ -251,8 +249,6 @@ function ResumeScoringContent() {
               <div>
                 <input
                   id="resume-file"
-             
-             
                   type="file"
                   accept=".pdf,.txt"
                   onChange={handleResumeUpload}
@@ -436,16 +432,12 @@ function ResumeScoringContent() {
 
 export default function ResumeScoringPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-br from-blue-50/30 via-white to-purple-50/30 flex items-center justify-center p-4">
-        <div className="text-center space-y-4">
-          <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto" />
-          <h2 className="text-xl font-semibold">Loading Resume Scoring...</h2>
-          <p className="text-gray-600">Preparing the ATS analysis tool</p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50/30 via-white to-purple-50/30 flex items-center justify-center p-4">
+      <div className="text-center space-y-4">
+        <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto" />
+        <h2 className="text-xl font-semibold">Loading Resume Scoring...</h2>
+        <p className="text-gray-600">Preparing the ATS analysis tool</p>
       </div>
-    }>
-      <ResumeScoringContent />
-    </Suspense>
+    </div>
   )
 }

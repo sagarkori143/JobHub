@@ -134,7 +134,6 @@ export default function JobSearchPage() {
       setMetadata(metadata)
       setLastUpdated(metadata?.lastUpdated || null)
 
-      console.log(`📊 Loaded ${jobs.length} jobs for display`)
     } catch (error) {
       console.error("Error loading jobs:", error)
       toast({

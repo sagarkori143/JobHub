@@ -61,32 +61,10 @@ export function Sidebar({}: SidebarProps) {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
   const [isJobPreferencesModalOpen, setIsJobPreferencesModalOpen] = useState(false)
-  const { user, isAuthenticated, logout, loading } = useAuth()
-  const [showProfileSection, setShowProfileSection] = useState(false)
+  const { user, isAuthenticated, logout, loading, isInitialized } = useAuth()
+  const profileVisible = isAuthenticated && !!user
 
-  // Determine when to show the profile section
-  useEffect(() => {
-    // Show profile section if:
-    // 1. User is authenticated and user data exists, OR
-    // 2. Loading is false and we have a cached user in localStorage
-    if (isAuthenticated && user) {
-      setShowProfileSection(true)
-    } else if (!loading) {
-      // Check localStorage as fallback
-      const cachedUser = localStorage.getItem("jobhub_user")
-      if (cachedUser) {
-        try {
-          const parsed = JSON.parse(cachedUser)
-          setShowProfileSection(true)
-        } catch {
-          setShowProfileSection(false)
-        }
-      } else {
-        setShowProfileSection(false)
-      }
-    }
-  }, [isAuthenticated, user, loading])
-
+ 
   const handleLogout = () => {
     logout()
   }
@@ -134,15 +112,7 @@ export function Sidebar({}: SidebarProps) {
 
         {/* User Section - Fixed at bottom */}
         <div className="p-4 border-t bg-gradient-to-r from-gray-50 to-gray-100 flex-shrink-0">
-          {loading ? (
-            <div className="flex items-center gap-3">
-              <Skeleton className="w-10 h-10 rounded-full" />
-              <div className="flex flex-col gap-1 flex-1 min-w-0">
-                <Skeleton className="h-4 w-24 rounded" />
-                <Skeleton className="h-3 w-16 rounded" />
-              </div>
-            </div>
-          ) : showProfileSection && user ? (
+          {profileVisible ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className={`w-full justify-start h-12 hover:bg-white/50`}>
@@ -189,15 +159,21 @@ export function Sidebar({}: SidebarProps) {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+          ) : loading ? (
+            <div className="flex items-center gap-3">
+              <Skeleton className="w-10 h-10 rounded-full" />
+              <div className="flex flex-col gap-1 flex-1 min-w-0">
+                <Skeleton className="h-4 w-24 rounded" />
+                <Skeleton className="h-3 w-16 rounded" />
+              </div>
+            </div>
           ) : (
-            !loading && (
-              <Button
-                onClick={() => setIsLoginModalOpen(true)}
-                className={`w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white`}
-              >
-                Sign In
-              </Button>
-            )
+            <Button
+              onClick={() => setIsLoginModalOpen(true)}
+              className={`w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white`}
+            >
+              Sign In
+            </Button>
           )}
         </div>
       </div>

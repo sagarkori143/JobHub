@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server"
-import { GeminiService } from "@/lib/gemini-service"
 import { getCompanyLogo } from "@/lib/company-logos"
 
 export async function POST(request: NextRequest) {
@@ -21,10 +20,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ logoUrl: existingLogo })
     }
 
-    // If not found in our database, search with Gemini
-    const logoUrl = await GeminiService.searchAndCacheCompanyLogo(companyName)
     
-    return NextResponse.json({ logoUrl })
+    
+    return NextResponse.json( "Logo url not found!")
   } catch (error) {
     console.error("Error searching for company logo:", error)
     return NextResponse.json(
