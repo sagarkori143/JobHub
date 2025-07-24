@@ -1,6 +1,5 @@
 import type { JobListing } from "@/types/job-search"
 import { mockJobs } from "@/data/mock-jobs"
-import { notificationHashmapService } from "@/services/notification-hashmap-service"
 
 export interface JobMetadata {
   lastUpdated: string

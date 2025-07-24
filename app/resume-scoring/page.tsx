@@ -431,13 +431,5 @@ function ResumeScoringContent() {
 }
 
 export default function ResumeScoringPage() {
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50/30 via-white to-purple-50/30 flex items-center justify-center p-4">
-      <div className="text-center space-y-4">
-        <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto" />
-        <h2 className="text-xl font-semibold">Loading Resume Scoring...</h2>
-        <p className="text-gray-600">Preparing the ATS analysis tool</p>
-      </div>
-    </div>
-  )
+  return <ResumeScoringContent />;
 }
