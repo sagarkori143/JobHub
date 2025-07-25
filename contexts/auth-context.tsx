@@ -115,8 +115,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         streaks: data.streaks || {},
         // Map streak fields from DB columns to camelCase
         loginDates: data.login_dates || [],
-        currentStreak: data.current_streak || 0,
-        longestStreak: data.longest_streak || 0,
         totalApplications: data.total_applications || 0,
         lastLoginDate: data.last_login_date || null,
         lastApplicationDate: data.last_application_date || null,
