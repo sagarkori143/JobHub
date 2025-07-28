@@ -1,12 +1,10 @@
 "use client"
 
-import React, { useState } from "react"
+import React from "react"
 import Link from "next/link"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { CheckCircle, Github, Linkedin, Instagram, Mail, User as UserIcon } from "lucide-react"
 import { JobHubWorkflow } from "../../components/jobhub-workflow"
-import { Button } from "@/components/ui/button"
-import { ReviewModal } from "../../components/review-modal"
 import Image from "next/image"
 
 const features = [
@@ -26,6 +24,7 @@ const developers = [
     image: "/sagar-kori.jpg", // ensure image placed in public/
     linkedin: "https://www.linkedin.com/in/sagarkori143/",
     instagram: "https://www.instagram.com/sagarkori143/",
+    github: "https://github.com/sagarkori143",
     email: "sagarkoriup11@gmail.com",
   },
   {
@@ -33,6 +32,7 @@ const developers = [
     image: "/alok-rai.jpg",
     linkedin: "https://www.linkedin.com/in/alok-rai158/",
     instagram: "https://www.instagram.com/158alokrai/",
+    github: "https://github.com/ALOK158",
   },
   {
     name: "Omkar Patil",
@@ -44,13 +44,6 @@ const developers = [
 ]
 
 export default function AboutPage() {
-  const [isReviewOpen, setIsReviewOpen] = useState(false)
-  const [reviewSubmitted, setReviewSubmitted] = useState(false)
-
-  const handleReviewSuccess = () => {
-    setReviewSubmitted(true)
-    setTimeout(() => setReviewSubmitted(false), 10000)
-  }
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50/30 via-white to-purple-50/30 p-4 md:p-8 space-y-8">
       <h1 className="text-4xl font-bold text-gray-800 mb-8">About JobHub</h1>
@@ -125,6 +118,11 @@ export default function AboutPage() {
                   <Link href={dev.instagram} target="_blank" aria-label="Instagram">
                     <Instagram className="h-5 w-5 text-pink-500 hover:scale-110 transition-transform" />
                   </Link>
+                  {dev.github && (
+                    <Link href={dev.github} target="_blank" aria-label="GitHub">
+                      <Github className="h-5 w-5 text-gray-800 hover:scale-110 transition-transform" />
+                    </Link>
+                  )}
                   {dev.email && (
                     <Link href={`mailto:${dev.email}`} aria-label="Email">
                       <Mail className="h-5 w-5 text-red-500 hover:scale-110 transition-transform" />
@@ -136,23 +134,6 @@ export default function AboutPage() {
           </div>
         </CardContent>
       </Card>
-
-      {/* Review Button at bottom */}
-      <div className="text-center">
-        <Button
-          onClick={() => setIsReviewOpen(true)}
-          disabled={reviewSubmitted}
-          className={`px-6 py-2 rounded-full transition-all duration-200 shadow-md focus:ring-2 focus:ring-offset-2
-            ${reviewSubmitted
-              ? 'bg-green-500 text-white cursor-default'
-              : 'bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:brightness-110'}
-          `}
-        >
-          {reviewSubmitted ? "Review submitted! 🎉" : "Please leave a review"}
-        </Button>
-      </div>
-
-      <ReviewModal isOpen={isReviewOpen} onClose={() => setIsReviewOpen(false)} onSuccess={handleReviewSuccess} />
     </div>
   )
 } 

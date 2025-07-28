@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { UserAvatar } from "@/components/user-avatar"
 import {
@@ -28,12 +29,14 @@ import {
   Info,
   ChevronLeft,
   ChevronRight,
+  Star,
 } from "lucide-react"
 import { useState, useEffect } from "react"
 import { useAuth } from "@/contexts/auth-context"
 import { LoginModal } from "@/components/login-modal"
 import { ProfileModal } from "@/components/profile-modal"
 import { JobPreferencesModal } from "@/components/job-preferences-modal"
+import { ReviewModal } from "@/components/review-modal"
 import { Skeleton } from "@/components/ui/skeleton"
 
 const navigationItems = [
@@ -63,6 +66,8 @@ export function Sidebar({}: SidebarProps) {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
   const [isJobPreferencesModalOpen, setIsJobPreferencesModalOpen] = useState(false)
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false)
+  const [reviewSubmitted, setReviewSubmitted] = useState(false)
   const { user, isAuthenticated, logout, loading, isInitialized } = useAuth()
   const profileVisible = isAuthenticated && !!user
 
@@ -96,6 +101,11 @@ export function Sidebar({}: SidebarProps) {
     logout()
   }
 
+  const handleReviewSuccess = () => {
+    setReviewSubmitted(true)
+    setTimeout(() => setReviewSubmitted(false), 10000)
+  }
+
   const toggleCollapse = () => {
     setIsCollapsed(!isCollapsed)
   }
@@ -111,7 +121,7 @@ export function Sidebar({}: SidebarProps) {
   return (
     <>
       <div
-        className={`flex h-screen flex-col border-r bg-gradient-to-b from-slate-50 to-white shadow-lg transition-all duration-300 ${
+        className={`flex h-screen flex-col border-r bg-gradient-to-b from-slate-50 to-white shadow-lg transition-all duration-300 ease-in-out ${
           isCollapsed ? 'w-16' : 'w-64'
         } dark:from-gray-800 dark:to-gray-900`}
       >
@@ -125,29 +135,66 @@ export function Sidebar({}: SidebarProps) {
           </Link>
         </div>
 
-        {/* Navigation - Scrollable only if needed */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="space-y-4 py-4 px-2">
-            <div>
-              {!isCollapsed && (
-                <h2 className="mb-2 px-2 text-lg font-semibold tracking-tight text-gray-700">Navigation</h2>
-              )}
-              <div className="space-y-2">
-                {navigationItems.map((item) => (
-                  <Button
-                    key={item.name}
-                    variant="ghost"
-                    className={`w-full justify-start h-12 transition-all duration-200 hover:scale-105 ${
-                      pathname === item.href ? `${item.color} shadow-md` : "hover:bg-gray-100 text-gray-600"
-                    } ${isCollapsed ? 'justify-center px-2' : ''}`}
-                    asChild
+        {/* Navigation - Controlled scrolling with no visible scrollbars during transition */}
+        <div className="flex-1 min-h-0 relative">
+          <div className="absolute inset-0 overflow-y-auto overflow-x-hidden scrollbar-hide">
+            <div className="space-y-4 py-4 px-2 min-h-full">
+              <div className="space-y-4">
+                <div>
+                  {!isCollapsed && (
+                    <h2 className="mb-2 px-2 text-lg font-semibold tracking-tight text-gray-700 transition-opacity duration-300">Navigation</h2>
+                  )}
+                  <div className="space-y-2">
+                    {navigationItems.map((item) => (
+                      <Button
+                        key={item.name}
+                        variant="ghost"
+                        className={`w-full justify-start h-12 transition-all duration-200 hover:scale-105 ${
+                          pathname === item.href ? `${item.color} shadow-md` : "hover:bg-gray-100 text-gray-600"
+                        } ${isCollapsed ? 'justify-center px-2' : ''}`}
+                        asChild
+                      >
+                        <Link href={item.href} title={isCollapsed ? item.name : undefined}>
+                          <item.icon className="h-5 w-5 flex-shrink-0" />
+                          {!isCollapsed && <span className="ml-3 transition-opacity duration-300">{item.name}</span>}
+                        </Link>
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Review Badge Section */}
+                <div className={`px-2 transition-all duration-300 ${isCollapsed ? 'flex justify-center' : ''}`}>
+                  <div
+                    onClick={() => setIsReviewModalOpen(true)}
+                    className={`group cursor-pointer bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 overflow-hidden ${
+                      isCollapsed ? 'w-12 h-12 max-h-12 flex items-center justify-center p-2' : 'w-full max-h-20 p-3'
+                    } ${reviewSubmitted ? 'from-green-400 to-green-600' : ''}`}
+                    title={isCollapsed ? 'Leave a Review' : undefined}
                   >
-                    <Link href={item.href} title={isCollapsed ? item.name : undefined}>
-                      <item.icon className="h-5 w-5 flex-shrink-0" />
-                      {!isCollapsed && <span className="ml-3">{item.name}</span>}
-                    </Link>
-                  </Button>
-                ))}
+                    <div className={`flex items-center gap-3 ${isCollapsed ? 'justify-center' : ''} min-h-0`}>
+                      <Star className={`text-white flex-shrink-0 ${reviewSubmitted ? 'fill-current' : ''} h-5 w-5`} />
+                      {!isCollapsed && (
+                        <div className="flex-1 min-w-0 transition-opacity duration-300">
+                          <div className="flex items-center justify-between">
+                            <span className="text-white font-semibold text-sm truncate">
+                              {reviewSubmitted ? 'Review Submitted!' : 'Leave a Review'}
+                            </span>
+                            <Badge 
+                              variant="secondary" 
+                              className="bg-white/20 text-white border-none text-xs hover:bg-white/30 transition-colors flex-shrink-0"
+                            >
+                              {reviewSubmitted ? '✓' : 'NEW'}
+                            </Badge>
+                          </div>
+                          <p className="text-white/80 text-xs mt-1 truncate">
+                            {reviewSubmitted ? 'Thank you for your feedback!' : 'Help us improve JobHub'}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -221,13 +268,8 @@ export function Sidebar({}: SidebarProps) {
             </DropdownMenu>
           ) : loading ? (
             <div className={`flex items-center gap-3 ${isCollapsed ? 'justify-center' : ''}`}>
-              <Skeleton className="w-10 h-10 rounded-full" />
-              {!isCollapsed && (
-                <div className="flex flex-col gap-1 flex-1 min-w-0">
-                  <Skeleton className="h-4 w-24 rounded" />
-                  <Skeleton className="h-3 w-16 rounded" />
-                </div>
-              )}
+              <p>Loading Profile...</p>
+              
             </div>
           ) : (
             <Button
@@ -245,6 +287,11 @@ export function Sidebar({}: SidebarProps) {
       <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
       <ProfileModal isOpen={isProfileModalOpen} onClose={() => setIsProfileModalOpen(false)} />
       <JobPreferencesModal isOpen={isJobPreferencesModalOpen} onClose={() => setIsJobPreferencesModalOpen(false)} />
+      <ReviewModal 
+        isOpen={isReviewModalOpen} 
+        onClose={() => setIsReviewModalOpen(false)} 
+        onSuccess={handleReviewSuccess} 
+      />
     </>
   )
 }
