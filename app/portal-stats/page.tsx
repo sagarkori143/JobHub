@@ -113,10 +113,11 @@ export default function PortalStatsPage() {
   const trend = allTrends[metric] || [];
 
   return (
-    <div className="max-w-7xl mx-auto py-8 px-2 md:px-8">
-      <h1 className="text-3xl font-bold mb-8 flex items-center gap-3">
-        <BarChart2 className="w-8 h-8 text-blue-600" /> Portal Statistics
-      </h1>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50/30 via-white to-purple-50/30 p-4 md:p-8">
+      <div className="mb-8 flex items-center gap-3">
+        <BarChart2 className="w-8 h-8 text-blue-600" />
+        <h1 className="text-3xl font-bold text-gray-800">Portal Statistics</h1>
+      </div>
       {loading ? (
         <div className="flex justify-center items-center h-40">
           <RefreshCw className="animate-spin w-8 h-8 text-gray-400" />

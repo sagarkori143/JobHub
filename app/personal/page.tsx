@@ -135,7 +135,17 @@ export default function PersonalDashboard() {
   const rejectedJobs = jobs.filter((job) => job.status === "Rejected")
 
   const handleAddJob = async (newJob: Omit<Job, "id">) => {
-    // Generate a unique id for the job (could use uuid or Date.now for demo)
+    // Check authentication state before proceeding
+    if (!isAuthenticated || !user?.id) {
+      toast({
+        title: "Authentication Error",
+        description: "Please log in again to add job applications.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Generate a unique id for the job (could use uuid or Date.now() for demo)
     const jobWithId = { ...newJob, id: Date.now().toString() };
     await addTrackedJob(jobWithId);
     toast({
@@ -146,6 +156,16 @@ export default function PersonalDashboard() {
   };
 
   const handleUpdateJob = async (updatedJob: Job) => {
+    // Check authentication state before proceeding
+    if (!isAuthenticated || !user?.id) {
+      toast({
+        title: "Authentication Error",
+        description: "Please log in again to update job applications.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     await updateTrackedJob(updatedJob.id, updatedJob);
     toast({
       title: "Success!",
@@ -160,6 +180,17 @@ export default function PersonalDashboard() {
 
   const confirmDeleteJob = async () => {
     if (!jobToDelete) return;
+    
+    // Check authentication state before proceeding
+    if (!isAuthenticated || !user?.id) {
+      toast({
+        title: "Authentication Error",
+        description: "Please log in again to delete job applications.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     await removeTrackedJob(jobToDelete.id);
     toast({
       title: "Success!",
@@ -171,6 +202,16 @@ export default function PersonalDashboard() {
 
   const handleMoveStatus = async (job: Job, direction: "forward" | "backward") => {
     if (!user) return
+
+    // Check authentication state before proceeding
+    if (!isAuthenticated || !user?.id) {
+      toast({
+        title: "Authentication Error",
+        description: "Please log in again to update job status.",
+        variant: "destructive"
+      });
+      return;
+    }
 
     const statusOrder = ["Applied", "Interviewing", "Offer", "Rejected"]
     const currentIndex = statusOrder.indexOf(job.status)

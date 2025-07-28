@@ -59,13 +59,13 @@ export default function NotificationsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50/30 via-white to-purple-50/30 p-4 md:p-8">
-      <div className="max-w-6xl mx-auto space-y-8">
+      <div className="space-y-8">
         {/* Header */}
-        <div className="text-center space-y-4">
-          <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+        <div className="mb-8">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-800">
             Notification Center
           </h1>
-          <p className="text-gray-600 text-lg">
+          <p className="text-gray-600 text-lg mt-2">
             Manage your job alerts and notification preferences
           </p>
         </div>

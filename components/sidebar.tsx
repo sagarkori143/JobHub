@@ -115,23 +115,14 @@ export function Sidebar({}: SidebarProps) {
           isCollapsed ? 'w-16' : 'w-64'
         } dark:from-gray-800 dark:to-gray-900`}
       >
-        {/* Header - Fixed with click handler */}
+        {/* Header - Fixed */}
         <div 
-          className="flex h-[60px] items-center border-b px-4 bg-gradient-to-r from-blue-500 to-purple-600 flex-shrink-0 cursor-pointer hover:from-blue-600 hover:to-purple-700 transition-colors duration-200"
-          onClick={handleHeaderClick}
+          className="flex h-[60px] items-center border-b px-4 bg-gradient-to-r from-blue-500 to-purple-600 flex-shrink-0"
         >
           <Link className="flex items-center gap-2 font-semibold text-white" href="/">
             <Briefcase className="h-6 w-6 flex-shrink-0" />
             {!isCollapsed && <span className="text-lg">JobHub</span>}
           </Link>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleCollapse}
-            className="ml-auto text-white hover:bg-white/20"
-          >
-            {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-          </Button>
         </div>
 
         {/* Navigation - Scrollable only if needed */}
@@ -162,8 +153,21 @@ export function Sidebar({}: SidebarProps) {
           </div>
         </div>
 
+        {/* Collapse/Expand Button above profile section */}
+        <div className="flex justify-center py-2 border-t border-b bg-gradient-to-r from-gray-50 to-gray-100">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleCollapse}
+            className="text-gray-500 hover:bg-gray-200"
+            aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            {isCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
+          </Button>
+        </div>
+
         {/* User Section - Fixed at bottom */}
-        <div className="p-4 border-t bg-gradient-to-r from-gray-50 to-gray-100 flex-shrink-0">
+        <div className="p-4 bg-gradient-to-r from-gray-50 to-gray-100 flex-shrink-0">
           {profileVisible ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

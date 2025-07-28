@@ -52,8 +52,8 @@ export default function AboutPage() {
     setTimeout(() => setReviewSubmitted(false), 10000)
   }
   return (
-    <div className="container mx-auto px-4 py-8 space-y-8 max-w-4xl">
-      <h1 className="text-4xl font-bold text-center text-gray-800">About JobHub</h1>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50/30 via-white to-purple-50/30 p-4 md:p-8 space-y-8">
+      <h1 className="text-4xl font-bold text-gray-800 mb-8">About JobHub</h1>
 
       {/* Features Section */}
       <Card>

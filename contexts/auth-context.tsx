@@ -97,10 +97,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data, error } = await supabase.from("user_profiles").select("*").eq("id", id).single();
 
     if (error && error.code !== "PGRST116") {
+      console.error("[Auth Debug] Error fetching user profile:", error);
       return null;
     }
 
     if (data) {
+      console.log("[Auth Debug] Raw user profile data:", data);
       const profile = {
         id: data.id,
         name: data.full_name || data.email.split("@")[0],
@@ -120,6 +122,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         lastApplicationDate: data.last_application_date || null,
         jobsTracking: data.jobs_tracking || [],
       };
+      
+      console.log("[Auth Debug] Processed user profile:", profile);
+      console.log("[Auth Debug] ATS Scores:", profile.atsScores);
       
       return profile;
     }
@@ -248,6 +253,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [fetchUserProfile, createOrUpdateUserProfile]);
 
+  // Define refreshUserProfile before it's used in useEffect
+  const refreshUserProfile = useCallback(async () => {
+    if (!supabaseUser) {
+      console.log("[Auth Debug] No supabaseUser available for refresh");
+      return;
+    }
+
+    // Check if session is still valid
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) {
+      console.log("[Auth Debug] Session expired during refresh");
+      setIsAuthenticated(false);
+      setUser(null);
+      setSupabaseUser(null);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      console.log("[Auth Debug] Refreshing user profile for:", supabaseUser.id);
+      const profile = await fetchUserProfile(supabaseUser.id);
+      if (profile) {
+        console.log("[Auth Debug] Successfully refreshed profile:", profile);
+        setUser(profile);
+        setJobPreferences(profile.jobPreferences);
+        setIsAuthenticated(true);
+      } else {
+        console.log("[Auth Debug] No profile found during refresh");
+        // If no profile found, user might have been deleted
+        setIsAuthenticated(false);
+        setUser(null);
+      }
+    } catch (error) {
+      console.error("[Auth Debug] Error refreshing user profile:", error);
+      // Handle error silently but log it
+    } finally {
+      setLoading(false);
+    }
+  }, [supabaseUser, fetchUserProfile]);
+
   useEffect(() => {
     initializeAuth();
   }, [initializeAuth]);
@@ -256,6 +301,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!isInitialized) return;
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("[Auth Debug] Auth state change:", event, session?.user?.id);
       setLoading(true);
       if (session?.user) {
         setSupabaseUser(session.user);
@@ -265,6 +311,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUser(profile);
             setJobPreferences(profile.jobPreferences);
             setIsAuthenticated(true);
+            console.log("[Auth Debug] User authenticated:", profile.name);
           } else {
             const newProfile = await createOrUpdateUserProfile(session.user, defaultJobPreferences);
             if (newProfile) {
@@ -281,17 +328,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               setUser(userProfile);
               setJobPreferences(newProfile.job_preferences);
               setIsAuthenticated(true);
+              console.log("[Auth Debug] New user created:", userProfile.name);
             }
           }
         } catch (error) {
-          // On error, maintain current state if possible
+          console.error("[Auth Debug] Error in auth state change:", error);
+          // Don't set authentication to false on error, just log it
         }
       } else {
-        // User signed out
+        // Clear all state when user signs out
         setUser(null);
-        setSupabaseUser(null);
         setIsAuthenticated(false);
         setJobPreferences(defaultJobPreferences);
+        setSupabaseUser(null);
+        console.log("[Auth Debug] User signed out");
       }
       setLoading(false);
     });
@@ -303,15 +353,75 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Listen for tab visibility change (tab change)
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        initializeAuth();
+      if (document.visibilityState === "visible" && isAuthenticated && user) {
+        // Only refresh the user profile if we're already authenticated
+        // Don't reset the entire auth state
+        console.log("[Auth Debug] Tab became visible, refreshing user profile");
+        
+        // Check if session is still valid before refreshing
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (session?.user) {
+            refreshUserProfile();
+          } else {
+            console.log("[Auth Debug] Session expired, re-initializing auth");
+            initializeAuth();
+          }
+        });
       }
     };
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [initializeAuth]);
+  }, [isAuthenticated, user, refreshUserProfile, initializeAuth]);
+
+  // Periodic session check to maintain authentication state
+  useEffect(() => {
+    if (!isAuthenticated || !user) return;
+    
+    const sessionCheckInterval = setInterval(async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user && isAuthenticated) {
+        console.log("[Auth Debug] Session check failed, re-initializing auth");
+        initializeAuth();
+      } else if (session?.user && isAuthenticated) {
+        // Session is valid, but let's refresh the profile data periodically
+        console.log("[Auth Debug] Periodic profile refresh");
+        refreshUserProfile();
+      }
+    }, 60000); // Check every 60 seconds and refresh profile
+    
+    return () => clearInterval(sessionCheckInterval);
+  }, [isAuthenticated, user, initializeAuth, refreshUserProfile]);
+
+  // Listen for user activity to refresh auth state after inactivity
+  useEffect(() => {
+    if (!isAuthenticated || !user) return;
+    
+    let activityTimeout: NodeJS.Timeout;
+    
+    const handleUserActivity = () => {
+      clearTimeout(activityTimeout);
+      activityTimeout = setTimeout(() => {
+        // User has been inactive for 5 minutes, refresh auth state
+        console.log("[Auth Debug] User activity detected, refreshing auth state");
+        refreshUserProfile();
+      }, 300000); // 5 minutes
+    };
+    
+    // Listen for user interactions
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+    events.forEach(event => {
+      document.addEventListener(event, handleUserActivity, true);
+    });
+    
+    return () => {
+      clearTimeout(activityTimeout);
+      events.forEach(event => {
+        document.removeEventListener(event, handleUserActivity, true);
+      });
+    };
+  }, [isAuthenticated, user, refreshUserProfile]);
 
   // Remove all localStorage usage for user persistence
 
@@ -653,23 +763,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (error) {
       throw error;
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  const refreshUserProfile = async () => {
-    if (!supabaseUser) return;
-
-    setLoading(true);
-    try {
-      const profile = await fetchUserProfile(supabaseUser.id);
-      if (profile) {
-        setUser(profile);
-        setJobPreferences(profile.jobPreferences);
-      }
-    } catch (error) {
-      // Handle error silently
     } finally {
       setLoading(false);
     }

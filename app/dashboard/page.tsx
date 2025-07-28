@@ -162,44 +162,90 @@ export default function MainDashboard() {
   const atsScores = user?.atsScores || [];
   const hasResume = !!user?.resumeUrl;
 
+  // Debug information
+  const debugInfo = {
+    userId: user?.id,
+    hasResume,
+    atsScoresCount: atsScores?.length || 0,
+    atsScores: atsScores,
+    userProfile: user
+  };
+
   const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file || !user) return
+    
+    // Check authentication state before proceeding
+    if (!isAuthenticated || !user?.id) {
+      toast({
+        title: "Authentication Error",
+        description: "Please log in again to upload your resume.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setResumeUploading(true)
     setResumeFile(file)
     setLoadingStep("extract")
     let extractedText = ""
+    
     try {
+      // Extract text from file
       if (file.type === "application/pdf") {
         extractedText = await extractTextFromPdf(file)
       } else if (file.type === "text/plain") {
         extractedText = await file.text()
       } else {
-        throw new Error("Unsupported file type")
+        throw new Error("Unsupported file type. Please upload a PDF or text file.")
       }
+      
+      if (!extractedText.trim()) {
+        throw new Error("Could not extract text from the file. Please try a different file.")
+      }
+      
       setLoadingStep("upload")
+      
       // Upload extracted text to backend
       const res = await fetch("/api/upload/resume", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.id, resumeText: extractedText })
+        body: JSON.stringify({ 
+          userId: user.id, 
+          resumeText: extractedText,
+          jobDescription: "Software Engineer" // Default job description
+        })
       })
-      setLoadingStep("score")
+      
       if (!res.ok) {
-        throw new Error("Failed to upload and score resume")
+        const errorData = await res.json().catch(() => ({}))
+        throw new Error(errorData.error || `Upload failed with status: ${res.status}`)
       }
-      // Refetch user profile to update ATS scores
+      
+      const result = await res.json()
+      console.log("Resume upload result:", result)
+      
+      setLoadingStep("score")
+      
       // Refresh user profile to get the latest ATS scores
       await refreshUserProfile()
+      
       toast({
-        title: "Resume Scored!",
-        description: "Your ATS score has been updated.",
+        title: "Resume Scored Successfully!",
+        description: `Your ATS score is ${result.score || 'N/A'}. Check the trends chart to see your progress.`,
       })
+      
       setLoadingStep("done")
       setTimeout(() => setLoadingStep(null), 1200)
-    } catch (err) {
+      
+    } catch (err: any) {
+      console.error("Resume upload error:", err)
       setLoadingStep(null)
-      // Show error toast or message
+      toast({
+        title: "Upload Failed",
+        description: err.message || "Failed to upload and score resume. Please try again.",
+        variant: "destructive"
+      })
     } finally {
       setResumeUploading(false)
     }
@@ -249,25 +295,6 @@ export default function MainDashboard() {
         </div>
       </div>
 
-      {/* Profile Tips */}
-      {profileTips.length > 0 && (
-        <Card className="bg-yellow-50 border-yellow-200">
-          <CardContent className="py-4">
-            <div className="flex items-center gap-2 mb-2">
-              <UserCheck className="w-5 h-5 text-yellow-600" />
-              <span className="font-semibold text-yellow-800">Tips to complete your profile:</span>
-            </div>
-            <ul className="list-disc list-inside text-yellow-700 text-sm">
-              {profileTips.map((tip, i) => <li key={i}>{tip}</li>)}
-            </ul>
-            <div className="flex gap-2 mt-4">
-              <Button size="sm" onClick={() => router.push("/profile")}>Go to Profile Settings</Button>
-              <Button size="sm" variant="outline" onClick={() => setIsJobPreferencesModalOpen(true)}>Update Job Preferences</Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {/* ATS Score Trends - Full Width */}
       <Card className="w-full">
         <CardHeader>
@@ -276,56 +303,105 @@ export default function MainDashboard() {
         </CardHeader>
         <CardContent>
           <div className="w-full h-64">
-            {atsScores.length === 0 ? (
-              <div className="flex items-center justify-center h-full text-gray-400">No ATS scores yet. Upload your resume to get started!</div>
+            {!atsScores || atsScores.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-gray-400 space-y-2">
+                <FileText className="w-8 h-8" />
+                <p>No ATS scores yet.</p>
+                <p className="text-sm">Upload your resume to get started!</p>
+              </div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={atsScores} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="date" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
-                  <YAxis tick={{ fontSize: 12 }} allowDecimals={false} domain={[0, 100]} tickLine={false} axisLine={false} />
-                  <Tooltip contentStyle={{ borderRadius: 8, fontSize: 14 }} />
+                  <XAxis 
+                    dataKey="date" 
+                    tick={{ fontSize: 12 }} 
+                    tickLine={false} 
+                    axisLine={false}
+                    tickFormatter={(value) => {
+                      const date = new Date(value)
+                      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                    }}
+                  />
+                  <YAxis 
+                    tick={{ fontSize: 12 }} 
+                    allowDecimals={false} 
+                    domain={[0, 100]} 
+                    tickLine={false} 
+                    axisLine={false} 
+                  />
+                  <Tooltip 
+                    contentStyle={{ borderRadius: 8, fontSize: 14 }}
+                    labelFormatter={(value) => {
+                      const date = new Date(value)
+                      return date.toLocaleDateString('en-US', { 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                      })
+                    }}
+                  />
                   <Legend verticalAlign="top" height={36} iconType="circle" />
-                  <Line type="monotone" dataKey="score" stroke="#22c55e" strokeWidth={3} dot={{ r: 5 }} activeDot={{ r: 7 }} isAnimationActive animationDuration={250} />
+                  <Line 
+                    type="monotone" 
+                    dataKey="score" 
+                    stroke="#22c55e" 
+                    strokeWidth={3} 
+                    dot={{ r: 5 }} 
+                    activeDot={{ r: 7 }} 
+                    isAnimationActive 
+                    animationDuration={250} 
+                  />
                 </LineChart>
               </ResponsiveContainer>
             )}
           </div>
-          <div className="flex justify-end mt-2">
-            {/* Stepper Loader */}
-            {loadingStep ? (
-              <div className="flex flex-col items-end w-full">
-                <div className="flex items-center gap-4 mb-2">
-                  {steps.map((step, idx) => (
-                    <div key={step.key} className="flex items-center">
-                      <div className={`rounded-full w-8 h-8 flex items-center justify-center border-2 transition-all duration-200
-                        ${idx < stepIndex ? 'bg-green-500 border-green-500 text-white' :
-                          idx === stepIndex ? 'bg-blue-600 border-blue-600 text-white animate-pulse' :
-                          'bg-gray-200 border-gray-300 text-gray-400'}`}
-                      >
-                        {idx < stepIndex ? <span className="font-bold">✓</span> : idx === stepIndex ? <Loader2 className="w-5 h-5 animate-spin" /> : idx+1}
+          <div className="flex justify-between items-center mt-4">
+            <div className="text-sm text-gray-600">
+              {atsScores && atsScores.length > 0 && (
+                <span>
+                  Latest score: <span className="font-semibold text-green-600">
+                    {atsScores[atsScores.length - 1]?.score || 'N/A'}
+                  </span>
+                </span>
+              )}
+            </div>
+            <div className="flex justify-end">
+              {/* Stepper Loader */}
+              {loadingStep ? (
+                <div className="flex flex-col items-end w-full">
+                  <div className="flex items-center gap-4 mb-2">
+                    {steps.map((step, idx) => (
+                      <div key={step.key} className="flex items-center">
+                        <div className={`rounded-full w-8 h-8 flex items-center justify-center border-2 transition-all duration-200
+                          ${idx < stepIndex ? 'bg-green-500 border-green-500 text-white' :
+                            idx === stepIndex ? 'bg-blue-600 border-blue-600 text-white animate-pulse' :
+                            'bg-gray-200 border-gray-300 text-gray-400'}`}
+                        >
+                          {idx < stepIndex ? <span className="font-bold">✓</span> : idx === stepIndex ? <Loader2 className="w-5 h-5 animate-spin" /> : idx+1}
+                        </div>
+                        {idx < steps.length - 1 && (
+                          <div className={`w-10 h-1 ${idx < stepIndex ? 'bg-green-500' : 'bg-gray-300'} transition-all duration-200`}></div>
+                        )}
                       </div>
-                      {idx < steps.length - 1 && (
-                        <div className={`w-10 h-1 ${idx < stepIndex ? 'bg-green-500' : 'bg-gray-300'} transition-all duration-200`}></div>
-                      )}
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+                  <span className="text-sm font-medium text-blue-700 mb-1">{loaderStepMessage[loadingStep]}</span>
                 </div>
-                <span className="text-sm font-medium text-blue-700 mb-1">{loaderStepMessage[loadingStep]}</span>
-              </div>
-            ) : (
-              <>
-                <input type="file" accept=".pdf,.txt" onChange={handleResumeUpload} className="hidden" id="resume-upload" />
-                <label htmlFor="resume-upload">
-                  <Button size="sm" variant="outline" asChild disabled={resumeUploading || !!loadingStep}>
-                    <span>
-                      <Upload className="mr-2 h-4 w-4" />
-                      {resumeUploading || loadingStep ? "Uploading..." : hasResume ? "Update Resume" : "Upload Resume"}
-                    </span>
-                  </Button>
-                </label>
-              </>
-            )}
+              ) : (
+                <>
+                  <input type="file" accept=".pdf,.txt" onChange={handleResumeUpload} className="hidden" id="resume-upload" />
+                  <label htmlFor="resume-upload">
+                    <Button size="sm" variant="outline" asChild disabled={resumeUploading || !!loadingStep}>
+                      <span>
+                        <Upload className="mr-2 h-4 w-4" />
+                        {resumeUploading || loadingStep ? "Uploading..." : hasResume ? "Update Resume" : "Upload Resume"}
+                      </span>
+                    </Button>
+                  </label>
+                </>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
