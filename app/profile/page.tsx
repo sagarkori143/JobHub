@@ -17,11 +17,14 @@ import { ProfileImageUpload } from "@/components/profile-image-upload";
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
-import { User, Settings, Save, Camera } from "lucide-react";
+import { useRoleAuth } from "@/hooks/use-role-auth";
+import { User, Settings, Save, Camera, Shield } from "lucide-react";
 import { JobPreferencesModal } from "@/components/job-preferences-modal";
+import { TagInput } from "@/components/ui/tag-input";
+import { OccupationType } from "@/types/job-search";
 
 export default function ProfilePage() {
-  const { user, updateProfile, uploadAvatar, removeAvatar, loading } =
+  const { user, updateProfile, uploadAvatar, removeAvatar, loading, refreshUserProfile } =
     useAuth();
   const { toast } = useToast();
   
@@ -30,95 +33,148 @@ export default function ProfilePage() {
     requireAuth: true,
     redirectTo: "/"
   });
+
+  // Get role information for admin features
+  const { isAdmin } = useRoleAuth({
+    requiredRole: "user", // Allow both admin and user
+    allowedRoles: ["admin", "user"]
+  });
   
   const [profileData, setProfileData] = useState({
     name: user?.name || "",
     email: user?.email || "",
     gender: user?.gender || "",
-    role: user?.role || "",
+    occupation: user?.occupation || "",
     target_field: user?.target_field || "",
-    target_companies: user?.target_companies?.join(", ") || "",
-    target_positions: user?.target_positions?.join(", ") || "",
+    target_companies: user?.target_companies || [], // Array instead of string
+    target_positions: user?.target_positions || [], // Array instead of string
     experience_level: user?.experience_level || "",
   });
 
-  const [isJobPreferencesModalOpen, setIsJobPreferencesModalOpen] =
-    useState(false);
+  const [isJobPreferencesModalOpen, setIsJobPreferencesModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [originalData, setOriginalData] = useState({
+    name: "",
+    email: "",
+    gender: "",
+    occupation: "",
+    target_field: "",
+    target_companies: [] as string[],
+    target_positions: [] as string[],
+    experience_level: "",
+  });
+
+  // Helper function to check if profile has changes
+  const hasChanges = () => {
+    return (
+      profileData.name !== originalData.name ||
+      profileData.gender !== originalData.gender ||
+      profileData.occupation !== originalData.occupation ||
+      profileData.target_field !== originalData.target_field ||
+      profileData.experience_level !== originalData.experience_level ||
+      JSON.stringify(profileData.target_companies) !== JSON.stringify(originalData.target_companies) ||
+      JSON.stringify(profileData.target_positions) !== JSON.stringify(originalData.target_positions)
+    );
+  };
+
+  // Helper function to capitalize gender for UI display
+  const capitalizeGender = (gender: string) => {
+    if (!gender) return "";
+    if (gender.toLowerCase() === "prefer not to say") return "Prefer not to say";
+    return gender.charAt(0).toUpperCase() + gender.slice(1).toLowerCase();
+  };
+
+  // Helper function to normalize gender for database storage
+  const normalizeGender = (gender: string) => {
+    if (!gender) return "";
+    if (gender === "Prefer not to say") return "prefer not to say";
+    return gender.toLowerCase();
+  };
 
   // Update profile data when user changes
   useEffect(() => {
-    console.log("🔄 Profile useEffect: User changed:", user);
     if (user) {
       const newProfileData = {
         name: user.name || "",
         email: user.email || "",
-        gender: user.gender || "",
-        role: user.role || "",
+        gender: capitalizeGender(user.gender || ""), // Capitalize for UI display
+        occupation: user.occupation || "",
         target_field: user.target_field || "",
-        target_companies: user.target_companies?.join(", ") || "",
-        target_positions: user.target_positions?.join(", ") || "",
+        target_companies: user.target_companies || [], // Keep as array
+        target_positions: user.target_positions || [], // Keep as array
         experience_level: user.experience_level || "",
       };
-      console.log("🔄 Profile useEffect: Setting new profile data:", newProfileData);
+      
       setProfileData(newProfileData);
-    } else {
-      console.log("🔄 Profile useEffect: No user, clearing profile data");
+      // Set original data to track changes
+      setOriginalData({
+        name: user.name || "",
+        email: user.email || "",
+        gender: capitalizeGender(user.gender || ""),
+        occupation: user.occupation || "",
+        target_field: user.target_field || "",
+        target_companies: user.target_companies || [],
+        target_positions: user.target_positions || [],
+        experience_level: user.experience_level || "",
+      });
     }
-  }, [user]);
+  }, [user, user?.target_field, user?.target_companies, user?.target_positions, user?.experience_level, user?.occupation, user?.gender]);
 
   const handleSaveProfile = async () => {
     if (!user) {
-      console.log("❌ handleSaveProfile: No user found, returning early");
       return;
     }
 
-    console.log("🚀 handleSaveProfile: Starting profile update");
-    console.log("📊 Current profileData:", profileData);
-    console.log("👤 Current user:", user);
+    setIsSaving(true); // Set saving state
 
     try {
-      // Prepare the data to be sent
+      // Prepare the data to be sent - create a clean copy
+      // Note: Temporarily excluding 'occupation' until database schema is updated
       const updateData = {
-        name: profileData.name,
-        gender: profileData.gender,
-        role: profileData.role,
-        target_field: profileData.target_field,
-        target_companies: profileData.target_companies
-          .split(",")
-          .map((c) => c.trim())
-          .filter(Boolean),
-        target_positions: profileData.target_positions
-          .split(",")
-          .map((p) => p.trim())
-          .filter(Boolean),
+        name: profileData.name?.trim(),
+        gender: normalizeGender(profileData.gender), // Normalize gender for database
+        occupation: profileData.occupation, 
+        target_field: profileData.target_field?.trim(),
+        target_companies: [...profileData.target_companies], // Create a fresh array copy
+        target_positions: [...profileData.target_positions], // Create a fresh array copy
         experience_level: profileData.experience_level,
       };
 
-      console.log("📤 handleSaveProfile: Sending update data:", updateData);
-
       const result = await updateProfile(updateData);
-      
-      console.log("✅ handleSaveProfile: updateProfile result:", result);
+
+      // Wait a moment for database to process, then refresh
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Force a profile refresh to ensure UI is updated with latest data
+      await refreshUserProfile();
+
+      // Wait another moment to ensure state updates
+      await new Promise(resolve => setTimeout(resolve, 200));
 
       toast({
         title: "Profile Updated!",
         description: "Your profile has been successfully updated.",
       });
-      
-      console.log("🎉 handleSaveProfile: Profile update completed successfully");
-    } catch (error) {
-      console.error("❌ handleSaveProfile: Error updating profile:", error);
-      console.error("❌ handleSaveProfile: Error details:", {
-        message: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
-        name: error instanceof Error ? error.name : 'Unknown'
+
+      // Reset original data after successful save
+      setOriginalData({
+        name: profileData.name,
+        email: profileData.email,
+        gender: profileData.gender,
+        occupation: profileData.occupation,
+        target_field: profileData.target_field,
+        target_companies: [...profileData.target_companies],
+        target_positions: [...profileData.target_positions],
+        experience_level: profileData.experience_level,
       });
-      
+    } catch (error) {
       toast({
         title: "Error",
         description: "Failed to update profile. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsSaving(false); // Reset saving state
     }
   };
 
@@ -126,17 +182,15 @@ export default function ProfilePage() {
     try {
       await uploadAvatar(file);
       toast({
-        title: "Avatar Updated!",
-        description: "Your profile picture has been successfully uploaded.",
+        title: "Avatar updated",
+        description: "Your avatar has been updated successfully.",
       });
     } catch (error) {
-      console.error("Error uploading avatar:", error);
       toast({
         title: "Error",
-        description: "Failed to upload avatar. Please try again.",
+        description: "Failed to update avatar. Please try again.",
         variant: "destructive",
       });
-      throw error;
     }
   };
 
@@ -144,311 +198,256 @@ export default function ProfilePage() {
     try {
       await removeAvatar();
       toast({
-        title: "Avatar Removed!",
-        description: "Your profile picture has been removed.",
+        title: "Avatar removed",
+        description: "Your avatar has been removed.",
       });
     } catch (error) {
-      console.error("Error removing avatar:", error);
       toast({
         title: "Error",
         description: "Failed to remove avatar. Please try again.",
         variant: "destructive",
       });
-      throw error;
     }
   };
 
-  if (!user) {
+  // Only render if authenticated
+  if (!isAuthenticated || !user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50/30 via-white to-purple-50/30 flex items-center justify-center p-4">
-        <div className="text-center space-y-4">
-          <User className="w-12 h-12 text-gray-400 mx-auto" />
-          <h2 className="text-xl font-semibold">Please Sign In</h2>
-          <p className="text-gray-600">
-            You need to sign in to view your profile.
-          </p>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading profile...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50/30 via-white to-purple-50/30 p-4">
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center space-x-3">
-          <Settings className="w-8 h-8 text-blue-600" />
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Profile Settings
-            </h1>
-            <p className="text-gray-600">
-              Manage your account information and preferences
-            </p>
-          </div>
+    <div className="container mx-auto p-6 max-w-4xl space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Profile Settings</h1>
+          <p className="text-gray-600">Manage your account settings and preferences</p>
         </div>
-
-                  <div className="grid gap-6 md:grid-cols-2">
-            {/* Profile Picture Section */}
-            <div className="md:col-span-1">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Camera className="w-5 h-5 text-blue-600" />
-                    <span>Profile Picture</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ProfileImageUpload
-                    currentAvatar={user.avatar}
-                    userName={user.name}
-                    onImageUpload={handleAvatarUpload}
-                    onImageRemove={handleAvatarRemove}
-                  />
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Account Information */}
-            <div className="md:col-span-1">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Account Information</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label>User ID</Label>
-                    <Input value={user.id} disabled className="bg-gray-50" />
-                  </div>
-
-                  <div>
-                    <Label>Role</Label>
-                    <Input value={user.role} disabled className="bg-gray-50" />
-                  </div>
-
-                  <div>
-                    <Label>Joined Date</Label>
-                    <Input
-                      value={new Date(user.joinedDate).toLocaleDateString()}
-                      disabled
-                      className="bg-gray-50"
-                    />
-                  </div>
-
-                  <Separator />
-
-                  <div className="text-sm text-gray-600">
-                    <p>
-                      <strong>Account Status:</strong> Active
-                    </p>
-                    <p>
-                      <strong>Last Login:</strong> {new Date().toLocaleString()}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+        {isAdmin && (
+          <div className="flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+            <Shield className="w-4 h-4" />
+            Admin Access
           </div>
+        )}
+      </div>
 
-          {/* Basic Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <User className="w-5 h-5 text-blue-600" />
-                <span>Basic Information</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="name">Full Name</Label>
-                <Input
-                  id="name"
-                  value={profileData.name}
-                  onChange={(e) =>
-                    setProfileData((prev) => ({
-                      ...prev,
-                      name: e.target.value,
-                    }))
-                  }
-                  placeholder="Enter your full name"
-                />
-              </div>
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Profile Image */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Camera className="w-5 h-5" />
+              Profile Picture
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <ProfileImageUpload
+              currentAvatar={user.avatar}
+              userName={user.name || ""}
+              onImageUpload={handleAvatarUpload}
+              onImageRemove={handleAvatarRemove}
+            />
+          </CardContent>
+        </Card>
 
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  value={profileData.email}
-                  disabled
-                  className="bg-gray-50"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Email cannot be changed
-                </p>
-              </div>
+        {/* Basic Information */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="w-5 h-5" />
+              Basic Information
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="name">Full Name</Label>
+              <Input
+                id="name"
+                value={profileData.name}
+                onChange={(e) => {
+                  setProfileData((prev) => ({
+                    ...prev,
+                    name: e.target.value,
+                  }))
+                }}
+                placeholder="Enter your full name"
+              />
+            </div>
 
-              <div>
-                <Label htmlFor="gender">Gender</Label>
-                <Select
-                  value={profileData.gender}
-                  onValueChange={(value) =>
-                    setProfileData((prev) => ({ ...prev, gender: value }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select gender" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="male">Male</SelectItem>
-                    <SelectItem value="female">Female</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                    <SelectItem value="prefer-not-to-say">
-                      Prefer not to say
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div>
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={profileData.email}
+                disabled
+                className="bg-gray-50"
+              />
+            </div>
 
-              <div>
-                <Label htmlFor="role">Role/Occupation</Label>
-                <Select
-                  value={profileData.role}
-                  onValueChange={(value) =>
-                    setProfileData((prev) => ({ ...prev, role: value }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select your role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Software Engineer">
-                      Software Engineer
-                    </SelectItem>
-                    <SelectItem value="Frontend Developer">
-                      Frontend Developer
-                    </SelectItem>
-                    <SelectItem value="Backend Developer">
-                      Backend Developer
-                    </SelectItem>
-                    <SelectItem value="Full Stack Developer">
-                      Full Stack Developer
-                    </SelectItem>
-                    <SelectItem value="Data Scientist">
-                      Data Scientist
-                    </SelectItem>
-                    <SelectItem value="Product Manager">
-                      Product Manager
-                    </SelectItem>
-                    <SelectItem value="UI/UX Designer">
-                      UI/UX Designer
-                    </SelectItem>
-                    <SelectItem value="DevOps Engineer">
-                      DevOps Engineer
-                    </SelectItem>
-                    <SelectItem value="QA Engineer">QA Engineer</SelectItem>
-                    <SelectItem value="Project Manager">
-                      Project Manager
-                    </SelectItem>
-                    <SelectItem value="Business Analyst">
-                      Business Analyst
-                    </SelectItem>
-                    <SelectItem value="Marketing Manager">
-                      Marketing Manager
-                    </SelectItem>
-                    <SelectItem value="Sales Representative">
-                      Sales Representative
-                    </SelectItem>
-                    <SelectItem value="Human Resources">
-                      Human Resources
-                    </SelectItem>
-                    <SelectItem value="Finance Analyst">
-                      Finance Analyst
-                    </SelectItem>
-                    <SelectItem value="Student">Student</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="target_field">Target Field/Industry</Label>
-                <Input
-                  id="target_field"
-                  value={profileData.target_field}
-                  onChange={(e) =>
-                    setProfileData((prev) => ({
-                      ...prev,
-                      target_field: e.target.value,
-                    }))
-                  }
-                  placeholder="e.g. Software Engineering, Data Science"
-                />
-              </div>
-              <div>
-                <Label htmlFor="target_companies">Target Companies</Label>
-                <Input
-                  id="target_companies"
-                  value={profileData.target_companies}
-                  onChange={(e) =>
-                    setProfileData((prev) => ({
-                      ...prev,
-                      target_companies: e.target.value,
-                    }))
-                  }
-                  placeholder="e.g. Google, Microsoft, Amazon (comma separated)"
-                />
-              </div>
-              <div>
-                <Label htmlFor="target_positions">Target Positions</Label>
-                <Input
-                  id="target_positions"
-                  value={profileData.target_positions}
-                  onChange={(e) =>
-                    setProfileData((prev) => ({
-                      ...prev,
-                      target_positions: e.target.value,
-                    }))
-                  }
-                  placeholder="e.g. Software Engineer, Data Analyst (comma separated)"
-                />
-              </div>
-              <div>
-                <Label htmlFor="experience_level">Experience Level</Label>
-                <Select
-                  value={profileData.experience_level}
-                  onValueChange={(value) =>
-                    setProfileData((prev) => ({
-                      ...prev,
-                      experience_level: value,
-                    }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select experience level" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Entry">Entry</SelectItem>
-                    <SelectItem value="Mid">Mid</SelectItem>
-                    <SelectItem value="Senior">Senior</SelectItem>
-                    <SelectItem value="Lead">Lead</SelectItem>
-                    <SelectItem value="Director">Director</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <Button
-                onClick={handleSaveProfile}
-                disabled={loading}
-                className="w-full"
+            <div>
+              <Label htmlFor="gender">Gender</Label>
+              <Select
+                value={profileData.gender}
+                onValueChange={(value) => {
+                  setProfileData((prev) => ({ ...prev, gender: value }))
+                }}
               >
-                <Save className="w-4 h-4 mr-2" />
-                {loading ? "Saving..." : "Save Changes"}
-              </Button>
-            </CardContent>
-          </Card>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select gender" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Male">Male</SelectItem>
+                  <SelectItem value="Female">Female</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                  <SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="userRole">Role</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="userRole"
+                  value={user.role || "user"}
+                  disabled
+                  className="bg-gray-50 capitalize"
+                />
+                <span className="text-sm text-gray-500">(Contact admin to change role)</span>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="occupation">Occupation</Label>
+              <Select
+                value={profileData.occupation}
+                onValueChange={(value) => {
+                  setProfileData((prev) => ({ ...prev, occupation: value }))
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select your occupation" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Software Engineer">Software Engineer</SelectItem>
+                  <SelectItem value="Frontend Developer">Frontend Developer</SelectItem>
+                  <SelectItem value="Backend Developer">Backend Developer</SelectItem>
+                  <SelectItem value="Full Stack Developer">Full Stack Developer</SelectItem>
+                  <SelectItem value="DevOps Engineer">DevOps Engineer</SelectItem>
+                  <SelectItem value="Data Scientist">Data Scientist</SelectItem>
+                  <SelectItem value="Data Analyst">Data Analyst</SelectItem>
+                  <SelectItem value="Product Manager">Product Manager</SelectItem>
+                  <SelectItem value="UI/UX Designer">UI/UX Designer</SelectItem>
+                  <SelectItem value="Marketing Manager">Marketing Manager</SelectItem>
+                  <SelectItem value="Sales Representative">Sales Representative</SelectItem>
+                  <SelectItem value="Business Analyst">Business Analyst</SelectItem>
+                  <SelectItem value="Project Manager">Project Manager</SelectItem>
+                  <SelectItem value="HR Manager">HR Manager</SelectItem>
+                  <SelectItem value="Finance Analyst">Finance Analyst</SelectItem>
+                  <SelectItem value="Customer Support">Customer Support</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Job Preferences */}
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Settings className="w-5 h-5" />
+              Job Search Preferences
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="target_field">Target Field/Industry</Label>
+              <Input
+                id="target_field"
+                value={profileData.target_field}
+                onChange={(e) =>
+                  setProfileData((prev) => ({
+                    ...prev,
+                    target_field: e.target.value,
+                  }))
+                }
+                placeholder="e.g. Software Engineering, Data Science"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="target_companies">Target Companies</Label>
+              <TagInput
+                tags={profileData.target_companies}
+                onTagsChange={(tags) => {
+                  setProfileData((prev) => ({
+                    ...prev,
+                    target_companies: tags,
+                  }))
+                }}
+                placeholder="e.g. Google, Microsoft, Amazon"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="target_positions">Target Positions</Label>
+              <TagInput
+                tags={profileData.target_positions}
+                onTagsChange={(tags) => {
+                  setProfileData((prev) => ({
+                    ...prev,
+                    target_positions: tags,
+                  }))
+                }}
+                placeholder="e.g. Software Engineer, Data Analyst"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="experience_level">Experience Level</Label>
+              <Select
+                value={profileData.experience_level}
+                onValueChange={(value) => {
+                  setProfileData((prev) => ({
+                    ...prev,
+                    experience_level: value,
+                  }))
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select experience level" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Entry">Entry</SelectItem>
+                  <SelectItem value="Mid">Mid</SelectItem>
+                  <SelectItem value="Senior">Senior</SelectItem>
+                  <SelectItem value="Lead">Lead</SelectItem>
+                  <SelectItem value="Director">Director</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button
+              onClick={handleSaveProfile}
+              disabled={loading || isSaving || !hasChanges()}
+              className="w-full"
+            >
+              <Save className="w-4 h-4 mr-2" />
+              {isSaving ? "Saving..." : "Save Changes"}
+            </Button>
+          </CardContent>
+        </Card>
 
         {/* Job Preferences Link */}
-        <Card>
+        <Card className="md:col-span-2">
           <CardContent className="p-6">
             <div className="text-center">
               <h3 className="text-lg font-semibold mb-2">Job Preferences</h3>

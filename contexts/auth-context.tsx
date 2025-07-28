@@ -97,24 +97,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data, error } = await supabase.from("user_profiles").select("*").eq("id", id).single();
 
     if (error && error.code !== "PGRST116") {
-      console.error("[Auth Debug] Error fetching user profile:", error);
+      console.error("Error fetching user profile:", error);
       return null;
     }
 
     if (data) {
-      console.log("[Auth Debug] Raw user profile data:", data);
       const profile = {
         id: data.id,
         name: data.full_name || data.email.split("@")[0],
         email: data.email,
         avatar: data.avatar_url,
-        role: data.role,
+        role: data.role || "user", // Default to "user" role if not set
+        occupation: data.occupation, // Separate occupation field
         joinedDate: data.joined_date,
         gender: data.gender,
         jobPreferences: data.job_preferences || defaultJobPreferences,
         resumeUrl: data.resume_url || null,
         atsScores: data.resume_scores || [],
         streaks: data.streaks || {},
+        // Map job preference fields from database
+        target_field: data.target_field,
+        target_companies: data.target_companies,
+        target_positions: data.target_positions,
+        experience_level: data.experience_level,
         // Map streak fields from DB columns to camelCase
         loginDates: data.login_dates || [],
         totalApplications: data.total_applications || 0,
@@ -122,9 +127,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         lastApplicationDate: data.last_application_date || null,
         jobsTracking: data.jobs_tracking || [],
       };
-      
-      console.log("[Auth Debug] Processed user profile:", profile);
-      console.log("[Auth Debug] ATS Scores:", profile.atsScores);
       
       return profile;
     }
@@ -161,7 +163,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: supabaseUser.email!,
         full_name: name || supabaseUser.user_metadata?.full_name || supabaseUser.email?.split("@")[0],
         avatar_url: supabaseUser.user_metadata?.avatar_url,
-        role: supabaseUser.user_metadata?.role || "User",
+        role: supabaseUser.user_metadata?.role || "user", // Default to "user" role for new accounts
         joined_date: new Date().toISOString().split("T")[0],
         job_preferences: preferences,
         ...(extraFields || {}),
@@ -185,13 +187,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Refactored: Only check Supabase session on mount and tab visibility change
   const initializeAuth = useCallback(async () => {
-    console.log("[Auth Debug] initializeAuth called");
     setLoading(true);
     let session;
     try {
       const { data } = await supabase.auth.getSession();
       session = data.session;
-      console.log("[Auth Debug] supabase.auth.getSession result:", session);
       if (session?.user) {
         setSupabaseUser(session.user);
         try {
@@ -200,7 +200,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUser(profile);
             setJobPreferences(profile.jobPreferences);
             setIsAuthenticated(true);
-            console.log("[Auth Debug] User profile loaded:", profile);
           } else {
             const newProfile = await createOrUpdateUserProfile(session.user, defaultJobPreferences);
             if (newProfile) {
@@ -210,18 +209,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 email: newProfile.email,
                 avatar: newProfile.avatar_url,
                 role: newProfile.role,
+                occupation: newProfile.occupation,
                 joinedDate: newProfile.joined_date,
                 gender: newProfile.gender,
                 jobPreferences: newProfile.job_preferences,
+                target_field: newProfile.target_field,
+                target_companies: newProfile.target_companies,
+                target_positions: newProfile.target_positions,
+                experience_level: newProfile.experience_level,
               };
               setUser(userProfile);
               setJobPreferences(newProfile.job_preferences);
               setIsAuthenticated(true);
-              console.log("[Auth Debug] New user profile created:", userProfile);
             }
           }
         } catch (profileError) {
-          console.error("[Auth Debug] Error fetching profile:", profileError);
+          console.error("Error fetching profile:", profileError);
         }
       } else {
         if (user !== null) {
@@ -230,10 +233,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsAuthenticated(false);
         setJobPreferences(defaultJobPreferences);
         setSupabaseUser(null);
-        console.log("[Auth Debug] No session found, user set to null");
       }
     } catch (error) {
-      console.error("[Auth Debug] Error in initializeAuth:", error);
+      console.error("Error in initializeAuth:", error);
       if (user !== null) {
         setUser(null);
       }
@@ -243,27 +245,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
       setIsInitialized(true);
-      console.log("[Auth Debug] setIsInitialized(true) called");
-      console.log("[Auth Debug] State after init:", {
-        user,
-        isAuthenticated,
-        loading,
-        isInitialized
-      });
     }
-  }, [fetchUserProfile, createOrUpdateUserProfile]);
+  }, [user, fetchUserProfile]);
 
   // Define refreshUserProfile before it's used in useEffect
   const refreshUserProfile = useCallback(async () => {
     if (!supabaseUser) {
-      console.log("[Auth Debug] No supabaseUser available for refresh");
       return;
     }
 
     // Check if session is still valid
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) {
-      console.log("[Auth Debug] Session expired during refresh");
       setIsAuthenticated(false);
       setUser(null);
       setSupabaseUser(null);
@@ -272,21 +265,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     setLoading(true);
     try {
-      console.log("[Auth Debug] Refreshing user profile for:", supabaseUser.id);
       const profile = await fetchUserProfile(supabaseUser.id);
       if (profile) {
-        console.log("[Auth Debug] Successfully refreshed profile:", profile);
         setUser(profile);
         setJobPreferences(profile.jobPreferences);
         setIsAuthenticated(true);
       } else {
-        console.log("[Auth Debug] No profile found during refresh");
         // If no profile found, user might have been deleted
         setIsAuthenticated(false);
         setUser(null);
       }
     } catch (error) {
-      console.error("[Auth Debug] Error refreshing user profile:", error);
+      console.error("Error refreshing user profile:", error);
       // Handle error silently but log it
     } finally {
       setLoading(false);
@@ -301,7 +291,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!isInitialized) return;
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("[Auth Debug] Auth state change:", event, session?.user?.id);
       setLoading(true);
       if (session?.user) {
         setSupabaseUser(session.user);
@@ -311,7 +300,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUser(profile);
             setJobPreferences(profile.jobPreferences);
             setIsAuthenticated(true);
-            console.log("[Auth Debug] User authenticated:", profile.name);
           } else {
             const newProfile = await createOrUpdateUserProfile(session.user, defaultJobPreferences);
             if (newProfile) {
@@ -321,18 +309,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 email: newProfile.email,
                 avatar: newProfile.avatar_url,
                 role: newProfile.role,
+                occupation: newProfile.occupation,
                 joinedDate: newProfile.joined_date,
                 gender: newProfile.gender,
                 jobPreferences: newProfile.job_preferences,
+                target_field: newProfile.target_field,
+                target_companies: newProfile.target_companies,
+                target_positions: newProfile.target_positions,
+                experience_level: newProfile.experience_level,
               };
               setUser(userProfile);
               setJobPreferences(newProfile.job_preferences);
               setIsAuthenticated(true);
-              console.log("[Auth Debug] New user created:", userProfile.name);
             }
           }
         } catch (error) {
-          console.error("[Auth Debug] Error in auth state change:", error);
+          console.error("Error in auth state change:", error);
           // Don't set authentication to false on error, just log it
         }
       } else {
@@ -341,7 +333,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsAuthenticated(false);
         setJobPreferences(defaultJobPreferences);
         setSupabaseUser(null);
-        console.log("[Auth Debug] User signed out");
       }
       setLoading(false);
     });
@@ -620,17 +611,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const updateProfile = async (updates: Partial<User> & { resumeUrl?: string; atsScores?: any[]; streaks?: any }) => {
+    console.log("[Profile Update Debug] Starting profile update with:", updates);
+    
     if (!user || !supabaseUser) {
+      console.error("[Profile Update Debug] Missing user or supabaseUser:", { user: !!user, supabaseUser: !!supabaseUser });
       return;
     }
 
+    console.log("[Profile Update Debug] Current user ID:", user.id);
     setLoading(true);
 
     const updatePayload: Record<string, unknown> = {
       full_name: updates.name,
       avatar_url: updates.avatar,
-      role: updates.role,
     };
+
+    // Handle role updates (admin/user) - should be restricted
+    if (updates.role !== undefined) {
+      updatePayload.role = updates.role;
+    }
+    
+    // Handle occupation updates (job title)
+    if (updates.occupation !== undefined) {
+      updatePayload.occupation = updates.occupation;
+    }
 
     if (updates.gender) {
       updatePayload.gender = updates.gender;
@@ -646,15 +650,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     if (updates.target_field !== undefined) {
       updatePayload.target_field = updates.target_field;
+      console.log("[Profile Update Debug] Setting target_field:", updates.target_field);
     }
     if (updates.target_companies !== undefined) {
       updatePayload.target_companies = updates.target_companies;
+      console.log("[Profile Update Debug] Setting target_companies:", updates.target_companies);
+      console.log("[Profile Update Debug] target_companies type:", Array.isArray(updates.target_companies) ? 'Array' : typeof updates.target_companies);
+      console.log("[Profile Update Debug] target_companies length:", updates.target_companies?.length);
     }
     if (updates.target_positions !== undefined) {
       updatePayload.target_positions = updates.target_positions;
+      console.log("[Profile Update Debug] Setting target_positions:", updates.target_positions);
+      console.log("[Profile Update Debug] target_positions type:", Array.isArray(updates.target_positions) ? 'Array' : typeof updates.target_positions);
+      console.log("[Profile Update Debug] target_positions length:", updates.target_positions?.length);
     }
     if (updates.experience_level !== undefined) {
       updatePayload.experience_level = updates.experience_level;
+      console.log("[Profile Update Debug] Setting experience_level:", updates.experience_level);
     }
     if (updates.currentStreak !== undefined) {
       updatePayload.current_streak = updates.currentStreak;
@@ -675,13 +687,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       updatePayload.last_application_date = updates.lastApplicationDate;
     }
 
+    console.log("[Profile Update Debug] Update payload being sent to database:", updatePayload);
+    console.log("[Profile Update Debug] Payload JSON stringify:", JSON.stringify(updatePayload, null, 2));
+
     const { data, error } = await supabase.from("user_profiles").update(updatePayload).eq("id", user.id).select();
 
+    console.log("[Profile Update Debug] Database response:", { data, error });
+    if (data && data.length > 0) {
+      console.log("[Profile Update Debug] Updated database record:", data[0]);
+      console.log("[Profile Update Debug] Database target_companies:", data[0].target_companies);
+      console.log("[Profile Update Debug] Database target_positions:", data[0].target_positions);
+      console.log("[Profile Update Debug] Database experience_level:", data[0].experience_level);
+    }
     setLoading(false);
 
-    if (!error && data && data[0]) {
-      setUser((prev) => (prev ? { ...prev, ...updates } : null));
+    if (error) {
+      console.error("[Profile Update Debug] Database update failed:", error);
+      return;
     }
+
+    if (!data || data.length === 0) {
+      console.error("[Profile Update Debug] No data returned from database update");
+      return;
+    }
+
+    console.log("[Profile Update Debug] Database update successful, refreshing user profile from database");
+    
+    // Instead of manually updating state, refresh the profile from database to ensure consistency
+    await refreshUserProfile();
+    console.log("[Profile Update Debug] Profile refresh completed");
   }
 
   const updateJobPreferences = async (preferences: JobPreferences) => {

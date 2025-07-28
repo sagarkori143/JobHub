@@ -30,6 +30,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Star,
+  Shield,
 } from "lucide-react"
 import { useState, useEffect } from "react"
 import { useAuth } from "@/contexts/auth-context"
@@ -39,7 +40,15 @@ import { JobPreferencesModal } from "@/components/job-preferences-modal"
 import { ReviewModal } from "@/components/review-modal"
 import { Skeleton } from "@/components/ui/skeleton"
 
-const navigationItems = [
+interface NavigationItem {
+  name: string
+  href: string
+  icon: any
+  color: string
+  adminOnly?: boolean
+}
+
+const navigationItems: NavigationItem[] = [
   { name: "Search Jobs", href: "/", icon: Search, color: "text-blue-600 bg-blue-100" },
   { name: "Main Dashboard", href: "/dashboard", icon: LayoutDashboard, color: "text-green-600 bg-green-100" },
   { name: "Applications Tracking", href: "/personal", icon: User, color: "text-purple-600 bg-purple-100" },
@@ -50,6 +59,13 @@ const navigationItems = [
     href: "/portal-stats",
     icon: BarChart,
     color: "text-blue-600 bg-blue-100"
+  },
+  {
+    name: "Admin Dashboard",
+    href: "/admin",
+    icon: Shield,
+    color: "text-red-600 bg-red-100",
+    adminOnly: true, // This item is only visible to admins
   },
   {
     name: "About",
@@ -145,7 +161,9 @@ export function Sidebar({}: SidebarProps) {
                     <h2 className="mb-2 px-2 text-lg font-semibold tracking-tight text-gray-700 transition-opacity duration-300">Navigation</h2>
                   )}
                   <div className="space-y-2">
-                    {navigationItems.map((item) => (
+                    {navigationItems
+                      .filter((item) => !item.adminOnly || (user && user.role === "admin"))
+                      .map((item) => (
                       <Button
                         key={item.name}
                         variant="ghost"
@@ -227,7 +245,7 @@ export function Sidebar({}: SidebarProps) {
                       <div className="text-left min-w-0 flex-1">
                         <p className="text-sm font-medium text-gray-800 truncate">{user.name}</p>
                         <p className="text-xs text-gray-500 truncate">
-                          {user.role && user.role !== "User" ? user.role : "Please select role"}
+                          {user.role && user.role !== "user" ? user.role : "Please select role"}
                         </p>
                       </div>
                     )}
@@ -240,7 +258,7 @@ export function Sidebar({}: SidebarProps) {
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium truncate">{user.name}</p>
                     <p className="text-xs text-gray-500 truncate">
-                      {user.role && user.role !== "User" ? user.role : "Please select role"}
+                      {user.role && user.role !== "user" ? user.role : "Please select role"}
                     </p>
                   </div>
                 </div>

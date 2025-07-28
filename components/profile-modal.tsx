@@ -23,16 +23,30 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
   const { toast } = useToast()
   const [name, setName] = useState(user?.name || "")
   const [email, setEmail] = useState(user?.email || "")
-  const [role, setRole] = useState(user?.role || "")
+  const [occupation, setOccupation] = useState(user?.occupation || "")
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    updateProfile({ name, email, role })
-    toast({
-      title: "Profile updated",
-      description: "Your profile has been successfully updated.",
-    })
-    onClose()
+    console.log("[Profile Modal Debug] Form submitted with data:", { name, email, occupation });
+    console.log("[Profile Modal Debug] Current user before update:", user);
+    
+    updateProfile({ name, email, occupation })
+      .then(() => {
+        console.log("[Profile Modal Debug] Update profile promise resolved");
+        toast({
+          title: "Profile updated",
+          description: "Your profile has been successfully updated.",
+        })
+        onClose()
+      })
+      .catch((error) => {
+        console.error("[Profile Modal Debug] Update profile promise rejected:", error);
+        toast({
+          title: "Update failed",
+          description: "Failed to update profile. Please try again.",
+          variant: "destructive",
+        })
+      });
   }
 
   if (!user) return null
@@ -71,14 +85,14 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
             <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
           </div>
           <div>
-            <Label htmlFor="role" className="flex items-center gap-2">
+            <Label htmlFor="occupation" className="flex items-center gap-2">
               <Briefcase className="w-4 h-4" />
-              Current Role
+              Current Occupation
             </Label>
             <Input
-              id="role"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
+              id="occupation"
+              value={occupation}
+              onChange={(e) => setOccupation(e.target.value)}
               placeholder="e.g., Software Engineer"
             />
           </div>

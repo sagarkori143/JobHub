@@ -52,12 +52,34 @@ export interface JobFilters {
   industry: string
 }
 
+export type UserRole = "admin" | "user"
+
+export type OccupationType = 
+  | "Software Engineer"
+  | "Frontend Developer" 
+  | "Backend Developer"
+  | "Full Stack Developer"
+  | "DevOps Engineer"
+  | "Data Scientist"
+  | "Data Analyst"
+  | "Product Manager"
+  | "UI/UX Designer"
+  | "Marketing Manager"
+  | "Sales Representative"
+  | "Business Analyst"
+  | "Project Manager"
+  | "HR Manager"
+  | "Finance Analyst"
+  | "Customer Support"
+  | "Other"
+
 export interface User {
   id: string
   name: string
   email: string
   avatar?: string | null
-  role: string
+  role: UserRole // Changed to UserRole type for access control
+  occupation?: OccupationType | string // Separate field for job title
   joinedDate: string
   gender?: string // Added gender field
   // New fields for personalized resume scoring
