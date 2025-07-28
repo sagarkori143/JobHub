@@ -48,6 +48,7 @@ export default function JobSearchPage() {
   const [lastUpdated, setLastUpdated] = useState<string | null>(null)
   const [metadata, setMetadata] = useState<any>(null)
   const [countdown, setCountdown] = useState<string>("")
+  const [error, setError] = useState<string | null>(null)
   const { toast } = useToast()
   const { user, supabaseUser } = useAuth()
   
@@ -59,8 +60,6 @@ export default function JobSearchPage() {
   useEffect(() => {
     loadJobs()
   }, [])
-
-
 
   // Initialize countdown timer (runs only when metadata or lastUpdated changes)
   useEffect(() => {
@@ -82,22 +81,27 @@ export default function JobSearchPage() {
             
             // Start countdown timer
             const updateCountdown = () => {
-              const now = new Date()
-              const diff = nextUpdateTimeRef.current!.getTime() - now.getTime()
-              
-              if (diff <= 0) {
-                // Countdown finished, check for new data
-                setCountdown("Checking for updates...")
-                loadJobs() // Reload to check for new data
+              try {
+                const now = new Date()
+                const diff = nextUpdateTimeRef.current!.getTime() - now.getTime()
                 
-                // Reset countdown for next cycle (2 hours from now)
-                const newNextUpdate = new Date(now.getTime() + SYNC_INTERVAL_MS)
-                nextUpdateTimeRef.current = newNextUpdate
-              } else {
-                const hours = Math.floor(diff / (1000 * 60 * 60))
-                const minutes = Math.floor((diff / (1000 * 60)) % 60)
-                const seconds = Math.floor((diff / 1000) % 60)
-                setCountdown(`${hours}h ${minutes}m ${seconds}s`)
+                if (diff <= 0) {
+                  // Countdown finished, check for new data
+                  setCountdown("Checking for updates...")
+                  loadJobs() // Reload to check for new data
+                  
+                  // Reset countdown for next cycle (2 hours from now)
+                  const newNextUpdate = new Date(now.getTime() + SYNC_INTERVAL_MS)
+                  nextUpdateTimeRef.current = newNextUpdate
+                } else {
+                  const hours = Math.floor(diff / (1000 * 60 * 60))
+                  const minutes = Math.floor((diff / (1000 * 60)) % 60)
+                  const seconds = Math.floor((diff / 1000) % 60)
+                  setCountdown(`${hours}h ${minutes}m ${seconds}s`)
+                }
+              } catch (error) {
+                console.error('Error updating countdown:', error)
+                setCountdown("")
               }
             }
 
@@ -126,8 +130,15 @@ export default function JobSearchPage() {
 
   const loadJobs = async () => {
     setIsLoading(true)
+    setError(null)
     try {
       const jobs = await jobDataService.loadJobs()
+      
+      // Validate jobs data
+      if (!Array.isArray(jobs)) {
+        throw new Error('Invalid jobs data received')
+      }
+      
       setAllJobs(jobs)
 
       const metadata = jobDataService.getMetadata()
@@ -136,6 +147,7 @@ export default function JobSearchPage() {
 
     } catch (error) {
       console.error("Error loading jobs:", error)
+      setError("Failed to load job data. Please try again.")
       toast({
         title: "Error Loading Jobs",
         description: "Failed to load job data. Please try again.",
@@ -147,43 +159,56 @@ export default function JobSearchPage() {
   }
 
   const filteredJobs = useMemo(() => {
-    return allJobs.filter((job) => {
-      // Search filter
-      if (
-        filters.search &&
-        !job.title.toLowerCase().includes(filters.search.toLowerCase()) &&
-        !job.company.toLowerCase().includes(filters.search.toLowerCase())
-      ) {
-        return false
-      }
+    try {
+      return allJobs.filter((job) => {
+        // Validate job object
+        if (!job || typeof job !== 'object') {
+          console.warn('Invalid job object found:', job)
+          return false
+        }
 
-      // Location filter
-      if (filters.location && !job.location.toLowerCase().includes(filters.location.toLowerCase())) {
-        return false
-      }
+        // Search filter
+        if (
+          filters.search &&
+          job.title &&
+          job.company &&
+          !job.title.toLowerCase().includes(filters.search.toLowerCase()) &&
+          !job.company.toLowerCase().includes(filters.search.toLowerCase())
+        ) {
+          return false
+        }
 
-      // Job type filter
-      if (filters.jobType !== "all" && job.type !== filters.jobType) {
-        return false
-      }
+        // Location filter
+        if (filters.location && job.location && !job.location.toLowerCase().includes(filters.location.toLowerCase())) {
+          return false
+        }
 
-      // Experience level filter
-      if (filters.experienceLevel !== "all" && job.experienceLevel !== filters.experienceLevel) {
-        return false
-      }
+        // Job type filter
+        if (filters.jobType !== "all" && job.type !== filters.jobType) {
+          return false
+        }
 
-      // Industry filter
-      if (filters.industry !== "all" && job.industry !== filters.industry) {
-        return false
-      }
+        // Experience level filter
+        if (filters.experienceLevel !== "all" && job.experienceLevel !== filters.experienceLevel) {
+          return false
+        }
 
-      // Remote filter
-      if (filters.remote && !job.remote) {
-        return false
-      }
+        // Industry filter
+        if (filters.industry !== "all" && job.industry !== filters.industry) {
+          return false
+        }
 
-      return true
-    })
+        // Remote filter
+        if (filters.remote && !job.remote) {
+          return false
+        }
+
+        return true
+      })
+    } catch (error) {
+      console.error('Error filtering jobs:', error)
+      return []
+    }
   }, [filters, allJobs])
 
   // Pagination logic
@@ -198,17 +223,33 @@ export default function JobSearchPage() {
 
   // Memoize handler functions
   const handleViewDetails = useCallback((job: JobListing) => {
-    setSelectedJob(job)
-    setIsModalOpen(true)
+    try {
+      if (!job || !job.id) {
+        console.error('Invalid job object for view details:', job)
+        return
+      }
+      setSelectedJob(job)
+      setIsModalOpen(true)
+    } catch (error) {
+      console.error('Error handling view details:', error)
+    }
   }, [])
 
   const handleApply = useCallback((job: JobListing) => {
-    toast({
-      title: "ℹ️ Application Link Not Available",
-      description: `The application link for ${job.title} at ${job.company} has not been updated yet. Please stay tuned for updates!`,
-      duration: 5000,
-      className: "bg-blue-50 border-blue-300 text-blue-900",
-    })
+    try {
+      if (!job || !job.title || !job.company) {
+        console.error('Invalid job object for apply:', job)
+        return
+      }
+      toast({
+        title: "ℹ️ Application Link Not Available",
+        description: `The application link for ${job.title} at ${job.company} has not been updated yet. Please stay tuned for updates!`,
+        duration: 5000,
+        className: "bg-blue-50 border-blue-300 text-blue-900",
+      })
+    } catch (error) {
+      console.error('Error handling apply:', error)
+    }
   }, [toast])
 
   const handleAddToPersonal = async (job: Omit<Job, "id">) => {
@@ -222,6 +263,11 @@ export default function JobSearchPage() {
     }
 
     try {
+      // Validate job data before inserting
+      if (!job.company || !job.position) {
+        throw new Error('Invalid job data')
+      }
+
       const { data, error } = await supabase
         .from("user_job_applications")
         .insert({
@@ -259,6 +305,25 @@ export default function JobSearchPage() {
         variant: "destructive",
       })
     }
+  }
+
+  // Error state
+  if (error && !isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50/30 via-white to-purple-50/30 flex items-center justify-center p-4">
+        <div className="text-center space-y-4 max-w-md">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
+          <h2 className="text-xl font-semibold text-red-600">Something went wrong</h2>
+          <p className="text-gray-600">{error}</p>
+          <button
+            onClick={loadJobs}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    )
   }
 
   if (isLoading) {
@@ -352,7 +417,12 @@ export default function JobSearchPage() {
 
           <div className="space-y-6">
             {paginatedJobs.map((job) => (
-              <JobListingCard key={job.id} job={job} onViewDetails={handleViewDetails} onApply={handleApply} />
+              <JobListingCard 
+                key={job.id} 
+                job={job} 
+                onViewDetails={handleViewDetails} 
+                onApply={handleApply} 
+              />
             ))}
           </div>
 

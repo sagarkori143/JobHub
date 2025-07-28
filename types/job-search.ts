@@ -1,4 +1,4 @@
-import type { JobType } from "./job"
+export type JobType = "Full-time" | "Part-time" | "Contract" | "Internship"
 
 export type JobStatus = "Applied" | "Interviewing" | "Offer" | "Rejected" | "Wishlist"
 

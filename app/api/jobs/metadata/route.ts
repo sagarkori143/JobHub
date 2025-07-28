@@ -25,7 +25,7 @@ export async function GET() {
     const lastUpdated = summary?.syncSession?.endTime || null
     // Sum all jobs from all companies
     const totalJobs = Array.isArray(summary?.results)
-      ? summary.results.reduce((sum, r) => sum + (r.total || 0), 0)
+      ? summary.results.reduce((sum: number, r: any) => sum + (r.total || 0), 0)
       : 0
     const hasData = totalJobs > 0
 

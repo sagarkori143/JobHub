@@ -38,7 +38,7 @@ export default function PersonalDashboard() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
   const [loadingJobs, setLoadingJobs] = useState(true)
 
-  const { user, isAuthenticated, loading: authLoading, addTrackedJob, updateTrackedJob, removeTrackedJob } = useAuth()
+  const { user, isAuthenticated, loading: authLoading, isInitialized, addTrackedJob, updateTrackedJob, removeTrackedJob } = useAuth()
   const { toast } = useToast()
 
   // Use jobsTracking from user context
@@ -61,10 +61,21 @@ export default function PersonalDashboard() {
     }
   }, [authLoading, fetchJobs])
 
+  // Wait for auth context to be initialized before rendering
+  if (!isInitialized) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center">
+        <p>Loading your dashboard...</p>
+        <p>If it is taking too long, try refreshing the page!</p>
+      </div>
+    )
+  }
+
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex flex-col items-center justify-center">
         <p>Loading your dashboard...</p>
+        <p>If it is taking too long, try refreshing the page!</p>
       </div>
     )
   }

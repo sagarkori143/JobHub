@@ -180,11 +180,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Refactored: Only check Supabase session on mount and tab visibility change
   const initializeAuth = useCallback(async () => {
+    console.log("[Auth Debug] initializeAuth called");
     setLoading(true);
     let session;
     try {
       const { data } = await supabase.auth.getSession();
       session = data.session;
+      console.log("[Auth Debug] supabase.auth.getSession result:", session);
       if (session?.user) {
         setSupabaseUser(session.user);
         try {
@@ -193,6 +195,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUser(profile);
             setJobPreferences(profile.jobPreferences);
             setIsAuthenticated(true);
+            console.log("[Auth Debug] User profile loaded:", profile);
           } else {
             const newProfile = await createOrUpdateUserProfile(session.user, defaultJobPreferences);
             if (newProfile) {
@@ -209,6 +212,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               setUser(userProfile);
               setJobPreferences(newProfile.job_preferences);
               setIsAuthenticated(true);
+              console.log("[Auth Debug] New user profile created:", userProfile);
             }
           }
         } catch (profileError) {
@@ -221,6 +225,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsAuthenticated(false);
         setJobPreferences(defaultJobPreferences);
         setSupabaseUser(null);
+        console.log("[Auth Debug] No session found, user set to null");
       }
     } catch (error) {
       console.error("[Auth Debug] Error in initializeAuth:", error);
@@ -233,6 +238,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
       setIsInitialized(true);
+      console.log("[Auth Debug] setIsInitialized(true) called");
+      console.log("[Auth Debug] State after init:", {
+        user,
+        isAuthenticated,
+        loading,
+        isInitialized
+      });
     }
   }, [fetchUserProfile, createOrUpdateUserProfile]);
 

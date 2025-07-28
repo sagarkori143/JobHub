@@ -26,6 +26,8 @@ import {
   Bug,
   BarChart,
   Info,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react"
 import { useState, useEffect } from "react"
 import { useAuth } from "@/contexts/auth-context"
@@ -64,31 +66,81 @@ export function Sidebar({}: SidebarProps) {
   const { user, isAuthenticated, logout, loading, isInitialized } = useAuth()
   const profileVisible = isAuthenticated && !!user
 
- 
+  // Initialize collapsed state to prevent hydration mismatch
+  const [isCollapsed, setIsCollapsed] = useState(false)
+  const [isClient, setIsClient] = useState(false)
+
+  // Set client flag after hydration
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+
+  // Load collapsed state from localStorage after hydration
+  useEffect(() => {
+    if (isClient) {
+      const savedState = localStorage.getItem('sidebar-collapsed')
+      if (savedState === 'true') {
+        setIsCollapsed(true)
+      }
+    }
+  }, [isClient])
+
+  // Save collapsed state to localStorage
+  useEffect(() => {
+    if (isClient) {
+      localStorage.setItem('sidebar-collapsed', isCollapsed.toString())
+    }
+  }, [isCollapsed, isClient])
+
   const handleLogout = () => {
     logout()
   }
 
-  const [isCollapsed, setIsCollapsed] = useState(false)
+  const toggleCollapse = () => {
+    setIsCollapsed(!isCollapsed)
+  }
+
+  const handleHeaderClick = (e: React.MouseEvent) => {
+    // Only toggle if clicking on the header background, not on buttons or links
+    if (e.target === e.currentTarget || (e.target as HTMLElement).closest('button') || (e.target as HTMLElement).closest('a')) {
+      return
+    }
+    toggleCollapse()
+  }
 
   return (
     <>
       <div
-        className={`flex h-screen flex-col border-r bg-gradient-to-b from-slate-50 to-white shadow-lg w-64 dark:from-gray-800 dark:to-gray-900`}
+        className={`flex h-screen flex-col border-r bg-gradient-to-b from-slate-50 to-white shadow-lg transition-all duration-300 ${
+          isCollapsed ? 'w-16' : 'w-64'
+        } dark:from-gray-800 dark:to-gray-900`}
       >
-        {/* Header - Fixed */}
-        <div className="flex h-[60px] items-center border-b px-4 bg-gradient-to-r from-blue-500 to-purple-600 flex-shrink-0">
+        {/* Header - Fixed with click handler */}
+        <div 
+          className="flex h-[60px] items-center border-b px-4 bg-gradient-to-r from-blue-500 to-purple-600 flex-shrink-0 cursor-pointer hover:from-blue-600 hover:to-purple-700 transition-colors duration-200"
+          onClick={handleHeaderClick}
+        >
           <Link className="flex items-center gap-2 font-semibold text-white" href="/">
-            <Briefcase className="h-6 w-6" />
-            <span className="text-lg">JobHub</span>
+            <Briefcase className="h-6 w-6 flex-shrink-0" />
+            {!isCollapsed && <span className="text-lg">JobHub</span>}
           </Link>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleCollapse}
+            className="ml-auto text-white hover:bg-white/20"
+          >
+            {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          </Button>
         </div>
 
         {/* Navigation - Scrollable only if needed */}
         <div className="flex-1 overflow-y-auto">
           <div className="space-y-4 py-4 px-2">
             <div>
-              <h2 className="mb-2 px-2 text-lg font-semibold tracking-tight text-gray-700">Navigation</h2>
+              {!isCollapsed && (
+                <h2 className="mb-2 px-2 text-lg font-semibold tracking-tight text-gray-700">Navigation</h2>
+              )}
               <div className="space-y-2">
                 {navigationItems.map((item) => (
                   <Button
@@ -96,12 +148,12 @@ export function Sidebar({}: SidebarProps) {
                     variant="ghost"
                     className={`w-full justify-start h-12 transition-all duration-200 hover:scale-105 ${
                       pathname === item.href ? `${item.color} shadow-md` : "hover:bg-gray-100 text-gray-600"
-                    }`}
+                    } ${isCollapsed ? 'justify-center px-2' : ''}`}
                     asChild
                   >
-                    <Link href={item.href}>
-                      <item.icon className="h-5 w-5" />
-                      <span className="ml-3">{item.name}</span>
+                    <Link href={item.href} title={isCollapsed ? item.name : undefined}>
+                      <item.icon className="h-5 w-5 flex-shrink-0" />
+                      {!isCollapsed && <span className="ml-3">{item.name}</span>}
                     </Link>
                   </Button>
                 ))}
@@ -115,15 +167,19 @@ export function Sidebar({}: SidebarProps) {
           {profileVisible ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className={`w-full justify-start h-12 hover:bg-white/50`}>
-                  <div className={`flex items-center gap-3`}>
+                <Button variant="ghost" className={`w-full justify-start h-12 hover:bg-white/50 ${
+                  isCollapsed ? 'justify-center px-2' : ''
+                }`}>
+                  <div className={`flex items-center gap-3 ${isCollapsed ? 'justify-center' : ''}`}>
                     <UserAvatar user={user} size="md" className="ring-2 ring-blue-200 flex-shrink-0" />
-                    <div className="text-left min-w-0 flex-1">
-                      <p className="text-sm font-medium text-gray-800 truncate">{user.name}</p>
-                      <p className="text-xs text-gray-500 truncate">
-                        {user.role && user.role !== "User" ? user.role : "Please select role"}
-                      </p>
-                    </div>
+                    {!isCollapsed && (
+                      <div className="text-left min-w-0 flex-1">
+                        <p className="text-sm font-medium text-gray-800 truncate">{user.name}</p>
+                        <p className="text-xs text-gray-500 truncate">
+                          {user.role && user.role !== "User" ? user.role : "Please select role"}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </Button>
               </DropdownMenuTrigger>
@@ -160,19 +216,23 @@ export function Sidebar({}: SidebarProps) {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : loading ? (
-            <div className="flex items-center gap-3">
+            <div className={`flex items-center gap-3 ${isCollapsed ? 'justify-center' : ''}`}>
               <Skeleton className="w-10 h-10 rounded-full" />
-              <div className="flex flex-col gap-1 flex-1 min-w-0">
-                <Skeleton className="h-4 w-24 rounded" />
-                <Skeleton className="h-3 w-16 rounded" />
-              </div>
+              {!isCollapsed && (
+                <div className="flex flex-col gap-1 flex-1 min-w-0">
+                  <Skeleton className="h-4 w-24 rounded" />
+                  <Skeleton className="h-3 w-16 rounded" />
+                </div>
+              )}
             </div>
           ) : (
             <Button
               onClick={() => setIsLoginModalOpen(true)}
-              className={`w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white`}
+              className={`w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white ${
+                isCollapsed ? 'justify-center px-2' : ''
+              }`}
             >
-              Sign In
+              {!isCollapsed ? 'Sign In' : <User className="h-5 w-5" />}
             </Button>
           )}
         </div>
