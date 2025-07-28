@@ -46,36 +46,36 @@ export default function ProfilePage() {
     gender: user?.gender || "",
     occupation: user?.occupation || "",
     target_field: user?.target_field || "",
-    target_companies: user?.target_companies || [], // Array instead of string
-    target_positions: user?.target_positions || [], // Array instead of string
     experience_level: user?.experience_level || "",
   });
 
+  // Separate state for managing tag arrays locally
+  const [localTargetCompanies, setLocalTargetCompanies] = useState<string[]>([]);
+  const [localTargetPositions, setLocalTargetPositions] = useState<string[]>([]);
+
   const [isJobPreferencesModalOpen, setIsJobPreferencesModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [originalData, setOriginalData] = useState({
-    name: "",
-    email: "",
-    gender: "",
-    occupation: "",
-    target_field: "",
-    target_companies: [] as string[],
-    target_positions: [] as string[],
-    experience_level: "",
-  });
 
-  // Helper function to check if profile has changes
-  const hasChanges = () => {
-    return (
-      profileData.name !== originalData.name ||
-      profileData.gender !== originalData.gender ||
-      profileData.occupation !== originalData.occupation ||
-      profileData.target_field !== originalData.target_field ||
-      profileData.experience_level !== originalData.experience_level ||
-      JSON.stringify(profileData.target_companies) !== JSON.stringify(originalData.target_companies) ||
-      JSON.stringify(profileData.target_positions) !== JSON.stringify(originalData.target_positions)
-    );
-  };
+  // Load initial data from database when user is available
+  useEffect(() => {
+    if (user) {
+      // Set profile data fields
+      setProfileData({
+        name: user.name || "",
+        email: user.email || "",
+        gender: capitalizeGender(user.gender || ""),
+        occupation: user.occupation || "",
+        target_field: user.target_field || "",
+        experience_level: user.experience_level || "",
+      });
+
+      // Set local arrays for tags
+      setLocalTargetCompanies(user.target_companies || []);
+      setLocalTargetPositions(user.target_positions || []);
+    }
+  }, [user?.id]); // Only depend on user.id to avoid infinite loops
+
+
 
   // Helper function to capitalize gender for UI display
   const capitalizeGender = (gender: string) => {
@@ -91,81 +91,31 @@ export default function ProfilePage() {
     return gender.toLowerCase();
   };
 
-  // Update profile data when user changes
-  useEffect(() => {
-    if (user) {
-      const newProfileData = {
-        name: user.name || "",
-        email: user.email || "",
-        gender: capitalizeGender(user.gender || ""), // Capitalize for UI display
-        occupation: user.occupation || "",
-        target_field: user.target_field || "",
-        target_companies: user.target_companies || [], // Keep as array
-        target_positions: user.target_positions || [], // Keep as array
-        experience_level: user.experience_level || "",
-      };
-      
-      setProfileData(newProfileData);
-      // Set original data to track changes
-      setOriginalData({
-        name: user.name || "",
-        email: user.email || "",
-        gender: capitalizeGender(user.gender || ""),
-        occupation: user.occupation || "",
-        target_field: user.target_field || "",
-        target_companies: user.target_companies || [],
-        target_positions: user.target_positions || [],
-        experience_level: user.experience_level || "",
-      });
-    }
-  }, [user, user?.target_field, user?.target_companies, user?.target_positions, user?.experience_level, user?.occupation, user?.gender]);
+
 
   const handleSaveProfile = async () => {
     if (!user) {
       return;
     }
 
-    setIsSaving(true); // Set saving state
+    setIsSaving(true);
 
     try {
-      // Prepare the data to be sent - create a clean copy
-      // Note: Temporarily excluding 'occupation' until database schema is updated
       const updateData = {
         name: profileData.name?.trim(),
-        gender: normalizeGender(profileData.gender), // Normalize gender for database
+        gender: normalizeGender(profileData.gender),
         occupation: profileData.occupation, 
         target_field: profileData.target_field?.trim(),
-        target_companies: [...profileData.target_companies], // Create a fresh array copy
-        target_positions: [...profileData.target_positions], // Create a fresh array copy
+        target_companies: [...localTargetCompanies],
+        target_positions: [...localTargetPositions],
         experience_level: profileData.experience_level,
       };
 
-      const result = await updateProfile(updateData);
-
-      // Wait a moment for database to process, then refresh
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Force a profile refresh to ensure UI is updated with latest data
-      await refreshUserProfile();
-
-      // Wait another moment to ensure state updates
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await updateProfile(updateData);
 
       toast({
         title: "Profile Updated!",
         description: "Your profile has been successfully updated.",
-      });
-
-      // Reset original data after successful save
-      setOriginalData({
-        name: profileData.name,
-        email: profileData.email,
-        gender: profileData.gender,
-        occupation: profileData.occupation,
-        target_field: profileData.target_field,
-        target_companies: [...profileData.target_companies],
-        target_positions: [...profileData.target_positions],
-        experience_level: profileData.experience_level,
       });
     } catch (error) {
       toast({
@@ -174,7 +124,7 @@ export default function ProfilePage() {
         variant: "destructive",
       });
     } finally {
-      setIsSaving(false); // Reset saving state
+      setIsSaving(false);
     }
   };
 
@@ -386,13 +336,8 @@ export default function ProfilePage() {
             <div>
               <Label htmlFor="target_companies">Target Companies</Label>
               <TagInput
-                tags={profileData.target_companies}
-                onTagsChange={(tags) => {
-                  setProfileData((prev) => ({
-                    ...prev,
-                    target_companies: tags,
-                  }))
-                }}
+                tags={localTargetCompanies}
+                onTagsChange={setLocalTargetCompanies}
                 placeholder="e.g. Google, Microsoft, Amazon"
               />
             </div>
@@ -400,13 +345,8 @@ export default function ProfilePage() {
             <div>
               <Label htmlFor="target_positions">Target Positions</Label>
               <TagInput
-                tags={profileData.target_positions}
-                onTagsChange={(tags) => {
-                  setProfileData((prev) => ({
-                    ...prev,
-                    target_positions: tags,
-                  }))
-                }}
+                tags={localTargetPositions}
+                onTagsChange={setLocalTargetPositions}
                 placeholder="e.g. Software Engineer, Data Analyst"
               />
             </div>
@@ -437,7 +377,7 @@ export default function ProfilePage() {
 
             <Button
               onClick={handleSaveProfile}
-              disabled={loading || isSaving || !hasChanges()}
+              disabled={isSaving}
               className="w-full"
             >
               <Save className="w-4 h-4 mr-2" />

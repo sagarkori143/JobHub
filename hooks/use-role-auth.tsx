@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
 import { UserRole } from "@/types/job-search"
@@ -19,52 +19,39 @@ export function useRoleAuth(options: UseRoleAuthOptions) {
 
   const { requiredRole, redirectTo = "/", allowedRoles } = options
 
-  useEffect(() => {
-    // Wait for auth to initialize
-    if (!isInitialized || loading) {
-      return
+  // Memoize the access check logic to prevent unnecessary recalculations
+  const accessCheckResult = useMemo(() => {
+    if (!isInitialized || loading || !isAuthenticated || !user) {
+      return { shouldRedirect: !isAuthenticated && isInitialized && !loading, hasAccess: false }
     }
 
-    console.log("[Role Auth Debug] Checking access:", {
-      isAuthenticated,
-      userRole: user?.role,
-      requiredRole,
-      allowedRoles
-    })
-
-    // If not authenticated, redirect
-    if (!isAuthenticated || !user) {
-      console.log("[Role Auth Debug] User not authenticated, redirecting to:", redirectTo)
-      setHasAccess(false)
-      setIsChecking(false)
-      router.push(redirectTo)
-      return
-    }
-
-    // Check role-based access
     let userHasAccess = false
-
     if (allowedRoles) {
-      // Check if user role is in allowed roles array
       userHasAccess = allowedRoles.includes(user.role as UserRole)
     } else {
-      // Check specific required role
       userHasAccess = user.role === requiredRole
     }
 
-    console.log("[Role Auth Debug] Access check result:", userHasAccess)
+    return { shouldRedirect: !userHasAccess, hasAccess: userHasAccess }
+  }, [isInitialized, loading, isAuthenticated, user?.role, requiredRole, allowedRoles])
 
-    if (!userHasAccess) {
-      console.log("[Role Auth Debug] Access denied, redirecting to:", redirectTo)
+  useEffect(() => {
+    // Only run when auth is initialized and not loading
+    if (!isInitialized || loading) {
+      setIsChecking(true)
+      return
+    }
+
+    if (accessCheckResult.shouldRedirect) {
       setHasAccess(false)
       setIsChecking(false)
       router.push(redirectTo)
       return
     }
 
-    setHasAccess(true)
+    setHasAccess(accessCheckResult.hasAccess)
     setIsChecking(false)
-  }, [isAuthenticated, user, loading, isInitialized, requiredRole, allowedRoles, redirectTo, router])
+  }, [accessCheckResult, redirectTo, router, isInitialized, loading])
 
   return {
     hasAccess,

@@ -18,6 +18,7 @@ export function TagInput({ tags, onTagsChange, placeholder, className }: TagInpu
 
   const addTag = (value: string) => {
     const trimmedValue = value.trim();
+    
     if (trimmedValue && !tags.includes(trimmedValue)) {
       const newTags = [...tags, trimmedValue];
       onTagsChange(newTags);
