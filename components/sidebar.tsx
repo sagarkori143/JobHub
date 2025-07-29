@@ -245,7 +245,7 @@ export function Sidebar({}: SidebarProps) {
                       <div className="text-left min-w-0 flex-1">
                         <p className="text-sm font-medium text-gray-800 truncate">{user.name}</p>
                         <p className="text-xs text-gray-500 truncate">
-                          {user.role && user.role !== "user" ? user.role : "Please select role"}
+                          {user.role && user.role == "user" ? "User" : "Please select role"}
                         </p>
                       </div>
                     )}
