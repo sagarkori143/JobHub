@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { PlusCircle, LogIn, User } from "lucide-react"
@@ -36,49 +36,14 @@ export default function PersonalDashboard() {
   const [jobToDelete, setJobToDelete] = useState<Job | null>(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
-  const [loadingJobs, setLoadingJobs] = useState(true)
 
   const { user, isAuthenticated, loading: authLoading, isInitialized, addTrackedJob, updateTrackedJob, removeTrackedJob } = useAuth()
   const { toast } = useToast()
 
   // Use jobsTracking from user context
   const jobs = user?.jobsTracking || [];
-  const fetchJobs = useCallback(async () => {
-    if (!user) {
-      setLoadingJobs(false)
-      return
-    }
 
-    setLoadingJobs(true)
-
-    
-    setLoadingJobs(false)
-  }, [user, toast])
-
-  useEffect(() => {
-    if (!authLoading) {
-      fetchJobs()
-    }
-  }, [authLoading, fetchJobs])
-
-  // Wait for auth context to be initialized before rendering
-  if (!isInitialized) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center">
-        <p>Loading your dashboard...</p>
-        <p>If it is taking too long, try refreshing the page!</p>
-      </div>
-    )
-  }
-
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center">
-        <p>Loading your dashboard...</p>
-        <p>If it is taking too long, try refreshing the page!</p>
-      </div>
-    )
-  }
+  
 
   if (!isAuthenticated) {
     return (
@@ -135,7 +100,6 @@ export default function PersonalDashboard() {
   const rejectedJobs = jobs.filter((job) => job.status === "Rejected")
 
   const handleAddJob = async (newJob: Omit<Job, "id">) => {
-    // Check authentication state before proceeding
     if (!isAuthenticated || !user?.id) {
       toast({
         title: "Authentication Error",
@@ -144,8 +108,6 @@ export default function PersonalDashboard() {
       });
       return;
     }
-
-    // Generate a unique id for the job (could use uuid or Date.now() for demo)
     const jobWithId = { ...newJob, id: Date.now().toString() };
     await addTrackedJob(jobWithId);
     toast({
@@ -156,7 +118,6 @@ export default function PersonalDashboard() {
   };
 
   const handleUpdateJob = async (updatedJob: Job) => {
-    // Check authentication state before proceeding
     if (!isAuthenticated || !user?.id) {
       toast({
         title: "Authentication Error",
@@ -165,7 +126,6 @@ export default function PersonalDashboard() {
       });
       return;
     }
-
     await updateTrackedJob(updatedJob.id, updatedJob);
     toast({
       title: "Success!",
@@ -180,8 +140,6 @@ export default function PersonalDashboard() {
 
   const confirmDeleteJob = async () => {
     if (!jobToDelete) return;
-    
-    // Check authentication state before proceeding
     if (!isAuthenticated || !user?.id) {
       toast({
         title: "Authentication Error",
@@ -190,7 +148,6 @@ export default function PersonalDashboard() {
       });
       return;
     }
-
     await removeTrackedJob(jobToDelete.id);
     toast({
       title: "Success!",
@@ -202,8 +159,6 @@ export default function PersonalDashboard() {
 
   const handleMoveStatus = async (job: Job, direction: "forward" | "backward") => {
     if (!user) return
-
-    // Check authentication state before proceeding
     if (!isAuthenticated || !user?.id) {
       toast({
         title: "Authentication Error",
@@ -212,11 +167,9 @@ export default function PersonalDashboard() {
       });
       return;
     }
-
     const statusOrder = ["Applied", "Interviewing", "Offer", "Rejected"]
     const currentIndex = statusOrder.indexOf(job.status)
     const newIndex = direction === "forward" ? currentIndex + 1 : currentIndex - 1
-
     if (newIndex >= 0 && newIndex < statusOrder.length) {
       const newStatus = statusOrder[newIndex] as Job["status"]
       const updatedJob = { ...job, status: newStatus };
