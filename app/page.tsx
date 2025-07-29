@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect, useRef, useCallback } from "react"
+import { useState, useMemo, useEffect, useCallback } from "react"
 import { JobListingCard } from "@/components/job-listing-card"
 import { JobFilters } from "@/components/job-filters"
 import { JobDetailsModal } from "@/components/job-details-modal"
@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast"
 import { jobDataService } from "@/services/job-data-service"
 import type { JobListing, JobFilters as JobFiltersType } from "@/types/job-search"
 import type { Job } from "@/types/job"
-import { RefreshCw, Database, AlertCircle, Clock } from "lucide-react"
+import { RefreshCw, Database, AlertCircle } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { UserAvatar } from "@/components/user-avatar"
 import { useAuth } from "@/contexts/auth-context"
@@ -27,7 +27,6 @@ const initialFilters: JobFiltersType = {
 }
 
 const JOBS_PER_PAGE = 6
-const SYNC_INTERVAL_MS = 2 * 60 * 60 * 1000 // 2 hours
 
 export default function JobSearchPage() {
   // Use auth guard to allow all users to access job search
@@ -45,88 +44,14 @@ export default function JobSearchPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [allJobs, setAllJobs] = useState<JobListing[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [lastUpdated, setLastUpdated] = useState<string | null>(null)
-  const [metadata, setMetadata] = useState<any>(null)
-  const [countdown, setCountdown] = useState<string>("")
   const [error, setError] = useState<string | null>(null)
   const { toast } = useToast()
-  const { user, supabaseUser } = useAuth()
-  
-  // Use refs to avoid re-renders
-  const intervalRef = useRef<NodeJS.Timeout | null>(null)
-  const nextUpdateTimeRef = useRef<Date | null>(null)
+  const { user, supabaseUser, addTrackedJob } = useAuth()
 
   // Load jobs on component mount
   useEffect(() => {
     loadJobs()
   }, [])
-
-  // Initialize countdown timer (runs only when metadata or lastUpdated changes)
-  useEffect(() => {
-    // Clear existing interval
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current)
-    }
-
-    // Fetch sync metadata for timer
-    const fetchSyncMetadata = async () => {
-      try {
-        const response = await fetch('/api/jobs/sync-metadata')
-        if (response.ok) {
-          const data = await response.json()
-          
-          if (data.nextSync) {
-            const nextUpdateTime = new Date(data.nextSync)
-            nextUpdateTimeRef.current = nextUpdateTime
-            
-            // Start countdown timer
-            const updateCountdown = () => {
-              try {
-                const now = new Date()
-                const diff = nextUpdateTimeRef.current!.getTime() - now.getTime()
-                
-                if (diff <= 0) {
-                  // Countdown finished, check for new data
-                  setCountdown("Checking for updates...")
-                  loadJobs() // Reload to check for new data
-                  
-                  // Reset countdown for next cycle (2 hours from now)
-                  const newNextUpdate = new Date(now.getTime() + SYNC_INTERVAL_MS)
-                  nextUpdateTimeRef.current = newNextUpdate
-                } else {
-                  const hours = Math.floor(diff / (1000 * 60 * 60))
-                  const minutes = Math.floor((diff / (1000 * 60)) % 60)
-                  const seconds = Math.floor((diff / 1000) % 60)
-                  setCountdown(`${hours}h ${minutes}m ${seconds}s`)
-                }
-              } catch (error) {
-                console.error('Error updating countdown:', error)
-                setCountdown("")
-              }
-            }
-
-            // Initial call
-            updateCountdown()
-            
-            // Set interval
-            intervalRef.current = setInterval(updateCountdown, 1000)
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching sync metadata:', error)
-      }
-    }
-
-    fetchSyncMetadata()
-
-    // Cleanup function
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-        intervalRef.current = null
-      }
-    }
-  }, [metadata?.hasRealData, lastUpdated]) // Only re-run when these change
 
   const loadJobs = async () => {
     setIsLoading(true)
@@ -140,10 +65,6 @@ export default function JobSearchPage() {
       }
       
       setAllJobs(jobs)
-
-      const metadata = jobDataService.getMetadata()
-      setMetadata(metadata)
-      setLastUpdated(metadata?.lastUpdated || null)
 
     } catch (error) {
       console.error("Error loading jobs:", error)
@@ -253,7 +174,7 @@ export default function JobSearchPage() {
   }, [toast])
 
   const handleAddToPersonal = async (job: Omit<Job, "id">) => {
-    if (!supabaseUser) {
+    if (!isAuthenticated || !user) {
       toast({
         title: "Authentication Required",
         description: "Please sign in to add jobs to your personal dashboard.",
@@ -268,35 +189,17 @@ export default function JobSearchPage() {
         throw new Error('Invalid job data')
       }
 
-      const { data, error } = await supabase
-        .from("user_job_applications")
-        .insert({
-          user_id: supabaseUser.id,
-          company: job.company,
-          position: job.position,
-          date_applied: job.dateApplied,
-          status: job.status,
-          industry: job.industry,
-          estimated_salary: job.estimatedSalary,
-          job_type: job.jobType,
-          company_logo: job.companyLogo,
-        })
-        .select()
-
-      if (error) {
-        console.error("Error adding job:", error)
-        toast({
-          title: "Error",
-          description: "Failed to add job to your personal dashboard.",
-          variant: "destructive",
-        })
-      } else {
-        toast({
-          title: "Job Added!",
-          description: "Job has been added to your personal dashboard.",
-          duration: 3000,
-        })
-      }
+      // Generate a unique id for the job
+      const jobWithId = { ...job, id: Date.now().toString() };
+      
+      // Use the AuthContext method to add the job
+      await addTrackedJob(jobWithId);
+      
+      toast({
+        title: "Job Added!",
+        description: "Job has been added to your personal dashboard.",
+        duration: 3000,
+      })
     } catch (error) {
       console.error("Error adding job:", error)
       toast({
@@ -383,16 +286,12 @@ export default function JobSearchPage() {
                   <Database className="w-5 h-5 text-green-600" />
                   <div className="flex-1">
                     <p className="text-sm font-medium text-green-800">
-                      {metadata?.hasRealData ? "Real job data from company career pages" : "Mock job data for demonstration (Real data coming soon!)"}
+                      Mock job data for demonstration (Real data coming soon!)
                     </p>
                     <p className="text-xs text-green-600">
-                      {metadata?.hasRealData && lastUpdated
-                        ? `Last updated: ${new Date(lastUpdated).toLocaleString()}`
-                        : "Last updated: Never"
-                      }
+                      Last updated: Never
                     </p>
                   </div>
-                  {/* Countdown timer removed */}
                 </div>
               </CardContent>
             </Card>

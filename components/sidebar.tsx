@@ -286,8 +286,10 @@ export function Sidebar({}: SidebarProps) {
             </DropdownMenu>
           ) : loading ? (
             <div className={`flex items-center gap-3 ${isCollapsed ? 'justify-center' : ''}`}>
-              <p>Loading Profile...</p>
-              
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                {!isCollapsed && <p className="text-sm text-gray-600">Checking credentials..</p>}
+              </div>
             </div>
           ) : (
             <Button

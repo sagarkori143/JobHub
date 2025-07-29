@@ -78,6 +78,7 @@ export function JobDetailsModal({ job, isOpen, onClose, onAddToPersonal, onApply
       status: "Applied",
       industry: job.industry,
       estimatedSalary: Math.floor((job.salary.min + job.salary.max) / 2),
+      jobType: job.type,
       companyLogo: job.companyLogo,
     }
     onAddToPersonal(personalJob)
@@ -195,7 +196,7 @@ export function JobDetailsModal({ job, isOpen, onClose, onAddToPersonal, onApply
                   variant="outline"
                   className="flex-1 border-blue-300 text-blue-700 hover:bg-blue-50 bg-transparent"
                 >
-                  Add to Personal Dashboard
+                  Add to tracking
                 </Button>
                 <Button variant="ghost" onClick={onClose} className="flex-1 hover:bg-gray-100">
                   Close
